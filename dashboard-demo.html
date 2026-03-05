@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物流流向分析仪表板</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .filters {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-item label {
+            font-weight: 600;
+            color: #555;
+            white-space: nowrap;
+        }
+        .filter-item select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .filter-item select:hover, .filter-item select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .chart-container.full-width {
+            grid-column: 1 / -1;
+        }
+        .chart-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        .chart {
+            width: 100%;
+            height: 400px;
+        }
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #888;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: white;
+            font-size: 1.5em;
+        }
+        @media (max-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📦 物流流向分析仪表板</h1>
+        
+        <div id="loading" class="loading">正在加载数据...</div>
+        
+        <div id="dashboard" style="display: none;">
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total">0</div>
+                    <div class="stat-label">总订单数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-warehouses">0</div>
+                    <div class="stat-label">发货仓库</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-carriers">0</div>
+                    <div class="stat-label">物流方式</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-months">0</div>
+                    <div class="stat-label">月份跨度</div>
+                </div>
+            </div>
+
+            <div class="filters">
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label>📍 发货地:</label>
+                        <select id="filter-warehouse" onchange="updateCharts()">
+                            <option value="all">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>🚚 物流方式:</label>
+                        <select id="filter-carrier" onchange="updateCharts()">
+                            <option value="all">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>📅 发货月份:</label>
+                        <select id="filter-month" onchange="updateCharts()">
+                            <option value="all">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>🌍 收货地:</label>
+                        <select id="filter-destination" onchange="updateCharts()">
+                            <option value="all">全部</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-container full-width">
+                    <div class="chart-title">🌊 仓库 → 收货地流向 (桑基图)</div>
+                    <div id="sankey-chart" class="chart"></div>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">📊 发货仓库分布</div>
+                    <div id="warehouse-chart" class="chart"></div>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">🚚 物流方式分布</div>
+                    <div id="carrier-chart" class="chart"></div>
+                </div>
+                
+                <div class="chart-container full-width">
+                    <div class="chart-title">📈 月度发货趋势</div>
+                    <div id="trend-chart" class="chart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let rawData = [];
+        let filteredData = [];
+
+        // 模拟数据生成
+        function generateData() {
+            const warehouses = ['美国仓', '嘉兴仓', '中国仓', '欧洲仓', '日本仓'];
+            const carriers = ['JC-USPS', 'HABIT POST delivery', 'liumai L01', 'JS EXPRESS', 'HABIT Commercial delivery', 'Standard Shipping'];
+            const destinations = ['美国', '英国', '德国', '法国', '日本', '加拿大', '澳大利亚'];
+            const months = ['2510', '2511', '2512', '2601', '2602'];
+            
+            const data = [];
+            for (let i = 0; i < 1698; i++) {
+                data.push({
+                    warehouse: warehouses[Math.floor(Math.random() * warehouses.length)],
+                    carrier: carriers[Math.floor(Math.random() * carriers.length)],
+                    destination: destinations[Math.floor(Math.random() * destinations.length)],
+                    month: months[Math.floor(Math.random() * months.length)],
+                    quantity: Math.floor(Math.random() * 10) + 1
+                });
+            }
+            return data;
+        }
+
+        // 初始化
+        function init() {
+            rawData = generateData();
+            filteredData = [...rawData];
+            
+            populateFilters();
+            updateStats();
+            updateCharts();
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+        }
+
+        // 填充筛选器
+        function populateFilters() {
+            const warehouses = [...new Set(rawData.map(d => d.warehouse))].sort();
+            const carriers = [...new Set(rawData.map(d => d.carrier))].sort();
+            const months = [...new Set(rawData.map(d => d.month))].sort();
+            const destinations = [...new Set(rawData.map(d => d.destination))].sort();
+            
+            warehouses.forEach(w => {
+                const opt = document.createElement('option');
+                opt.value = w;
+                opt.textContent = w;
+                document.getElementById('filter-warehouse').appendChild(opt);
+            });
+            
+            carriers.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                document.getElementById('filter-carrier').appendChild(opt);
+            });
+            
+            months.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = m;
+                document.getElementById('filter-month').appendChild(opt);
+            });
+            
+            destinations.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.textContent = d;
+                document.getElementById('filter-destination').appendChild(opt);
+            });
+        }
+
+        // 更新统计数据
+        function updateStats() {
+            document.getElementById('stat-total').textContent = filteredData.length.toLocaleString();
+            document.getElementById('stat-warehouses').textContent = new Set(filteredData.map(d => d.warehouse)).size;
+            document.getElementById('stat-carriers').textContent = new Set(filteredData.map(d => d.carrier)).size;
+            document.getElementById('stat-months').textContent = new Set(filteredData.map(d => d.month)).size;
+        }
+
+        // 更新图表
+        function updateCharts() {
+            const warehouse = document.getElementById('filter-warehouse').value;
+            const carrier = document.getElementById('filter-carrier').value;
+            const month = document.getElementById('filter-month').value;
+            const destination = document.getElementById('filter-destination').value;
+            
+            filteredData = rawData.filter(d => {
+                return (warehouse === 'all' || d.warehouse === warehouse) &&
+                       (carrier === 'all' || d.carrier === carrier) &&
+                       (month === 'all' || d.month === month) &&
+                       (destination === 'all' || d.destination === destination);
+            });
+            
+            updateStats();
+            renderSankey();
+            renderWarehouse();
+            renderCarrier();
+            renderTrend();
+        }
+
+        // 桑基图
+        function renderSankey() {
+            const chart = echarts.init(document.getElementById('sankey-chart'));
+            
+            const warehouseCount = {};
+            const destCount = {};
+            const links = {};
+            
+            filteredData.forEach(d => {
+                warehouseCount[d.warehouse] = (warehouseCount[d.warehouse] || 0) + d.quantity;
+                destCount[d.destination] = (destCount[d.destination] || 0) + d.quantity;
+                const key = `${d.warehouse}-${d.destination}`;
+                links[key] = (links[key] || 0) + d.quantity;
+            });
+            
+            const nodes = [];
+            const linkData = [];
+            
+            Object.keys(warehouseCount).forEach(name => {
+                nodes.push({ name, category: 0 });
+            });
+            Object.keys(destCount).forEach(name => {
+                nodes.push({ name, category: 1 });
+            });
+            
+            Object.keys(links).forEach(key => {
+                const [source, target] = key.split('-');
+                linkData.push({ source, target, value: links[key] });
+            });
+            
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    triggerOn: 'mousemove',
+                    formatter: function(params) {
+                        if (params.dataType === 'edge') {
+                            return `${params.data.source} → ${params.data.target}: ${params.data.value.toLocaleString()} 件`;
+                        }
+                        return `${params.data.name}: ${params.value?.toLocaleString()} 件`;
+                    }
+                },
+                series: [{
+                    type: 'sankey',
+                    layout: 'none',
+                    emphasis: { focus: 'adjacency' },
+                    lineStyle: {
+                        color: 'gradient',
+                        curveness: 0.5
+                    },
+                    label: {
+                        position: 'right',
+                        fontSize: 12
+                    },
+                    data: nodes,
+                    links: linkData
+                }]
+            };
+            
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+        }
+
+        // 仓库分布
+        function renderWarehouse() {
+            const chart = echarts.init(document.getElementById('warehouse-chart'));
+            
+            const count = {};
+            filteredData.forEach(d => {
+                count[d.warehouse] = (count[d.warehouse] || 0) + d.quantity;
+            });
+            
+            const data = Object.entries(count).map(([name, value]) => ({ name, value }));
+            
+            const option = {
+                tooltip: { trigger: 'item' },
+                series: [{
+                    type: 'pie',
+                    radius: '70%',
+                    data: data,
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    },
+                    label: {
+                        formatter: '{b}: {c}件'
+                    }
+                }]
+            };
+            
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+        }
+
+        // 物流方式
+        function renderCarrier() {
+            const chart = echarts.init(document.getElementById('carrier-chart'));
+            
+            const count = {};
+            filteredData.forEach(d => {
+                count[d.carrier] = (count[d.carrier] || 0) + d.quantity;
+            });
+            
+            const data = Object.entries(count).map(([name, value]) => ({ name, value }));
+            
+            const option = {
+                tooltip: { trigger: 'item' },
+                series: [{
+                    type: 'pie',
+                    radius: '70%',
+                    data: data,
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    },
+                    label: {
+                        formatter: '{b}: {c}件'
+                    }
+                }]
+            };
+            
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+        }
+
+        // 趋势图
+        function renderTrend() {
+            const chart = echarts.init(document.getElementById('trend-chart'));
+            
+            const count = {};
+            filteredData.forEach(d => {
+                count[d.month] = (count[d.month] || 0) + d.quantity;
+            });
+            
+            const months = Object.keys(count).sort();
+            const values = months.map(m => count[m]);
+            
+            const option = {
+                tooltip: { trigger: 'axis' },
+                xAxis: {
+                    type: 'category',
+                    data: months,
+                    name: '月份'
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '发货量'
+                },
+                series: [{
+                    data: values,
+                    type: 'line',
+                    smooth: true,
+                    areaStyle: {
+                        opacity: 0.3
+                    },
+                    itemStyle: {
+                        color: '#667eea'
+                    },
+                    label: {
+                        show: true,
+                        position: 'top',
+                        formatter: '{c}'
+                    }
+                }]
+            };
+            
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+        }
+
+        // 启动
+        init();
+    </script>
+</body>
+</html>
