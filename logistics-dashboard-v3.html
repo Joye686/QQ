@@ -247,38 +247,44 @@
         .new-flow-layout {
             display: grid !important;
             grid-template-columns: 1fr 3fr !important;
-            grid-template-rows: auto 3fr 1fr !important;
-            gap: 15px !important;
+            gap: 10px !important;
             width: 100% !important;
             align-items: stretch !important;
         }
         .country-selector-top {
-            grid-row: 1 / 2 !important;
-            grid-column: 1 / 3 !important;
             display: flex !important;
             flex-direction: row !important;
             gap: 10px !important;
             justify-content: center !important;
             background: transparent !important;
-            padding: 10px !important;
+            padding: 5px !important;
+            margin-bottom: 10px !important;
         }
         .country-selector-top .country-btn {
-            padding: 8px 16px !important;
+            padding: 6px 12px !important;
+            font-size: 12px !important;
         }
         .sankey-section {
-            grid-row: 2 / 4 !important;
+            grid-row: 2 / 3 !important;
             grid-column: 1 / 2 !important;
             background: #f8f9ff !important;
             border-radius: 8px !important;
-            padding: 15px !important;
+            padding: 10px !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        .excel-wrapper {
+            grid-row: 1 / 3 !important;
+            grid-column: 2 / 3 !important;
+            display: grid !important;
+            grid-template-rows: 3fr 1fr !important;
+            gap: 10px !important;
         }
         .excel-top {
-            grid-row: 2 / 3 !important;
-            grid-column: 2 / 3 !important;
+            grid-row: 1 / 2 !important;
         }
         .excel-bottom {
-            grid-row: 3 / 4 !important;
-            grid-column: 2 / 3 !important;
+            grid-row: 2 / 3 !important;
         }
         
         /* 左侧国家选择 */
@@ -317,14 +323,19 @@
             grid-column: 1 / 2 !important;
         }
         .excel-section {
-            min-height: 200px;
+            min-height: 0 !important;
+            height: 100% !important;
+            overflow: hidden !important;
+        }
+        .excel-section .table-scroll-container {
+            max-height: calc(100% - 60px) !important;
         }
         .excel-label {
             text-align: center;
             font-weight: 600;
             color: #667eea;
-            margin-bottom: 10px;
-            font-size: 14px;
+            margin-bottom: 8px;
+            font-size: 13px;
         }
         
         .excel-label {
@@ -684,37 +695,37 @@
             <div class="t-chart-container">
                 <div class="t-chart-title">📊 嘉兴仓 vs 海外仓 - 按国家/产品维度分析</div>
                 
-                <!-- 新布局 -->
-                <div class="new-flow-layout">
-                    <!-- 顶部国家筛选 -->
-                    <div class="country-selector country-selector-top">
-                        <div class="country-btn active" onclick="selectFlowCountry('US', this)">美国</div>
-                        <div class="country-btn" onclick="selectFlowCountry('UK', this)">英国</div>
-                        <div class="country-btn" onclick="selectFlowCountry('CA', this)">加拿大</div>
-                        <div class="country-btn" onclick="selectFlowCountry('AU', this)">澳大利亚</div>
-                        <div class="country-btn" onclick="selectFlowCountry('OTHER', this)">其他</div>
-                    </div>
-                    
-                    <!-- 左侧桑基图 -->
-                    <div class="sankey-section">
-                        <div class="flow-chart-title" style="text-align: center; font-weight: 600; margin-bottom: 10px;">🔀 客户选择 → 实际发出 流向分析</div>
-                        <div id="flow-sankey-chart" style="width: 100%; height: 280px;"></div>
-                        <div class="flow-metrics" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px;">
-                            <div class="flow-metric-card" style="background: white; border-radius: 6px; padding: 10px; text-align: center;">
-                                <div class="flow-metric-value metric-green" style="font-size: 1.5em; font-weight: 700;">90%</div>
-                                <div class="flow-metric-label" style="font-size: 10px; color: #888;">总体保持率</div>
-                            </div>
-                            <div class="flow-metric-card" style="background: white; border-radius: 6px; padding: 10px; text-align: center;">
-                                <div class="flow-metric-value metric-red" style="font-size: 1.5em; font-weight: 700;">4%</div>
-                                <div class="flow-metric-label" style="font-size: 10px; color: #888;">降档率</div>
-                            </div>
-                            <div class="flow-metric-card" style="background: white; border-radius: 6px; padding: 10px; text-align: center;">
-                                <div class="flow-metric-value metric-blue" style="font-size: 1.5em; font-weight: 700;">1%</div>
-                                <div class="flow-metric-label" style="font-size: 10px; color: #888;">提档率</div>
-                            </div>
+                <!-- 顶部国家筛选 -->
+                <div class="country-selector country-selector-top" style="grid-column: 1 / 3;">
+                    <div class="country-btn active" onclick="selectFlowCountry('US', this)">美国</div>
+                    <div class="country-btn" onclick="selectFlowCountry('UK', this)">英国</div>
+                    <div class="country-btn" onclick="selectFlowCountry('CA', this)">加拿大</div>
+                    <div class="country-btn" onclick="selectFlowCountry('AU', this)">澳大利亚</div>
+                    <div class="country-btn" onclick="selectFlowCountry('OTHER', this)">其他</div>
+                </div>
+                
+                <!-- 左侧桑基图 -->
+                <div class="sankey-section">
+                    <div class="flow-chart-title" style="text-align: center; font-weight: 600; margin-bottom: 10px;">🔀 客户选择 → 实际发出</div>
+                    <div id="flow-sankey-chart" style="width: 100%; flex: 1; min-height: 200px;"></div>
+                    <div class="flow-metrics" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;">
+                        <div class="flow-metric-card" style="background: white; border-radius: 6px; padding: 10px; text-align: center;">
+                            <div class="flow-metric-value metric-green" style="font-size: 1.5em; font-weight: 700;">90%</div>
+                            <div class="flow-metric-label" style="font-size: 10px; color: #888;">总体保持率</div>
+                        </div>
+                        <div class="flow-metric-card" style="background: white; border-radius: 6px; padding: 10px; text-align: center;">
+                            <div class="flow-metric-value metric-red" style="font-size: 1.5em; font-weight: 700;">4%</div>
+                            <div class="flow-metric-label" style="font-size: 10px; color: #888;">降档率</div>
+                        </div>
+                        <div class="flow-metric-card" style="background: white; border-radius: 6px; padding: 10px; text-align: center;">
+                            <div class="flow-metric-value metric-blue" style="font-size: 1.5em; font-weight: 700;">1%</div>
+                            <div class="flow-metric-label" style="font-size: 10px; color: #888;">提档率</div>
                         </div>
                     </div>
-                    
+                </div>
+                
+                <!-- 右侧 Excel 区域（上下） -->
+                <div class="excel-wrapper">
                     <!-- 上方 Excel：嘉兴仓 -->
                     <div class="excel-section excel-top">
                         <div class="excel-label">🏭 嘉兴仓 - 客户选择的运送方式</div>
