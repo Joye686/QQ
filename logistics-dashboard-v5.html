@@ -173,6 +173,7 @@
             grid-column: 2 / 3;
             border-right: 2px solid #e0e0e0;
             padding-right: 10px;
+            min-height: 400px;
         }
         
         /* 右侧 Excel */
@@ -180,6 +181,7 @@
             grid-row: 2 / 3;
             grid-column: 3 / 4;
             padding-left: 10px;
+            min-height: 400px;
         }
         
         /* 右侧时间粒度选择 */
@@ -226,7 +228,10 @@
             background: white;
             border: 1px solid #e0e0e0;
             border-radius: 8px;
-            overflow: hidden;
+            overflow: visible;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
         .excel-toolbar {
             display: flex;
@@ -257,28 +262,34 @@
         }
         .table-scroll-container {
             max-height: 350px;
-            overflow-x: auto;
-            overflow-y: auto;
+            overflow: auto;
+            position: relative;
         }
         .table-scroll-container::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
         }
         .table-scroll-container::-webkit-scrollbar-track {
             background: #f1f1f1;
-            border-radius: 5px;
+            border-radius: 6px;
         }
         .table-scroll-container::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 5px;
+            background: #c1c1c1;
+            border-radius: 6px;
+            border: 2px solid #f1f1f1;
         }
         .table-scroll-container::-webkit-scrollbar-thumb:hover {
-            background: #555;
+            background: #a8a8a8;
         }
         .excel-table {
-            min-width: 900px;
+            min-width: 1000px;
             border-collapse: collapse;
             font-size: 11px;
+            table-layout: fixed;
+        }
+        .excel-table th, .excel-table td {
+            min-width: 80px;
+            padding: 6px 8px;
         }
         .excel-table {
             width: 100%;
