@@ -233,11 +233,11 @@
             border-top: 1px dashed #e0e0e0;
         }
         
-        /* T 字型流向分析布局（V5） */
+        /* T 字型流向分析布局（V5）- 与上方折线图对齐 */
         .t-layout {
             display: grid;
-            grid-template-columns: 150px 1fr 1fr;
-            grid-template-rows: 60px 1fr;
+            grid-template-columns: 150px 1fr 1fr 120px;
+            grid-template-rows: 60px 1fr 80px;
             gap: 10px;
             align-items: center;
         }
@@ -278,7 +278,7 @@
             grid-column: 2 / 3;
             border-right: 2px solid #e0e0e0;
             padding-right: 10px;
-            min-height: 400px;
+            min-height: 350px;
         }
         
         /* 右侧 Excel */
@@ -286,7 +286,49 @@
             grid-row: 2 / 3;
             grid-column: 3 / 4;
             padding-left: 10px;
-            min-height: 400px;
+            min-height: 350px;
+        }
+        
+        /* 右侧时间粒度选择（占位） */
+        .time-selector {
+            grid-row: 2 / 3;
+            grid-column: 4 / 5;
+            background: #f8f9ff;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            justify-self: end;
+        }
+        .time-btn {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .time-btn:hover {
+            border-color: #667eea;
+        }
+        .time-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        /* 底部时间轴 */
+        .timeline {
+            grid-row: 3 / 4;
+            grid-column: 2 / 4;
+            text-align: center;
+            color: #888;
+            font-size: 12px;
+            padding-top: 10px;
+            border-top: 1px dashed #e0e0e0;
         }
         
         .excel-label {
@@ -711,6 +753,18 @@
                                 </table>
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- 右侧时间粒度占位（与上方对齐） -->
+                    <div class="time-selector">
+                        <div class="time-btn">周</div>
+                        <div class="time-btn">月</div>
+                        <div class="time-btn">年</div>
+                    </div>
+                    
+                    <!-- 底部时间轴（与上方对齐） -->
+                    <div class="timeline">
+                        ← 时间轴（周/月/年） →
                     </div>
                 </div>
             </div>
