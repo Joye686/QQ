@@ -233,116 +233,125 @@
             border-top: 1px dashed #e0e0e0;
         }
         
-        /* 流向分析 + Excel 模块 */
-        .flow-table-container {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .section-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #667eea;
-        }
-        
-        /* 1:3 布局 */
-        .flow-table-layout {
+        /* T 字型流向分析布局（V5） */
+        .t-layout {
             display: grid;
-            grid-template-columns: 1fr 3fr;
-            gap: 20px;
-            align-items: stretch;
+            grid-template-columns: 150px 1fr 1fr;
+            grid-template-rows: 60px 1fr;
+            gap: 10px;
+            align-items: center;
         }
         
-        /* 流向分析图表 */
-        .flow-chart-section {
+        /* 左侧国家选择 */
+        .country-selector {
+            grid-row: 2 / 3;
+            grid-column: 1 / 2;
             background: #f8f9ff;
             border-radius: 8px;
-            padding: 15px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .country-btn {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .country-btn:hover {
+            border-color: #667eea;
+        }
+        .country-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        /* 左侧 Excel */
+        .left-excel-container {
+            grid-row: 2 / 3;
+            grid-column: 2 / 3;
+            border-right: 2px solid #e0e0e0;
+            padding-right: 10px;
             min-height: 400px;
         }
-        .flow-chart-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-        #flow-sankey-chart {
-            width: 100%;
-            height: 280px;
-        }
-        .flow-metrics {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .flow-metric-card {
-            background: white;
-            border-radius: 6px;
-            padding: 10px;
-            text-align: center;
-        }
-        .flow-metric-value {
-            font-size: 1.3em;
-            font-weight: 700;
-        }
-        .flow-metric-label {
-            font-size: 10px;
-            color: #888;
-            margin-top: 4px;
-        }
-        .metric-green { color: #34a853; }
-        .metric-red { color: #ea4335; }
-        .metric-blue { color: #4285f4; }
         
-        /* Excel 表格 */
+        /* 右侧 Excel */
+        .right-excel-container {
+            grid-row: 2 / 3;
+            grid-column: 3 / 4;
+            padding-left: 10px;
+            min-height: 400px;
+        }
+        
+        .excel-label {
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        /* Excel 表格样式 */
         .excel-section {
             background: white;
             border: 1px solid #e0e0e0;
             border-radius: 8px;
-            overflow: hidden;
+            overflow: visible;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
         .excel-toolbar {
             display: flex;
             gap: 10px;
-            padding: 10px;
+            padding: 8px;
             background: #f5f5f5;
             border-bottom: 1px solid #e0e0e0;
             align-items: center;
         }
         .excel-toolbar input {
-            padding: 6px 10px;
+            padding: 5px 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            font-size: 12px;
+            font-size: 11px;
             flex: 1;
-        }
-        .excel-toolbar button {
-            padding: 6px 12px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        .excel-toolbar button:hover {
-            background: #5a6fd6;
         }
         .table-scroll-container {
             max-height: 350px;
             overflow: auto;
+            position: relative;
+        }
+        .table-scroll-container::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        .table-scroll-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 6px;
+        }
+        .table-scroll-container::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 6px;
+            border: 2px solid #f1f1f1;
+        }
+        .table-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
         .excel-table {
-            width: 100%;
+            min-width: 1000px;
             border-collapse: collapse;
             font-size: 11px;
+            table-layout: fixed;
+        }
+        .excel-table th, .excel-table td {
+            min-width: 80px;
+            padding: 6px 8px;
         }
         .excel-table thead {
             position: sticky;
@@ -351,7 +360,7 @@
             z-index: 10;
         }
         .excel-table th {
-            padding: 8px 6px;
+            padding: 6px 8px;
             text-align: left;
             font-weight: 600;
             color: #333;
@@ -359,7 +368,7 @@
             white-space: nowrap;
         }
         .excel-table td {
-            padding: 6px;
+            padding: 6px 8px;
             border: 1px solid #eee;
             color: #555;
         }
@@ -373,11 +382,60 @@
             background: #e8f0fe !important;
             font-weight: 600;
         }
-        .excel-table .highlight {
-            background: #fff9c4;
-        }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
+        
+        /* 流向分析桑基图（独立模块） */
+        .flow-sankey-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .flow-sankey-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            text-align: center;
+        }
+        .flow-sankey-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            align-items: center;
+        }
+        #flow-sankey-chart {
+            width: 100%;
+            height: 250px;
+        }
+        .flow-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .flow-metric-card {
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+        }
+        .flow-metric-value {
+            font-size: 2em;
+            font-weight: 700;
+        }
+        .flow-metric-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+        .metric-green { color: #34a853; }
+        .metric-red { color: #ea4335; }
+        .metric-blue { color: #4285f4; }
         
         /* 其他图表 */
         .charts-grid {
@@ -582,60 +640,98 @@
                 </div>
             </div>
 
-            <!-- 流向分析 + Excel 表格 -->
-            <div class="flow-table-container">
-                <div class="section-title">📊 客户选择 → 实际发出 流向分析 + 产品明细表</div>
+            <!-- T 字型流向分析图表（V5 设计） -->
+            <div class="t-chart-container">
+                <div class="t-chart-title">📊 嘉兴仓 vs 海外仓 - 按国家/产品维度分析</div>
                 
-                <div class="flow-table-layout">
-                    <!-- 左侧：流向分析图 -->
-                    <div class="flow-chart-section">
-                        <div class="flow-chart-title">🔀 客户选择 → 实际发出 流向分析</div>
-                        <div id="flow-sankey-chart"></div>
-                        
-                        <!-- 底部指标卡 -->
-                        <div class="flow-metrics">
-                            <div class="flow-metric-card">
-                                <div class="flow-metric-value metric-green" id="metric-keep-rate">90%</div>
-                                <div class="flow-metric-label">总体保持率</div>
+                <!-- T 字型布局 -->
+                <div class="t-layout">
+                    <!-- 左侧国家选择 -->
+                    <div class="country-selector">
+                        <div class="country-btn active" onclick="selectFlowCountry('US', this)">美国</div>
+                        <div class="country-btn" onclick="selectFlowCountry('UK', this)">英国</div>
+                        <div class="country-btn" onclick="selectFlowCountry('CA', this)">加拿大</div>
+                        <div class="country-btn" onclick="selectFlowCountry('AU', this)">澳大利亚</div>
+                        <div class="country-btn" onclick="selectFlowCountry('OTHER', this)">其他</div>
+                    </div>
+                    
+                    <!-- 左侧 Excel：嘉兴仓 -->
+                    <div class="left-excel-container">
+                        <div class="excel-label">🏭 嘉兴仓 - 客户选择的运送方式</div>
+                        <div class="excel-section">
+                            <div class="excel-toolbar">
+                                <input type="text" id="left-search" placeholder="🔍 搜索产品..." style="flex: 1;">
                             </div>
-                            <div class="flow-metric-card">
-                                <div class="flow-metric-value metric-red" id="metric-downgrade">4%</div>
-                                <div class="flow-metric-label">降档率</div>
-                            </div>
-                            <div class="flow-metric-card">
-                                <div class="flow-metric-value metric-blue" id="metric-upgrade">1%</div>
-                                <div class="flow-metric-label">提档率</div>
+                            <div class="table-scroll-container">
+                                <table class="excel-table" id="left-table">
+                                    <thead>
+                                        <tr>
+                                            <th>客户选择的运送方式</th>
+                                            <th>一级产品</th>
+                                            <th>二级产品</th>
+                                            <th>三级产品</th>
+                                            <th class="text-right">当期发货数量</th>
+                                            <th class="text-right">发货占当期总比</th>
+                                            <th class="text-right">单价/kg</th>
+                                            <th class="text-center">承诺时效</th>
+                                            <th class="text-center">妥投时效</th>
+                                            <th class="text-right">妥投率</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="left-table-body"></tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- 右侧：Excel 表格 -->
-                    <div class="excel-section">
-                        <div class="excel-toolbar">
-                            <input type="text" id="table-search" placeholder="🔍 搜索产品/发货方式..." style="flex: 1;">
-                            <button onclick="exportTable()">📥 导出 Excel</button>
+                    <!-- 右侧 Excel：海外仓 -->
+                    <div class="right-excel-container">
+                        <div class="excel-label">🌍 海外仓 - 实际发出的运送方式</div>
+                        <div class="excel-section">
+                            <div class="excel-toolbar">
+                                <input type="text" id="right-search" placeholder="🔍 搜索产品..." style="flex: 1;">
+                            </div>
+                            <div class="table-scroll-container">
+                                <table class="excel-table" id="right-table">
+                                    <thead>
+                                        <tr>
+                                            <th>实际发出的运送方式</th>
+                                            <th>一级产品</th>
+                                            <th>二级产品</th>
+                                            <th>三级产品</th>
+                                            <th class="text-right">当期发货数量</th>
+                                            <th class="text-right">发货占当期总比</th>
+                                            <th class="text-right">单价/kg</th>
+                                            <th class="text-center">承诺时效</th>
+                                            <th class="text-center">妥投时效</th>
+                                            <th class="text-right">妥投率</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="right-table-body"></tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div class="table-scroll-container">
-                            <table class="excel-table" id="product-table">
-                                <thead>
-                                    <tr>
-                                        <th>收货地</th>
-                                        <th>客户选择的运送方式</th>
-                                        <th>一级产品</th>
-                                        <th>二级产品</th>
-                                        <th>三级产品</th>
-                                        <th class="text-right">当期发货数量</th>
-                                        <th class="text-right">发货占当期总比</th>
-                                        <th class="text-right">单价/kg</th>
-                                        <th class="text-center">承诺时效</th>
-                                        <th class="text-center">妥投时效</th>
-                                        <th class="text-right">妥投率</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table-body">
-                                    <!-- 数据由 JS 生成 -->
-                                </tbody>
-                            </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 流向分析桑基图（独立模块） -->
+            <div class="flow-sankey-container">
+                <div class="flow-sankey-title">🔀 整体流向分析 - 客户选择 → 实际发出</div>
+                <div class="flow-sankey-content">
+                    <div id="flow-sankey-chart"></div>
+                    <div class="flow-metrics">
+                        <div class="flow-metric-card">
+                            <div class="flow-metric-value metric-green" id="metric-keep-rate">90%</div>
+                            <div class="flow-metric-label">总体保持率</div>
+                        </div>
+                        <div class="flow-metric-card">
+                            <div class="flow-metric-value metric-red" id="metric-downgrade">4%</div>
+                            <div class="flow-metric-label">降档率</div>
+                        </div>
+                        <div class="flow-metric-card">
+                            <div class="flow-metric-value metric-blue" id="metric-upgrade">1%</div>
+                            <div class="flow-metric-label">提档率</div>
                         </div>
                     </div>
                 </div>
@@ -727,6 +823,73 @@
                 ],
                 metrics: { keepRate: 90, downgrade: 4, upgrade: 1 }
             },
+            // 产品数据（按国家分类）- V5
+            productDataByCountry: {
+                US: {
+                    customerChoice: [
+                        { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 82, ratio: 6.48, priceKg: 95.54, promise: 8, delivery: 7, rate: 87.5 },
+                        { shipping: '快', level1: '快', level2: '海贝拓', level3: 'HABIT POST delivery', qty: 14, ratio: 17.07, priceKg: 92.56, promise: 15, delivery: 6, rate: 92.3 },
+                        { shipping: '快', level1: '快', level2: '极速', level3: 'JS EXPRESS', qty: 31, ratio: 37.80, priceKg: 87.00, promise: 5, delivery: 7, rate: 88.2 },
+                        { shipping: '快', level1: '快', level2: '极速', level3: '', qty: 15, ratio: 48.39, priceKg: 84.28, promise: 6, delivery: 7, rate: 90.1 },
+                        { shipping: '快', level1: '快', level2: '六脉', level3: '', qty: 16, ratio: 51.61, priceKg: 92.52, promise: 3, delivery: 7, rate: 85.7 },
+                        { shipping: '快', level1: '快', level2: '六脉', level3: 'JS EXPRESS', qty: 26, ratio: 31.71, priceKg: 81.94, promise: 9, delivery: 9, rate: 78.4 },
+                        { shipping: '快', level1: '快', level2: '燕文', level3: '', qty: 4, ratio: 4.88, priceKg: 102.32, promise: 7, delivery: 7, rate: 91.5 },
+                        { shipping: '快', level1: '快', level2: '云途', level3: '', qty: 7, ratio: 8.54, priceKg: 170.02, promise: 7, delivery: 7, rate: 93.2 },
+                        { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 1184, ratio: 93.52, priceKg: 96.84, promise: 12, delivery: 7, rate: 89.5 },
+                        { shipping: '普通', level1: '普通', level2: '海贝拓', level3: '', qty: 1184, ratio: 100.00, priceKg: 96.84, promise: 12, delivery: 7, rate: 89.5 },
+                        { shipping: '普通', level1: '普通', level2: '海贝拓', level3: 'HABIT Commercial delivery', qty: 603, ratio: 50.93, priceKg: 102.56, promise: 12, delivery: 5, rate: 94.8 },
+                        { shipping: '普通', level1: '普通', level2: '极速', level3: 'JS clothing line', qty: 319, ratio: 26.94, priceKg: 96.79, promise: 12, delivery: 7, rate: 88.9 },
+                        { shipping: '普通', level1: '普通', level2: '六脉', level3: '', qty: 298, ratio: 93.42, priceKg: 102.36, promise: 12, delivery: 7, rate: 90.3 }
+                    ],
+                    actualShip: [
+                        { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 78, ratio: 6.15, priceKg: 94.20, promise: 8, delivery: 7, rate: 88.5 },
+                        { shipping: '快', level1: '快', level2: '海贝拓', level3: 'HABIT POST delivery', qty: 12, ratio: 15.38, priceKg: 91.30, promise: 15, delivery: 6, rate: 93.1 },
+                        { shipping: '快', level1: '快', level2: '极速', level3: 'JS EXPRESS', qty: 35, ratio: 44.87, priceKg: 86.50, promise: 5, delivery: 7, rate: 89.0 },
+                        { shipping: '快', level1: '快', level2: '六脉', level3: '', qty: 20, ratio: 57.14, priceKg: 91.80, promise: 3, delivery: 7, rate: 86.5 },
+                        { shipping: '快', level1: '快', level2: '六脉', level3: 'JS EXPRESS', qty: 30, ratio: 36.59, priceKg: 81.20, promise: 9, delivery: 9, rate: 79.2 },
+                        { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 1250, ratio: 94.12, priceKg: 97.20, promise: 12, delivery: 7, rate: 90.1 },
+                        { shipping: '普通', level1: '普通', level2: '海贝拓', level3: 'HABIT Commercial delivery', qty: 650, ratio: 52.00, priceKg: 103.10, promise: 12, delivery: 5, rate: 95.2 },
+                        { shipping: '普通', level1: '普通', level2: '极速', level3: 'JS clothing line', qty: 340, ratio: 27.20, priceKg: 97.10, promise: 12, delivery: 7, rate: 89.5 },
+                        { shipping: '普通', level1: '普通', level2: '六脉', level3: '', qty: 310, ratio: 93.94, priceKg: 102.80, promise: 12, delivery: 7, rate: 90.8 }
+                    ]
+                },
+                UK: {
+                    customerChoice: [
+                        { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 45, ratio: 8.50, priceKg: 78.20, promise: 7, delivery: 6, rate: 90.2 },
+                        { shipping: '快', level1: '快', level2: '极速', level3: 'JS EXPRESS', qty: 20, ratio: 44.44, priceKg: 72.50, promise: 5, delivery: 6, rate: 92.5 },
+                        { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 435, ratio: 90.62, priceKg: 68.40, promise: 10, delivery: 6, rate: 91.8 }
+                    ],
+                    actualShip: [
+                        { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 42, ratio: 8.20, priceKg: 77.50, promise: 7, delivery: 6, rate: 91.0 },
+                        { shipping: '快', level1: '快', level2: '极速', level3: 'JS EXPRESS', qty: 22, ratio: 52.38, priceKg: 71.80, promise: 5, delivery: 6, rate: 93.2 },
+                        { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 450, ratio: 91.84, priceKg: 68.90, promise: 10, delivery: 6, rate: 92.3 }
+                    ]
+                },
+                CA: {
+                    customerChoice: [
+                        { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 35, ratio: 7.00, priceKg: 88.30, promise: 8, delivery: 7, rate: 88.5 },
+                        { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 465, ratio: 93.00, priceKg: 82.10, promise: 12, delivery: 7, rate: 89.8 }
+                    ],
+                    actualShip: [
+                        { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 33, ratio: 6.73, priceKg: 87.60, promise: 8, delivery: 7, rate: 89.2 },
+                        { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 470, ratio: 93.27, priceKg: 82.50, promise: 12, delivery: 7, rate: 90.3 }
+                    ]
+                },
+                AU: {
+                    customerChoice: [
+                        { shipping: '快', level1: '快', level2: '极速', level3: '', qty: 15, ratio: 5.00, priceKg: 52.40, promise: 6, delivery: 5, rate: 93.5 },
+                        { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 285, ratio: 95.00, priceKg: 45.20, promise: 10, delivery: 5, rate: 94.2 }
+                    ],
+                    actualShip: []
+                },
+                OTHER: {
+                    customerChoice: [
+                        { shipping: '快', level1: '快', level2: '云途', level3: '', qty: 5, ratio: 10.00, priceKg: 125.30, promise: 9, delivery: 8, rate: 85.0 },
+                        { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 45, ratio: 90.00, priceKg: 98.70, promise: 14, delivery: 8, rate: 87.5 }
+                    ],
+                    actualShip: []
+                }
+            },
             // 产品明细表数据
             productData: [
                 { country: '美国', shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 82, ratio: 6.48, priceKg: 95.54, promise: 8, delivery: 7 },
@@ -759,7 +922,8 @@
             renderJiaxingTChart();
             renderOverseasTChart();
             renderFlowSankey();
-            renderTable();
+            renderLeftTable('US');
+            renderRightTable('US');
             renderOrderStructure();
             renderWarehouseRatio();
             renderClaimAmount();
@@ -767,9 +931,18 @@
             updateStats();
             
             // 表格搜索功能
-            document.getElementById('table-search').addEventListener('input', function(e) {
+            document.getElementById('left-search').addEventListener('input', function(e) {
                 const keyword = e.target.value.toLowerCase();
-                const rows = document.querySelectorAll('#table-body tr');
+                const rows = document.querySelectorAll('#left-table-body tr');
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(keyword) ? '' : 'none';
+                });
+            });
+            
+            document.getElementById('right-search').addEventListener('input', function(e) {
+                const keyword = e.target.value.toLowerCase();
+                const rows = document.querySelectorAll('#right-table-body tr');
                 rows.forEach(row => {
                     const text = row.textContent.toLowerCase();
                     row.style.display = text.includes(keyword) ? '' : 'none';
@@ -783,6 +956,101 @@
                 Object.values(charts).forEach(chart => chart.resize());
                 if (charts.flow) charts.flow.resize();
             });
+        }
+
+        function selectFlowCountry(country, btn) {
+            document.querySelectorAll('.country-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderLeftTable(country);
+            renderRightTable(country);
+        }
+
+        function renderLeftTable(country) {
+            const tbody = document.getElementById('left-table-body');
+            const data = mockData.productDataByCountry[country].customerChoice;
+            let html = '';
+            
+            data.forEach(row => {
+                html += `
+                    <tr>
+                        <td>${row.shipping}</td>
+                        <td>${row.level1}</td>
+                        <td>${row.level2}</td>
+                        <td>${row.level3}</td>
+                        <td class="text-right">${row.qty}</td>
+                        <td class="text-right">${row.ratio.toFixed(2)}%</td>
+                        <td class="text-right">${row.priceKg.toFixed(2)}</td>
+                        <td class="text-center">${row.promise}</td>
+                        <td class="text-center">${row.delivery}</td>
+                        <td class="text-right">${row.rate.toFixed(1)}%</td>
+                    </tr>
+                `;
+            });
+            
+            const totalQty = data.reduce((sum, row) => sum + row.qty, 0);
+            html += `
+                <tr class="total-row">
+                    <td colspan="4">总计</td>
+                    <td class="text-right">${totalQty}</td>
+                    <td class="text-right">100.00%</td>
+                    <td class="text-right">-</td>
+                    <td class="text-center">-</td>
+                    <td class="text-center">-</td>
+                    <td class="text-right">-</td>
+                </tr>
+            `;
+            
+            tbody.innerHTML = html;
+        }
+
+        function renderRightTable(country) {
+            const tbody = document.getElementById('right-table-body');
+            const data = mockData.productDataByCountry[country].actualShip;
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" style="text-align: center; padding: 50px; color: #999;">
+                            🌍 该国家无海外仓数据
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            data.forEach(row => {
+                html += `
+                    <tr>
+                        <td>${row.shipping}</td>
+                        <td>${row.level1}</td>
+                        <td>${row.level2}</td>
+                        <td>${row.level3}</td>
+                        <td class="text-right">${row.qty}</td>
+                        <td class="text-right">${row.ratio.toFixed(2)}%</td>
+                        <td class="text-right">${row.priceKg.toFixed(2)}</td>
+                        <td class="text-center">${row.promise}</td>
+                        <td class="text-center">${row.delivery}</td>
+                        <td class="text-right">${row.rate.toFixed(1)}%</td>
+                    </tr>
+                `;
+            });
+            
+            const totalQty = data.reduce((sum, row) => sum + row.qty, 0);
+            html += `
+                <tr class="total-row">
+                    <td colspan="4">总计</td>
+                    <td class="text-right">${totalQty}</td>
+                    <td class="text-right">100.00%</td>
+                    <td class="text-right">-</td>
+                    <td class="text-center">-</td>
+                    <td class="text-center">-</td>
+                    <td class="text-right">-</td>
+                </tr>
+            `;
+            
+            tbody.innerHTML = html;
         }
 
         function selectMetric(metric, btn) {
