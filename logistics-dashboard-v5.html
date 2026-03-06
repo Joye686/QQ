@@ -496,7 +496,7 @@
 
             <!-- T 字型流向分析图表 -->
             <div class="t-chart-container">
-                <div class="t-chart-title">📊 客户选择 → 实际发出 流向分析（按国家/产品维度）</div>
+                <div class="t-chart-title">📊 嘉兴仓 vs 海外仓 - 按国家/产品维度分析</div>
                 
                 <!-- T 字型布局 -->
                 <div class="t-layout">
@@ -509,9 +509,9 @@
                         <div class="country-btn" onclick="selectCountry('OTHER', this)">其他</div>
                     </div>
                     
-                    <!-- 左侧 Excel：客户选择 -->
+                    <!-- 左侧 Excel：嘉兴仓 -->
                     <div class="left-excel-container">
-                        <div class="excel-label">📋 客户选择的运送方式</div>
+                        <div class="excel-label">🏭 嘉兴仓 - 客户选择的运送方式</div>
                         <div class="excel-section">
                             <div class="excel-toolbar">
                                 <input type="text" id="left-search" placeholder="🔍 搜索产品..." style="flex: 1;">
@@ -538,9 +538,9 @@
                         </div>
                     </div>
                     
-                    <!-- 右侧 Excel：实际发出 -->
+                    <!-- 右侧 Excel：海外仓 -->
                     <div class="right-excel-container">
-                        <div class="excel-label">🚚 实际发出的运送方式</div>
+                        <div class="excel-label">🌍 海外仓 - 实际发出的运送方式</div>
                         <div class="excel-section">
                             <div class="excel-toolbar">
                                 <input type="text" id="right-search" placeholder="🔍 搜索产品..." style="flex: 1;">
@@ -677,20 +677,14 @@
                     { shipping: '快', level1: '快', level2: '极速', level3: '', qty: 15, ratio: 5.00, priceKg: 52.40, promise: 6, delivery: 5, rate: 93.5 },
                     { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 285, ratio: 95.00, priceKg: 45.20, promise: 10, delivery: 5, rate: 94.2 }
                 ],
-                actualShip: [
-                    { shipping: '快', level1: '快', level2: '极速', level3: '', qty: 14, ratio: 4.83, priceKg: 51.80, promise: 6, delivery: 5, rate: 94.0 },
-                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 290, ratio: 95.17, priceKg: 45.60, promise: 10, delivery: 5, rate: 94.8 }
-                ]
+                actualShip: []  // 澳大利亚无海外仓
             },
             OTHER: {
                 customerChoice: [
                     { shipping: '快', level1: '快', level2: '云途', level3: '', qty: 5, ratio: 10.00, priceKg: 125.30, promise: 9, delivery: 8, rate: 85.0 },
                     { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 45, ratio: 90.00, priceKg: 98.70, promise: 14, delivery: 8, rate: 87.5 }
                 ],
-                actualShip: [
-                    { shipping: '快', level1: '快', level2: '云途', level3: '', qty: 4, ratio: 8.51, priceKg: 124.50, promise: 9, delivery: 8, rate: 86.2 },
-                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 46, ratio: 91.49, priceKg: 99.20, promise: 14, delivery: 8, rate: 88.1 }
-                ]
+                actualShip: []  // 其他无海外仓
             }
         };
 
@@ -788,6 +782,19 @@
         function renderRightTable(country) {
             const tbody = document.getElementById('right-table-body');
             const data = productDataByCountry[country].actualShip;
+            
+            // 澳大利亚和其他国家无海外仓数据
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" style="text-align: center; padding: 50px; color: #999;">
+                            🌍 该国家无海外仓数据
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
             let html = '';
             
             data.forEach(row => {
