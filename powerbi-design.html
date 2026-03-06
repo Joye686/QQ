@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Power BI 设计方案 - 客户流向分析</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            color: #333;
+        }
+        h1 {
+            color: #1a1a1a;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2c3e50;
+            border-left: 4px solid #3498db;
+            padding-left: 12px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #34495e;
+            margin-top: 25px;
+        }
+        ul, ol {
+            margin: 10px 0;
+            padding-left: 30px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        hr {
+            border: none;
+            border-top: 2px solid #ecf0f1;
+            margin: 30px 0;
+        }
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px solid #ecf0f1;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: "Consolas", "Monaco", monospace;
+        }
+        @media print {
+            body { padding: 20px; }
+            h2 { page-break-before: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<h1>📊 Power BI 设计方案 - 客户流向分析</h1>
+
+<h2>1. 项目概述</h2>
+<p>分析客户选择与实际发出商品的流向差异，识别业务中的偏差和优化机会。</p>
+
+<h3>分析目标</h3>
+<ul>
+    <li>可视化客户选择 vs 实际发出的流向对比</li>
+    <li>识别主要偏差来源</li>
+    <li>支持业务决策优化</li>
+</ul>
+
+<hr>
+
+<h2>2. 数据源</h2>
+
+<h3>数据来源</h3>
+<ul>
+    <li><strong>客户选择记录</strong>：客户下单时的选择数据（实时更新）</li>
+    <li><strong>实际发出记录</strong>：仓库实际发货数据（实时更新）</li>
+    <li><strong>商品主数据</strong>：商品分类、规格等信息（每日更新）</li>
+</ul>
+
+<h3>关键字段</h3>
+<p>客户 ID、订单号、商品 SKU、选择数量、发出数量、时间戳、仓库/发货地</p>
+
+<hr>
+
+<h2>3. 可视化模块</h2>
+
+<h3>3.1 桑基图 (Sankey Diagram)</h3>
+<ul>
+    <li><strong>左侧节点</strong>：客户选择的商品分类</li>
+    <li><strong>右侧节点</strong>：实际发出的商品分类</li>
+    <li><strong>连线宽度</strong>：代表流量大小</li>
+    <li><strong>颜色编码</strong>：区分商品类别</li>
+</ul>
+
+<h3>3.2 辅助图表</h3>
+<ul>
+    <li><strong>偏差分析柱状图</strong>：展示各品类的选择 vs 发出差异</li>
+    <li><strong>时间趋势折线图</strong>：按日/周/月展示偏差变化趋势</li>
+    <li><strong>客户分布地图</strong>：地理位置维度的流向分布</li>
+</ul>
+
+<hr>
+
+<h2>4. 交互功能</h2>
+
+<h3>筛选器</h3>
+<ul>
+    <li><strong>时间范围</strong>：日期选择器（默认：最近 30 天）</li>
+    <li><strong>客户分类</strong>：下拉多选（默认：全部）</li>
+    <li><strong>商品品类</strong>：下拉多选（默认：全部）</li>
+    <li><strong>发货仓库</strong>：下拉单选（默认：全部）</li>
+</ul>
+
+<h3>钻取功能</h3>
+<ul>
+    <li>从品类钻取到 SKU</li>
+    <li>从月份钻取到日期</li>
+    <li>从总览钻取到明细</li>
+</ul>
+
+<h3>工具提示</h3>
+<ul>
+    <li>鼠标悬停显示详细数据</li>
+    <li>显示偏差百分比和绝对值</li>
+</ul>
+
+<hr>
+
+<h2>5. 技术实现</h2>
+
+<h3>Power BI 组件</h3>
+<ul>
+    <li>桑基图自定义视觉对象：流向可视化</li>
+    <li>标准柱状图：偏差对比</li>
+    <li>折线图：趋势分析</li>
+    <li>地图视觉对象：地理分布</li>
+</ul>
+
+<h3>数据模型</h3>
+<p><code>客户选择表 + 实际发出表 → 关联商品主数据</code></p>
+
+<h3>DAX 关键度量</h3>
+<ul>
+    <li><code>偏差率 = (实际发出 - 客户选择) / 客户选择</code></li>
+    <li><code>偏差量 = 实际发出 - 客户选择</code></li>
+</ul>
+
+<hr>
+
+<h2>6. 部署与分享</h2>
+
+<h3>发布流程</h3>
+<ol>
+    <li>Power BI Desktop 开发</li>
+    <li>发布到 Power BI Service</li>
+    <li>配置数据刷新计划</li>
+    <li>分享给相关人员</li>
+</ol>
+
+<h3>访问权限</h3>
+<ul>
+    <li><strong>业务分析师</strong>：编辑 + 查看</li>
+    <li><strong>业务经理</strong>：查看 + 导出</li>
+    <li><strong>执行人员</strong>：查看</li>
+</ul>
+
+<h3>数据刷新</h3>
+<ul>
+    <li><strong>频率</strong>：每日自动刷新</li>
+    <li><strong>时间</strong>：凌晨 2:00</li>
+    <li><strong>失败通知</strong>：邮件提醒</li>
+</ul>
+
+<hr>
+
+<h2>7. 后续优化建议</h2>
+
+<h3>短期优化</h3>
+<ul>
+    <li>添加异常值高亮功能</li>
+    <li>增加数据质量监控</li>
+    <li>优化桑基图性能</li>
+</ul>
+
+<h3>长期规划</h3>
+<ul>
+    <li>集成预测分析</li>
+    <li>添加 AI 异常检测</li>
+    <li>移动端适配</li>
+</ul>
+
+<hr>
+
+<h2>8. 附录</h2>
+
+<h3>相关文档链接</h3>
+<ul>
+    <li>飞书知识库文档：<a href="https://lcn8szj6vfzq.feishu.cn/wiki/K6uEwxu4Hi4TCgkaGTGcaMDXnVj" target="_blank">https://lcn8szj6vfzq.feishu.cn/wiki/K6uEwxu4Hi4TCgkaGTGcaMDXnVj</a></li>
+    <li>桑基图临时链接：<a href="http://tmpfiles.org/27350257/sankey-dashboard.png" target="_blank">http://tmpfiles.org/27350257/sankey-dashboard.png</a></li>
+</ul>
+
+<div class="footer">
+    <p><strong>文档创建时间：</strong> 2026-03-05</p>
+    <p><strong>最后更新：</strong> 2026-03-05 10:26</p>
+</div>
+
+</body>
+</html>
