@@ -243,11 +243,12 @@
         
         /* T 字型流向分析布局（V5）- 与上方折线图对齐 */
         .flow-t-layout {
-            display: grid;
-            grid-template-columns: 150px 1fr 1fr 120px;
-            grid-template-rows: 60px 1fr 80px;
-            gap: 10px;
-            align-items: center;
+            display: grid !important;
+            grid-template-columns: 150px 1fr 1fr 120px !important;
+            grid-template-rows: 60px 1fr 80px !important;
+            gap: 10px !important;
+            align-items: center !important;
+            width: 100% !important;
         }
         
         /* 左侧国家选择 */
