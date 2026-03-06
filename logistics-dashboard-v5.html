@@ -131,8 +131,8 @@
         /* T 字型布局 */
         .t-layout {
             display: grid;
-            grid-template-columns: 120px 1fr 1fr 100px;
-            grid-template-rows: 60px 1fr 80px;
+            grid-template-columns: 120px 1fr 1fr;
+            grid-template-rows: 60px 1fr;
             gap: 10px;
             align-items: center;
         }
@@ -225,8 +225,22 @@
             background: #5a6fd6;
         }
         .table-scroll-container {
-            max-height: 300px;
+            max-height: 350px;
             overflow: auto;
+        }
+        .table-scroll-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .table-scroll-container::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        .table-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+        .excel-table {
+            min-width: 800px;
         }
         .excel-table {
             width: 100%;
@@ -510,8 +524,12 @@
                                             <th>一级产品</th>
                                             <th>二级产品</th>
                                             <th>三级产品</th>
-                                            <th class="text-right">数量</th>
-                                            <th class="text-right">占比</th>
+                                            <th class="text-right">当期发货数量</th>
+                                            <th class="text-right">发货占当期总比</th>
+                                            <th class="text-right">单价/kg</th>
+                                            <th class="text-center">承诺时效</th>
+                                            <th class="text-center">妥投时效</th>
+                                            <th class="text-right">妥投率</th>
                                         </tr>
                                     </thead>
                                     <tbody id="left-table-body"></tbody>
@@ -535,26 +553,18 @@
                                             <th>一级产品</th>
                                             <th>二级产品</th>
                                             <th>三级产品</th>
-                                            <th class="text-right">数量</th>
-                                            <th class="text-right">占比</th>
+                                            <th class="text-right">当期发货数量</th>
+                                            <th class="text-right">发货占当期总比</th>
+                                            <th class="text-right">单价/kg</th>
+                                            <th class="text-center">承诺时效</th>
+                                            <th class="text-center">妥投时效</th>
+                                            <th class="text-right">妥投率</th>
                                         </tr>
                                     </thead>
                                     <tbody id="right-table-body"></tbody>
                                 </table>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- 右侧时间粒度选择 -->
-                    <div class="time-selector">
-                        <div class="time-btn active" onclick="selectTimeGranularity('week', this)">周</div>
-                        <div class="time-btn" onclick="selectTimeGranularity('month', this)">月</div>
-                        <div class="time-btn" onclick="selectTimeGranularity('year', this)">年</div>
-                    </div>
-                    
-                    <!-- 底部时间轴 -->
-                    <div class="timeline">
-                        ← 时间轴（根据所选时间粒度动态显示：周/月/年） →
                     </div>
                 </div>
             </div>
@@ -599,87 +609,87 @@
     </div>
 
     <script>
-        // 产品数据（按国家分类）
+        // 产品数据（按国家分类）- 包含完整指标
         const productDataByCountry = {
             US: {
                 customerChoice: [
-                    { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 82, ratio: 6.48 },
-                    { shipping: '快', level1: '快', level2: '海贝拓', level3: 'HABIT POST delivery', qty: 14, ratio: 17.07 },
-                    { shipping: '快', level1: '快', level2: '海贝拓', level3: 'JS clothing line', qty: 14, ratio: 100.00 },
-                    { shipping: '快', level1: '快', level2: '极速', level3: 'JS EXPRESS', qty: 31, ratio: 37.80 },
-                    { shipping: '快', level1: '快', level2: '极速', level3: '', qty: 15, ratio: 48.39 },
-                    { shipping: '快', level1: '快', level2: '六脉', level3: '', qty: 16, ratio: 51.61 },
-                    { shipping: '快', level1: '快', level2: '六脉', level3: 'JS EXPRESS', qty: 26, ratio: 31.71 },
-                    { shipping: '快', level1: '快', level2: '燕文', level3: '', qty: 4, ratio: 4.88 },
-                    { shipping: '快', level1: '快', level2: '云途', level3: '', qty: 7, ratio: 8.54 },
-                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 1184, ratio: 93.52 },
-                    { shipping: '普通', level1: '普通', level2: '海贝拓', level3: '', qty: 1184, ratio: 100.00 },
-                    { shipping: '普通', level1: '普通', level2: '海贝拓', level3: 'HABIT Commercial delivery', qty: 603, ratio: 50.93 },
-                    { shipping: '普通', level1: '普通', level2: '海贝拓', level3: 'HABIT POST delivery', qty: 54, ratio: 8.96 },
-                    { shipping: '普通', level1: '普通', level2: '极速', level3: 'JS clothing line', qty: 319, ratio: 26.94 },
-                    { shipping: '普通', level1: '普通', level2: '极速', level3: 'JS EXPRESS', qty: 21, ratio: 6.55 },
-                    { shipping: '普通', level1: '普通', level2: '六脉', level3: '', qty: 298, ratio: 93.42 },
-                    { shipping: '普通', level1: '普通', level2: '六脉', level3: 'JS EXPRESS', qty: 256, ratio: 21.62 },
-                    { shipping: '普通', level1: '普通', level2: '燕文', level3: '', qty: 1, ratio: 0.08 },
-                    { shipping: '普通', level1: '普通', level2: '云途', level3: '', qty: 5, ratio: 0.42 }
+                    { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 82, ratio: 6.48, priceKg: 95.54, promise: 8, delivery: 7, rate: 87.5 },
+                    { shipping: '快', level1: '快', level2: '海贝拓', level3: 'HABIT POST delivery', qty: 14, ratio: 17.07, priceKg: 92.56, promise: 15, delivery: 6, rate: 92.3 },
+                    { shipping: '快', level1: '快', level2: '海贝拓', level3: 'JS clothing line', qty: 14, ratio: 100.00, priceKg: 92.56, promise: 15, delivery: 6, rate: 95.0 },
+                    { shipping: '快', level1: '快', level2: '极速', level3: 'JS EXPRESS', qty: 31, ratio: 37.80, priceKg: 87.00, promise: 5, delivery: 7, rate: 88.2 },
+                    { shipping: '快', level1: '快', level2: '极速', level3: '', qty: 15, ratio: 48.39, priceKg: 84.28, promise: 6, delivery: 7, rate: 90.1 },
+                    { shipping: '快', level1: '快', level2: '六脉', level3: '', qty: 16, ratio: 51.61, priceKg: 92.52, promise: 3, delivery: 7, rate: 85.7 },
+                    { shipping: '快', level1: '快', level2: '六脉', level3: 'JS EXPRESS', qty: 26, ratio: 31.71, priceKg: 81.94, promise: 9, delivery: 9, rate: 78.4 },
+                    { shipping: '快', level1: '快', level2: '燕文', level3: '', qty: 4, ratio: 4.88, priceKg: 102.32, promise: 7, delivery: 7, rate: 91.5 },
+                    { shipping: '快', level1: '快', level2: '云途', level3: '', qty: 7, ratio: 8.54, priceKg: 170.02, promise: 7, delivery: 7, rate: 93.2 },
+                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 1184, ratio: 93.52, priceKg: 96.84, promise: 12, delivery: 7, rate: 89.5 },
+                    { shipping: '普通', level1: '普通', level2: '海贝拓', level3: '', qty: 1184, ratio: 100.00, priceKg: 96.84, promise: 12, delivery: 7, rate: 89.5 },
+                    { shipping: '普通', level1: '普通', level2: '海贝拓', level3: 'HABIT Commercial delivery', qty: 603, ratio: 50.93, priceKg: 102.56, promise: 12, delivery: 5, rate: 94.8 },
+                    { shipping: '普通', level1: '普通', level2: '海贝拓', level3: 'HABIT POST delivery', qty: 54, ratio: 8.96, priceKg: 120.85, promise: 11, delivery: 6, rate: 91.2 },
+                    { shipping: '普通', level1: '普通', level2: '极速', level3: 'JS clothing line', qty: 319, ratio: 26.94, priceKg: 96.79, promise: 12, delivery: 7, rate: 88.9 },
+                    { shipping: '普通', level1: '普通', level2: '极速', level3: 'JS EXPRESS', qty: 21, ratio: 6.55, priceKg: 80.04, promise: 9, delivery: 9, rate: 82.1 },
+                    { shipping: '普通', level1: '普通', level2: '六脉', level3: '', qty: 298, ratio: 93.42, priceKg: 102.36, promise: 12, delivery: 7, rate: 90.3 },
+                    { shipping: '普通', level1: '普通', level2: '六脉', level3: 'JS EXPRESS', qty: 256, ratio: 21.62, priceKg: 86.65, promise: 12, delivery: 9, rate: 84.6 },
+                    { shipping: '普通', level1: '普通', level2: '燕文', level3: '', qty: 1, ratio: 0.08, priceKg: 4478.00, promise: 14, delivery: 9, rate: 75.0 },
+                    { shipping: '普通', level1: '普通', level2: '云途', level3: '', qty: 5, ratio: 0.42, priceKg: 205.57, promise: 14, delivery: 3, rate: 96.5 }
                 ],
                 actualShip: [
-                    { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 78, ratio: 6.15 },
-                    { shipping: '快', level1: '快', level2: '海贝拓', level3: 'HABIT POST delivery', qty: 12, ratio: 15.38 },
-                    { shipping: '快', level1: '快', level2: '极速', level3: 'JS EXPRESS', qty: 35, ratio: 44.87 },
-                    { shipping: '快', level1: '快', level2: '极速', level3: '', qty: 18, ratio: 51.43 },
-                    { shipping: '快', level1: '快', level2: '六脉', level3: '', qty: 20, ratio: 57.14 },
-                    { shipping: '快', level1: '快', level2: '六脉', level3: 'JS EXPRESS', qty: 30, ratio: 36.59 },
-                    { shipping: '快', level1: '快', level2: '燕文', level3: '', qty: 5, ratio: 6.10 },
-                    { shipping: '快', level1: '快', level2: '云途', level3: '', qty: 8, ratio: 9.76 },
-                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 1250, ratio: 94.12 },
-                    { shipping: '普通', level1: '普通', level2: '海贝拓', level3: '', qty: 1250, ratio: 100.00 },
-                    { shipping: '普通', level1: '普通', level2: '海贝拓', level3: 'HABIT Commercial delivery', qty: 650, ratio: 52.00 },
-                    { shipping: '普通', level1: '普通', level2: '极速', level3: 'JS clothing line', qty: 340, ratio: 27.20 },
-                    { shipping: '普通', level1: '普通', level2: '六脉', level3: '', qty: 310, ratio: 93.94 },
-                    { shipping: '普通', level1: '普通', level2: '六脉', level3: 'JS EXPRESS', qty: 270, ratio: 21.60 }
+                    { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 78, ratio: 6.15, priceKg: 94.20, promise: 8, delivery: 7, rate: 88.5 },
+                    { shipping: '快', level1: '快', level2: '海贝拓', level3: 'HABIT POST delivery', qty: 12, ratio: 15.38, priceKg: 91.30, promise: 15, delivery: 6, rate: 93.1 },
+                    { shipping: '快', level1: '快', level2: '极速', level3: 'JS EXPRESS', qty: 35, ratio: 44.87, priceKg: 86.50, promise: 5, delivery: 7, rate: 89.0 },
+                    { shipping: '快', level1: '快', level2: '极速', level3: '', qty: 18, ratio: 51.43, priceKg: 83.90, promise: 6, delivery: 7, rate: 91.2 },
+                    { shipping: '快', level1: '快', level2: '六脉', level3: '', qty: 20, ratio: 57.14, priceKg: 91.80, promise: 3, delivery: 7, rate: 86.5 },
+                    { shipping: '快', level1: '快', level2: '六脉', level3: 'JS EXPRESS', qty: 30, ratio: 36.59, priceKg: 81.20, promise: 9, delivery: 9, rate: 79.2 },
+                    { shipping: '快', level1: '快', level2: '燕文', level3: '', qty: 5, ratio: 6.10, priceKg: 101.50, promise: 7, delivery: 7, rate: 92.0 },
+                    { shipping: '快', level1: '快', level2: '云途', level3: '', qty: 8, ratio: 9.76, priceKg: 168.30, promise: 7, delivery: 7, rate: 94.0 },
+                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 1250, ratio: 94.12, priceKg: 97.20, promise: 12, delivery: 7, rate: 90.1 },
+                    { shipping: '普通', level1: '普通', level2: '海贝拓', level3: '', qty: 1250, ratio: 100.00, priceKg: 97.20, promise: 12, delivery: 7, rate: 90.1 },
+                    { shipping: '普通', level1: '普通', level2: '海贝拓', level3: 'HABIT Commercial delivery', qty: 650, ratio: 52.00, priceKg: 103.10, promise: 12, delivery: 5, rate: 95.2 },
+                    { shipping: '普通', level1: '普通', level2: '极速', level3: 'JS clothing line', qty: 340, ratio: 27.20, priceKg: 97.10, promise: 12, delivery: 7, rate: 89.5 },
+                    { shipping: '普通', level1: '普通', level2: '六脉', level3: '', qty: 310, ratio: 93.94, priceKg: 102.80, promise: 12, delivery: 7, rate: 90.8 },
+                    { shipping: '普通', level1: '普通', level2: '六脉', level3: 'JS EXPRESS', qty: 270, ratio: 21.60, priceKg: 87.20, promise: 12, delivery: 9, rate: 85.3 }
                 ]
             },
             UK: {
                 customerChoice: [
-                    { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 45, ratio: 8.50 },
-                    { shipping: '快', level1: '快', level2: '极速', level3: 'JS EXPRESS', qty: 20, ratio: 44.44 },
-                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 435, ratio: 90.62 }
+                    { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 45, ratio: 8.50, priceKg: 78.20, promise: 7, delivery: 6, rate: 90.2 },
+                    { shipping: '快', level1: '快', level2: '极速', level3: 'JS EXPRESS', qty: 20, ratio: 44.44, priceKg: 72.50, promise: 5, delivery: 6, rate: 92.5 },
+                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 435, ratio: 90.62, priceKg: 68.40, promise: 10, delivery: 6, rate: 91.8 }
                 ],
                 actualShip: [
-                    { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 42, ratio: 8.20 },
-                    { shipping: '快', level1: '快', level2: '极速', level3: 'JS EXPRESS', qty: 22, ratio: 52.38 },
-                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 450, ratio: 91.84 }
+                    { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 42, ratio: 8.20, priceKg: 77.50, promise: 7, delivery: 6, rate: 91.0 },
+                    { shipping: '快', level1: '快', level2: '极速', level3: 'JS EXPRESS', qty: 22, ratio: 52.38, priceKg: 71.80, promise: 5, delivery: 6, rate: 93.2 },
+                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 450, ratio: 91.84, priceKg: 68.90, promise: 10, delivery: 6, rate: 92.3 }
                 ]
             },
             CA: {
                 customerChoice: [
-                    { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 35, ratio: 7.00 },
-                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 465, ratio: 93.00 }
+                    { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 35, ratio: 7.00, priceKg: 88.30, promise: 8, delivery: 7, rate: 88.5 },
+                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 465, ratio: 93.00, priceKg: 82.10, promise: 12, delivery: 7, rate: 89.8 }
                 ],
                 actualShip: [
-                    { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 33, ratio: 6.73 },
-                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 470, ratio: 93.27 }
+                    { shipping: '快', level1: '快', level2: '海贝拓', level3: '', qty: 33, ratio: 6.73, priceKg: 87.60, promise: 8, delivery: 7, rate: 89.2 },
+                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 470, ratio: 93.27, priceKg: 82.50, promise: 12, delivery: 7, rate: 90.3 }
                 ]
             },
             AU: {
                 customerChoice: [
-                    { shipping: '快', level1: '快', level2: '极速', level3: '', qty: 15, ratio: 5.00 },
-                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 285, ratio: 95.00 }
+                    { shipping: '快', level1: '快', level2: '极速', level3: '', qty: 15, ratio: 5.00, priceKg: 52.40, promise: 6, delivery: 5, rate: 93.5 },
+                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 285, ratio: 95.00, priceKg: 45.20, promise: 10, delivery: 5, rate: 94.2 }
                 ],
                 actualShip: [
-                    { shipping: '快', level1: '快', level2: '极速', level3: '', qty: 14, ratio: 4.83 },
-                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 290, ratio: 95.17 }
+                    { shipping: '快', level1: '快', level2: '极速', level3: '', qty: 14, ratio: 4.83, priceKg: 51.80, promise: 6, delivery: 5, rate: 94.0 },
+                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 290, ratio: 95.17, priceKg: 45.60, promise: 10, delivery: 5, rate: 94.8 }
                 ]
             },
             OTHER: {
                 customerChoice: [
-                    { shipping: '快', level1: '快', level2: '云途', level3: '', qty: 5, ratio: 10.00 },
-                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 45, ratio: 90.00 }
+                    { shipping: '快', level1: '快', level2: '云途', level3: '', qty: 5, ratio: 10.00, priceKg: 125.30, promise: 9, delivery: 8, rate: 85.0 },
+                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 45, ratio: 90.00, priceKg: 98.70, promise: 14, delivery: 8, rate: 87.5 }
                 ],
                 actualShip: [
-                    { shipping: '快', level1: '快', level2: '云途', level3: '', qty: 4, ratio: 8.51 },
-                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 46, ratio: 91.49 }
+                    { shipping: '快', level1: '快', level2: '云途', level3: '', qty: 4, ratio: 8.51, priceKg: 124.50, promise: 9, delivery: 8, rate: 86.2 },
+                    { shipping: '普通', level1: '普通', level2: '普通', level3: '', qty: 46, ratio: 91.49, priceKg: 99.20, promise: 14, delivery: 8, rate: 88.1 }
                 ]
             }
         };
@@ -737,11 +747,6 @@
             renderRightTable(country);
         }
 
-        function selectTimeGranularity(granularity, btn) {
-            document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-
         function renderLeftTable(country) {
             const tbody = document.getElementById('left-table-body');
             const data = productDataByCountry[country].customerChoice;
@@ -756,6 +761,10 @@
                         <td>${row.level3}</td>
                         <td class="text-right">${row.qty}</td>
                         <td class="text-right">${row.ratio.toFixed(2)}%</td>
+                        <td class="text-right">${row.priceKg.toFixed(2)}</td>
+                        <td class="text-center">${row.promise}</td>
+                        <td class="text-center">${row.delivery}</td>
+                        <td class="text-right">${row.rate.toFixed(1)}%</td>
                     </tr>
                 `;
             });
@@ -766,6 +775,10 @@
                     <td colspan="4">总计</td>
                     <td class="text-right">${totalQty}</td>
                     <td class="text-right">100.00%</td>
+                    <td class="text-right">-</td>
+                    <td class="text-center">-</td>
+                    <td class="text-center">-</td>
+                    <td class="text-right">-</td>
                 </tr>
             `;
             
@@ -786,6 +799,10 @@
                         <td>${row.level3}</td>
                         <td class="text-right">${row.qty}</td>
                         <td class="text-right">${row.ratio.toFixed(2)}%</td>
+                        <td class="text-right">${row.priceKg.toFixed(2)}</td>
+                        <td class="text-center">${row.promise}</td>
+                        <td class="text-center">${row.delivery}</td>
+                        <td class="text-right">${row.rate.toFixed(1)}%</td>
                     </tr>
                 `;
             });
@@ -796,6 +813,10 @@
                     <td colspan="4">总计</td>
                     <td class="text-right">${totalQty}</td>
                     <td class="text-right">100.00%</td>
+                    <td class="text-right">-</td>
+                    <td class="text-center">-</td>
+                    <td class="text-center">-</td>
+                    <td class="text-right">-</td>
                 </tr>
             `;
             
