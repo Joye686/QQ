@@ -172,6 +172,10 @@
             grid-column: 2 / 3;
             border-right: 2px solid #e0e0e0;
             padding-right: 10px;
+            height: 350px;
+        }
+        .jiaxing-chart .chart {
+            height: 350px;
         }
         .chart-label {
             text-align: center;
@@ -190,6 +194,10 @@
             grid-row: 2 / 3;
             grid-column: 3 / 4;
             padding-left: 10px;
+            height: 350px;
+        }
+        .overseas-chart .chart {
+            height: 350px;
         }
         
         /* 右侧时间粒度选择 */
@@ -234,7 +242,7 @@
         }
         
         /* T 字型流向分析布局（V5）- 与上方折线图对齐 */
-        .t-layout {
+        .flow-t-layout {
             display: grid;
             grid-template-columns: 150px 1fr 1fr 120px;
             grid-template-rows: 60px 1fr 80px;
@@ -280,6 +288,9 @@
             padding-right: 10px;
             min-height: 350px;
         }
+        .left-excel-container .excel-section {
+            height: 100%;
+        }
         
         /* 右侧 Excel */
         .right-excel-container {
@@ -287,6 +298,9 @@
             grid-column: 3 / 4;
             padding-left: 10px;
             min-height: 350px;
+        }
+        .right-excel-container .excel-section {
+            height: 100%;
         }
         
         /* 右侧时间粒度选择（占位） */
@@ -687,7 +701,7 @@
                 <div class="t-chart-title">📊 嘉兴仓 vs 海外仓 - 按国家/产品维度分析</div>
                 
                 <!-- T 字型布局 -->
-                <div class="t-layout">
+                <div class="flow-t-layout">
                     <!-- 左侧国家选择 -->
                     <div class="country-selector">
                         <div class="country-btn active" onclick="selectFlowCountry('US', this)">美国</div>
