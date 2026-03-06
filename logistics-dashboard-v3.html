@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物流分析仪表板 v3</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1600px; margin: 0 auto; }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        /* 筛选器 */
+        .filters {
+            background: white;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .filter-item label {
+            font-weight: 600;
+            color: #555;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+        .filter-item select {
+            padding: 6px 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .filter-item select:hover, .filter-item select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        /* 指标卡片 */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #888;
+            margin-top: 4px;
+            font-size: 11px;
+        }
+        
+        /* T 字型图表区域 */
+        .t-chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .t-chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        /* 顶部指标选择 */
+        .metric-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        .metric-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            background: white;
+            color: #667eea;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .metric-btn:hover {
+            background: #f0f0f0;
+        }
+        .metric-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        /* T 字型布局 */
+        .t-layout {
+            display: grid;
+            grid-template-columns: 150px 1fr 1fr 120px;
+            grid-template-rows: 60px 1fr 80px;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        /* 左侧国家选择 */
+        .country-selector {
+            grid-row: 2 / 3;
+            grid-column: 1 / 2;
+            background: #f8f9ff;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .country-btn {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .country-btn:hover {
+            border-color: #667eea;
+        }
+        .country-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        /* 嘉兴仓图表 */
+        .jiaxing-chart {
+            grid-row: 2 / 3;
+            grid-column: 2 / 3;
+            border-right: 2px solid #e0e0e0;
+            padding-right: 10px;
+        }
+        .chart-label {
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .chart {
+            width: 100%;
+            height: 350px;
+        }
+        
+        /* 海外仓图表 */
+        .overseas-chart {
+            grid-row: 2 / 3;
+            grid-column: 3 / 4;
+            padding-left: 10px;
+        }
+        
+        /* 右侧时间粒度选择 */
+        .time-selector {
+            grid-row: 2 / 3;
+            grid-column: 4 / 5;
+            background: #f8f9ff;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .time-btn {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .time-btn:hover {
+            border-color: #667eea;
+        }
+        .time-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        /* 底部时间轴 */
+        .timeline {
+            grid-row: 3 / 4;
+            grid-column: 2 / 4;
+            text-align: center;
+            color: #888;
+            font-size: 12px;
+            padding-top: 10px;
+            border-top: 1px dashed #e0e0e0;
+        }
+        
+        /* 其他图表 */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .chart-container.full-width {
+            grid-column: 1 / -1;
+        }
+        .chart-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: white;
+            font-size: 1.5em;
+        }
+        
+        @media (max-width: 1400px) {
+            .stats-row { grid-template-columns: repeat(4, 1fr); }
+            .t-layout {
+                grid-template-columns: 100px 1fr;
+                grid-template-rows: auto auto auto auto;
+            }
+            .country-selector { grid-row: 1; grid-column: 1; }
+            .jiaxing-chart { grid-row: 2; grid-column: 1 / 3; border-right: none; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; }
+            .overseas-chart { grid-row: 3; grid-column: 1 / 3; }
+            .time-selector { grid-row: 1; grid-column: 2; justify-self: end; }
+            .timeline { grid-row: 4; grid-column: 1 / 3; }
+        }
+        @media (max-width: 1024px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📦 物流分析仪表板 v3</h1>
+        
+        <div id="loading" class="loading">正在加载数据...</div>
+        
+        <div id="dashboard" style="display: none;">
+            <!-- 筛选器 -->
+            <div class="filters">
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label>📅 时间:</label>
+                        <select id="filter-time"><option value="all">最近 90 天</option></select>
+                    </div>
+                    <div class="filter-item">
+                        <label>🌍 国家:</label>
+                        <select id="filter-country" onchange="updateCharts()">
+                            <option value="all">全部</option>
+                            <option value="US">美国</option>
+                            <option value="UK">英国</option>
+                            <option value="AU">澳大利亚</option>
+                            <option value="CA">加拿大</option>
+                            <option value="OTHER">其他</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>🏭 发货仓库:</label>
+                        <select id="filter-warehouse" onchange="updateCharts()">
+                            <option value="all">全部</option>
+                            <option value="jiaxing">嘉兴仓</option>
+                            <option value="overseas">海外仓</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>📦 产品:</label>
+                        <select id="filter-product" onchange="updateCharts()">
+                            <option value="all">全部</option>
+                            <option value="standard">Standard Shipping</option>
+                            <option value="express">Express Shipping</option>
+                            <option value="quickship">Quickship</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>💰 货币:</label>
+                        <select id="filter-currency" onchange="updateCharts()">
+                            <option value="USD">USD</option>
+                            <option value="CNY">CNY</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>🏷️ 站点:</label>
+                        <select id="filter-site" onchange="updateCharts()">
+                            <option value="all">全部</option>
+                            <option value="M">M</option>
+                            <option value="W">W</option>
+                            <option value="R">R</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>📋 订单类型:</label>
+                        <select id="filter-order-type" onchange="updateCharts()">
+                            <option value="all">全部发货</option>
+                            <option value="partial">部分</option>
+                            <option value="unshipped">未发货</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 指标卡片 -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-price-kg">$0.00</div>
+                    <div class="stat-label">单价/KG</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-price-pkg">$0.00</div>
+                    <div class="stat-label">单价/包裹</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-packages">0</div>
+                    <div class="stat-label">发货包裹数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-orders">0</div>
+                    <div class="stat-label">订单数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-items-pkg">0.0</div>
+                    <div class="stat-label">包单件</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-weight-pkg">0.0 kg</div>
+                    <div class="stat-label">每包裹重量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-logistics-ratio">0%</div>
+                    <div class="stat-label">正向物流占收入比</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total-logistics">$0</div>
+                    <div class="stat-label">累计物流费</div>
+                </div>
+            </div>
+
+            <!-- T 字型图表 -->
+            <div class="t-chart-container">
+                <div class="t-chart-title">📊 嘉兴仓 vs 海外仓 - 按国家/时间维度分析（发货口径）</div>
+                
+                <!-- 顶部指标选择 -->
+                <div class="metric-selector">
+                    <div class="metric-btn active" onclick="selectMetric('priceKg', this)">单价/KG</div>
+                    <div class="metric-btn" onclick="selectMetric('pricePkg', this)">单价/包裹</div>
+                    <div class="metric-btn" onclick="selectMetric('itemsPkg', this)">件数/包裹</div>
+                    <div class="metric-btn" onclick="selectMetric('kgPkg', this)">KG/包裹</div>
+                </div>
+                
+                <!-- T 字型布局 -->
+                <div class="t-layout">
+                    <!-- 左侧国家选择 -->
+                    <div class="country-selector">
+                        <div class="country-btn active" onclick="selectCountry('US', this)">美国</div>
+                        <div class="country-btn" onclick="selectCountry('UK', this)">英国</div>
+                        <div class="country-btn" onclick="selectCountry('CA', this)">加拿大</div>
+                        <div class="country-btn" onclick="selectCountry('AU', this)">澳大利亚</div>
+                        <div class="country-btn" onclick="selectCountry('OTHER', this)">其他</div>
+                    </div>
+                    
+                    <!-- 嘉兴仓图表 -->
+                    <div class="jiaxing-chart">
+                        <div class="chart-label">🏭 嘉兴仓 by 周/月（实物用折线图按所选期间展示）</div>
+                        <div id="jiaxing-t-chart" class="chart"></div>
+                    </div>
+                    
+                    <!-- 海外仓图表 -->
+                    <div class="overseas-chart">
+                        <div class="chart-label">🌍 海外仓 by 周/月（折线图展示）</div>
+                        <div id="overseas-t-chart" class="chart"></div>
+                    </div>
+                    
+                    <!-- 右侧时间粒度选择 -->
+                    <div class="time-selector">
+                        <div class="time-btn active" onclick="selectTimeGranularity('week', this)">周</div>
+                        <div class="time-btn" onclick="selectTimeGranularity('month', this)">月</div>
+                        <div class="time-btn" onclick="selectTimeGranularity('year', this)">年</div>
+                    </div>
+                    
+                    <!-- 底部时间轴 -->
+                    <div class="timeline">
+                        ← 时间轴（根据所选时间粒度动态显示：周/月/年） →
+                    </div>
+                </div>
+            </div>
+
+            <!-- 其他图表 -->
+            <div class="charts-grid">
+                <!-- 订单结构 -->
+                <div class="chart-container">
+                    <div class="chart-title">📊 订单结构（显示占比，悬浮显示数量）- 订单口径</div>
+                    <div id="order-structure-chart" class="chart"></div>
+                </div>
+                
+                <!-- 发货仓库占比 -->
+                <div class="chart-container">
+                    <div class="chart-title">🏭 发货仓库占比（显示占比，悬浮显示数量）- 发货口径</div>
+                    <div id="warehouse-ratio-chart" class="chart"></div>
+                </div>
+                
+                <!-- 赔偿金额 -->
+                <div class="chart-container">
+                    <div class="chart-title">💰 赔偿 - 金额（by 年累计）</div>
+                    <div id="claim-amount-chart" class="chart"></div>
+                </div>
+                
+                <!-- 赔偿数量 -->
+                <div class="chart-container">
+                    <div class="chart-title">📦 赔偿 - 数量（by 年累计）</div>
+                    <div id="claim-quantity-chart" class="chart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟数据
+        const mockData = {
+            countries: ['美国', '英国', '加拿大', '澳大利亚', '其他'],
+            timeSeries: ['第 1 周', '第 2 周', '第 3 周', '第 4 周', '第 5 周', '第 6 周', '第 7 周', '第 8 周'],
+            jiaxingData: {
+                US: { priceKg: [82, 85, 84, 86, 83, 85, 84, 85], pricePkg: [55, 58, 57, 59, 56, 58, 57, 58], itemsPkg: [2.4, 2.5, 2.5, 2.6, 2.4, 2.5, 2.5, 2.5], kgPkg: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
+                UK: { priceKg: [62, 65, 64, 66, 63, 65, 64, 65], pricePkg: [32, 34, 33, 35, 32, 34, 33, 34], itemsPkg: [2.0, 2.1, 2.1, 2.2, 2.0, 2.1, 2.1, 2.1], kgPkg: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
+                CA: { priceKg: [82, 85, 84, 86, 83, 85, 84, 85], pricePkg: [37, 39, 38, 40, 37, 39, 38, 39], itemsPkg: [2.5, 2.6, 2.6, 2.7, 2.5, 2.6, 2.6, 2.6], kgPkg: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
+                AU: { priceKg: [42, 45, 44, 46, 43, 45, 44, 45], pricePkg: [29, 31, 30, 32, 29, 31, 30, 31], itemsPkg: [2.1, 2.2, 2.2, 2.3, 2.1, 2.2, 2.2, 2.2], kgPkg: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
+                OTHER: { priceKg: [110, 115, 113, 116, 111, 115, 113, 115], pricePkg: [60, 63, 62, 64, 61, 63, 62, 63], itemsPkg: [2.0, 2.1, 2.1, 2.2, 2.0, 2.1, 2.1, 2.1], kgPkg: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] }
+            },
+            overseasData: {
+                US: { priceKg: [72, 75, 74, 76, 73, 75, 74, 75], pricePkg: [31, 33, 32, 34, 31, 33, 32, 33], itemsPkg: [1.3, 1.4, 1.4, 1.5, 1.3, 1.4, 1.4, 1.4], kgPkg: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
+                UK: { priceKg: [54, 57, 56, 58, 55, 57, 56, 57], pricePkg: [17, 19, 18, 20, 17, 19, 18, 19], itemsPkg: [1.1, 1.2, 1.2, 1.3, 1.1, 1.2, 1.2, 1.2], kgPkg: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
+                CA: { priceKg: [85, 88, 87, 89, 86, 88, 87, 88], pricePkg: [29, 31, 30, 32, 29, 31, 30, 31], itemsPkg: [1.1, 1.2, 1.2, 1.3, 1.1, 1.2, 1.2, 1.2], kgPkg: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] },
+                AU: { priceKg: [0, 0, 0, 0, 0, 0, 0, 0], pricePkg: [0, 0, 0, 0, 0, 0, 0, 0], itemsPkg: [0, 0, 0, 0, 0, 0, 0, 0], kgPkg: [0, 0, 0, 0, 0, 0, 0, 0] },
+                OTHER: { priceKg: [0, 0, 0, 0, 0, 0, 0, 0], pricePkg: [0, 0, 0, 0, 0, 0, 0, 0], itemsPkg: [0, 0, 0, 0, 0, 0, 0, 0], kgPkg: [0, 0, 0, 0, 0, 0, 0, 0] }
+            },
+            orderStructure: [
+                { country: '澳大利亚', full: 60.61, partial: 18.18, unshipped: 21.21 },
+                { country: '加拿大', full: 79.69, partial: 7.81, unshipped: 12.50 },
+                { country: '美国', full: 86.96, partial: 5.80, unshipped: 7.25 },
+                { country: '英国', full: 81.08, partial: 8.11, unshipped: 10.81 },
+                { country: '其他', full: 35.00, partial: 30.00, unshipped: 35.00 }
+            ],
+            warehouseRatio: [
+                { country: '澳大利亚', jiaxing: 100, overseas: 0 },
+                { country: '加拿大', jiaxing: 89.89, overseas: 10.11 },
+                { country: '美国', jiaxing: 88.78, overseas: 11.22 },
+                { country: '英国', jiaxing: 86.43, overseas: 13.57 },
+                { country: '其他', jiaxing: 100, overseas: 0 }
+            ],
+            claimAmount: [
+                { label: 'A', logisticsFee: 4000, cost: 4500, claim: 2000, ratio: 0.24 },
+                { label: 'B', logisticsFee: 8000, cost: 3000, claim: 400, ratio: 0.05 },
+                { label: 'C', logisticsFee: 20000, cost: 22500, claim: 5000, ratio: 0.12 },
+                { label: 'D', logisticsFee: 120000, cost: 135000, claim: 7000, ratio: 0.03 }
+            ],
+            claimQuantity: [
+                { label: 'A', packages: 10000, ratio: 0.05, claimPkg: 100, shipRatio: 0.01 },
+                { label: 'B', packages: 50000, ratio: 0.04, claimPkg: 200, shipRatio: 0.004 },
+                { label: 'C', packages: 60000, ratio: 0.08, claimPkg: 500, shipRatio: 0.008 },
+                { label: 'D', packages: 100000, ratio: 0.20, claimPkg: 3000, shipRatio: 0.03 }
+            ]
+        };
+
+        let charts = {};
+        let currentMetric = 'priceKg';
+        let currentTimeGranularity = 'week';
+
+        function init() {
+            renderJiaxingTChart();
+            renderOverseasTChart();
+            renderOrderStructure();
+            renderWarehouseRatio();
+            renderClaimAmount();
+            renderClaimQuantity();
+            updateStats();
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            
+            window.addEventListener('resize', () => {
+                Object.values(charts).forEach(chart => chart.resize());
+            });
+        }
+
+        function selectMetric(metric, btn) {
+            currentMetric = metric;
+            document.querySelectorAll('.metric-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateTCharts();
+        }
+
+        function selectCountry(country, btn) {
+            document.querySelectorAll('.country-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateTCharts();
+        }
+
+        function selectTimeGranularity(granularity, btn) {
+            currentTimeGranularity = granularity;
+            document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateTCharts();
+        }
+
+        function updateStats() {
+            document.getElementById('stat-price-kg').textContent = '$2.45';
+            document.getElementById('stat-price-pkg').textContent = '$5.67';
+            document.getElementById('stat-packages').textContent = '12,458';
+            document.getElementById('stat-orders').textContent = '8,234';
+            document.getElementById('stat-items-pkg').textContent = '2.3';
+            document.getElementById('stat-weight-pkg').textContent = '1.8 kg';
+            document.getElementById('stat-logistics-ratio').textContent = '8.5%';
+            document.getElementById('stat-total-logistics').textContent = '$70,542';
+        }
+
+        function updateCharts() {
+            updateStats();
+        }
+
+        function updateTCharts() {
+            renderJiaxingTChart();
+            renderOverseasTChart();
+        }
+
+        function getMetricName(key) {
+            const names = {
+                priceKg: '单价/KG',
+                pricePkg: '单价/包裹',
+                itemsPkg: '件数/包裹',
+                kgPkg: 'KG/包裹'
+            };
+            return names[key] || key;
+        }
+
+        function getMetricColor(key) {
+            const colors = {
+                priceKg: '#4285f4',
+                pricePkg: '#ea4335',
+                itemsPkg: '#34a853',
+                kgPkg: '#fbbc04'
+            };
+            return colors[key] || '#4285f4';
+        }
+
+        function renderJiaxingTChart() {
+            if (charts.jiaxingT) charts.jiaxingT.dispose();
+            charts.jiaxingT = echarts.init(document.getElementById('jiaxing-t-chart'));
+            
+            const countryMap = { US: '美国', UK: '英国', CA: '加拿大', AU: '澳大利亚', OTHER: '其他' };
+            const activeCountry = document.querySelector('.country-btn.active')?.textContent || '美国';
+            const dataKey = Object.keys(countryMap).find(k => countryMap[k] === activeCountry) || 'US';
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: '{b}<br/>{a}: {c}'
+                },
+                grid: { left: '3%', right: '4%', bottom: '10%', top: '10%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    data: mockData.timeSeries,
+                    axisLabel: { fontSize: 10, rotate: 0 }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: { fontSize: 10 }
+                },
+                series: [{
+                    name: getMetricName(currentMetric),
+                    type: 'line',
+                    data: mockData.jiaxingData[dataKey][currentMetric],
+                    smooth: true,
+                    itemStyle: { color: getMetricColor(currentMetric) },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                            offset: 0,
+                            color: getMetricColor(currentMetric) + '40'
+                        }, {
+                            offset: 1,
+                            color: getMetricColor(currentMetric) + '05'
+                        }])
+                    },
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    label: {
+                        show: false,
+                        position: 'top',
+                        formatter: '{c}',
+                        fontSize: 9
+                    }
+                }]
+            };
+            charts.jiaxingT.setOption(option);
+        }
+
+        function renderOverseasTChart() {
+            if (charts.overseasT) charts.overseasT.dispose();
+            charts.overseasT = echarts.init(document.getElementById('overseas-t-chart'));
+            
+            const countryMap = { US: '美国', UK: '英国', CA: '加拿大', AU: '澳大利亚', OTHER: '其他' };
+            const activeCountry = document.querySelector('.country-btn.active')?.textContent || '美国';
+            const dataKey = Object.keys(countryMap).find(k => countryMap[k] === activeCountry) || 'US';
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: '{b}<br/>{a}: {c}'
+                },
+                grid: { left: '3%', right: '4%', bottom: '10%', top: '10%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    data: mockData.timeSeries,
+                    axisLabel: { fontSize: 10, rotate: 0 }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: { fontSize: 10 }
+                },
+                series: [{
+                    name: getMetricName(currentMetric),
+                    type: 'line',
+                    data: mockData.overseasData[dataKey][currentMetric],
+                    smooth: true,
+                    itemStyle: { color: getMetricColor(currentMetric) },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                            offset: 0,
+                            color: getMetricColor(currentMetric) + '40'
+                        }, {
+                            offset: 1,
+                            color: getMetricColor(currentMetric) + '05'
+                        }])
+                    },
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    label: {
+                        show: false,
+                        position: 'top',
+                        formatter: '{c}',
+                        fontSize: 9
+                    }
+                }]
+            };
+            charts.overseasT.setOption(option);
+        }
+
+        function renderOrderStructure() {
+            charts.orderStructure = echarts.init(document.getElementById('order-structure-chart'));
+            
+            // 模拟底层数量数据（实际应从后端获取）
+            const baseNumbers = {
+                '美国': { full: 8696, partial: 580, unshipped: 725 },
+                '英国': { full: 8108, partial: 811, unshipped: 1081 },
+                '加拿大': { full: 7969, partial: 781, unshipped: 1250 },
+                '澳大利亚': { full: 6061, partial: 1818, unshipped: 2121 },
+                '其他': { full: 3500, partial: 3000, unshipped: 3500 }
+            };
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' },
+                    formatter: function(params) {
+                        const country = params[0].name;
+                        const data = baseNumbers[country];
+                        let html = `<strong>${country}</strong><br/>`;
+                        params.forEach(p => {
+                            const key = p.seriesName === '全部发货订单数' ? 'full' : 
+                                       p.seriesName === '部分发货订单数' ? 'partial' : 'unshipped';
+                            html += `${p.seriesName}: ${data[key]} 单<br/>`;
+                        });
+                        return html;
+                    }
+                },
+                legend: {
+                    data: ['全部发货订单数', '部分发货订单数', '未发货订单数'],
+                    bottom: 0,
+                    textStyle: { fontSize: 11 }
+                },
+                grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
+                xAxis: {
+                    type: 'value',
+                    max: 100,
+                    axisLabel: { formatter: '{value}%' }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: mockData.countries.reverse(),
+                    axisLabel: { fontSize: 11 }
+                },
+                series: [
+                    {
+                        name: '全部发货订单数',
+                        type: 'bar',
+                        stack: 'total',
+                        data: mockData.orderStructure.map(d => d.full).reverse(),
+                        itemStyle: { color: '#4285f4' },
+                        label: {
+                            show: true,
+                            position: 'inside',
+                            formatter: '{c}%',
+                            color: '#fff',
+                            fontSize: 11,
+                            fontWeight: 'bold'
+                        }
+                    },
+                    {
+                        name: '部分发货订单数',
+                        type: 'bar',
+                        stack: 'total',
+                        data: mockData.orderStructure.map(d => d.partial).reverse(),
+                        itemStyle: { color: '#ea4335' },
+                        label: {
+                            show: true,
+                            position: 'inside',
+                            formatter: '{c}%',
+                            color: '#fff',
+                            fontSize: 11,
+                            fontWeight: 'bold'
+                        }
+                    },
+                    {
+                        name: '未发货订单数',
+                        type: 'bar',
+                        stack: 'total',
+                        data: mockData.orderStructure.map(d => d.unshipped).reverse(),
+                        itemStyle: { color: '#9b59b6' },
+                        label: {
+                            show: true,
+                            position: 'inside',
+                            formatter: '{c}%',
+                            color: '#fff',
+                            fontSize: 11,
+                            fontWeight: 'bold'
+                        }
+                    }
+                ]
+            };
+            charts.orderStructure.setOption(option);
+        }
+
+        function renderWarehouseRatio() {
+            charts.warehouseRatio = echarts.init(document.getElementById('warehouse-ratio-chart'));
+            
+            // 模拟底层数量数据（实际应从后端获取 - 发货口径）
+            const warehouseNumbers = {
+                '美国': { jiaxing: 8878, overseas: 1122 },
+                '英国': { jiaxing: 8643, overseas: 1357 },
+                '加拿大': { jiaxing: 8989, overseas: 1011 },
+                '澳大利亚': { jiaxing: 10000, overseas: 0 },
+                '其他': { jiaxing: 10000, overseas: 0 }
+            };
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' },
+                    formatter: function(params) {
+                        const country = params[0].name;
+                        const data = warehouseNumbers[country];
+                        let html = `<strong>${country}</strong><br/>`;
+                        params.forEach(p => {
+                            const key = p.seriesName === '嘉兴仓' ? 'jiaxing' : 'overseas';
+                            html += `${p.seriesName}: ${data[key]} 单<br/>`;
+                        });
+                        return html;
+                    }
+                },
+                legend: {
+                    data: ['嘉兴仓', '海外仓'],
+                    bottom: 0,
+                    textStyle: { fontSize: 11 }
+                },
+                grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
+                xAxis: {
+                    type: 'value',
+                    max: 100,
+                    axisLabel: { formatter: '{value}%' }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: mockData.countries.reverse(),
+                    axisLabel: { fontSize: 11 }
+                },
+                series: [
+                    {
+                        name: '嘉兴仓',
+                        type: 'bar',
+                        stack: 'total',
+                        data: mockData.warehouseRatio.map(d => d.jiaxing).reverse(),
+                        itemStyle: { color: '#4285f4' },
+                        label: {
+                            show: true,
+                            position: 'inside',
+                            formatter: '{c}%',
+                            color: '#fff',
+                            fontSize: 11,
+                            fontWeight: 'bold'
+                        }
+                    },
+                    {
+                        name: '海外仓',
+                        type: 'bar',
+                        stack: 'total',
+                        data: mockData.warehouseRatio.map(d => d.overseas).reverse(),
+                        itemStyle: { color: '#ea4335' },
+                        label: {
+                            show: true,
+                            position: 'inside',
+                            formatter: '{c}%',
+                            color: '#fff',
+                            fontSize: 11,
+                            fontWeight: 'bold'
+                        }
+                    }
+                ]
+            };
+            charts.warehouseRatio.setOption(option);
+        }
+
+        function renderClaimAmount() {
+            charts.claimAmount = echarts.init(document.getElementById('claim-amount-chart'));
+            const option = {
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                legend: {
+                    data: ['需赔偿物流费', '需赔偿成本', '已赔偿', '覆盖率'],
+                    bottom: 0,
+                    textStyle: { fontSize: 10 }
+                },
+                grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    data: ['A', 'B', 'C', 'D'],
+                    axisLabel: { fontSize: 10 }
+                },
+                yAxis: [
+                    { type: 'value', name: '金额', axisLabel: { fontSize: 10 } },
+                    { type: 'value', name: '比率', min: 0, max: 0.3, axisLabel: { formatter: '{value}%' }, splitLine: { show: false } }
+                ],
+                series: [
+                    {
+                        name: '需赔偿物流费',
+                        type: 'bar',
+                        data: mockData.claimAmount.map(d => d.logisticsFee),
+                        itemStyle: { color: '#4285f4' }
+                    },
+                    {
+                        name: '需赔偿成本',
+                        type: 'bar',
+                        data: mockData.claimAmount.map(d => d.cost),
+                        itemStyle: { color: '#ea4335' }
+                    },
+                    {
+                        name: '已赔偿',
+                        type: 'bar',
+                        data: mockData.claimAmount.map(d => d.claim),
+                        itemStyle: { color: '#34a853' }
+                    },
+                    {
+                        name: '覆盖率',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        data: mockData.claimAmount.map(d => d.ratio),
+                        itemStyle: { color: '#fbbc04' },
+                        symbol: 'circle',
+                        symbolSize: 8,
+                        label: { show: true, position: 'top', formatter: '{c}%', fontSize: 10 }
+                    }
+                ]
+            };
+            charts.claimAmount.setOption(option);
+        }
+
+        function renderClaimQuantity() {
+            charts.claimQuantity = echarts.init(document.getElementById('claim-quantity-chart'));
+            const option = {
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                legend: {
+                    data: ['累计发货包裹数', '占全年发货包裹数比', '需赔偿包裹数', '需赔偿包裹占其发货比'],
+                    bottom: 0,
+                    textStyle: { fontSize: 9 }
+                },
+                grid: { left: '3%', right: '4%', bottom: '20%', top: '10%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    data: ['A', 'B', 'C', 'D'],
+                    axisLabel: { fontSize: 10 }
+                },
+                yAxis: [
+                    { type: 'value', name: '数量', axisLabel: { fontSize: 10 } },
+                    { type: 'value', name: '比率', min: 0, max: 0.5, axisLabel: { formatter: '{value}' }, splitLine: { show: false } }
+                ],
+                series: [
+                    {
+                        name: '累计发货包裹数',
+                        type: 'bar',
+                        data: mockData.claimQuantity.map(d => d.packages),
+                        itemStyle: { color: '#4285f4' }
+                    },
+                    {
+                        name: '占全年发货包裹数比',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        data: mockData.claimQuantity.map(d => d.ratio),
+                        itemStyle: { color: '#ea4335' },
+                        symbol: 'circle',
+                        symbolSize: 6,
+                        label: { show: true, position: 'top', formatter: '{c}', fontSize: 9 }
+                    },
+                    {
+                        name: '需赔偿包裹数',
+                        type: 'bar',
+                        data: mockData.claimQuantity.map(d => d.claimPkg),
+                        itemStyle: { color: '#34a853' }
+                    },
+                    {
+                        name: '需赔偿包裹占其发货比',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        data: mockData.claimQuantity.map(d => d.shipRatio),
+                        itemStyle: { color: '#fbbc04' },
+                        symbol: 'circle',
+                        symbolSize: 6,
+                        label: { show: true, position: 'top', formatter: '{c}', fontSize: 9 }
+                    }
+                ]
+            };
+            charts.claimQuantity.setOption(option);
+        }
+
+        init();
+    </script>
+</body>
+</html>
