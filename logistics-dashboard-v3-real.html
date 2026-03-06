@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物流分析仪表板 v3 - 真实数据测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1800px; margin: 0 auto; }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        /* 筛选器 */
+        .filters {
+            background: white;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .filter-item label {
+            font-weight: 600;
+            color: #555;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+        .filter-item select, .filter-item input {
+            padding: 6px 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .filter-item select:hover, .filter-item select:focus,
+        .filter-item input:hover, .filter-item input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        /* 指标卡片 */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #888;
+            margin-top: 4px;
+            font-size: 11px;
+        }
+        
+        /* 图表容器 */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .chart-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+        .chart {
+            width: 100%;
+            height: 300px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: white;
+            font-size: 1.5em;
+        }
+        
+        @media (max-width: 1400px) {
+            .stats-row { grid-template-columns: repeat(4, 1fr); }
+        }
+        @media (max-width: 1024px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📦 物流分析仪表板 v3 - 真实数据测试</h1>
+        
+        <div id="loading" class="loading">正在加载数据...</div>
+        
+        <div id="dashboard" style="display: none;">
+            <!-- 筛选器 -->
+            <div class="filters">
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label>📅 时间:</label>
+                        <input type="date" id="filter-date-start" value="2025-12-01" style="padding: 6px 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 13px;">
+                        <span style="color: #999;">-</span>
+                        <input type="date" id="filter-date-end" value="2025-12-31" style="padding: 6px 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 13px;">
+                    </div>
+                    <div class="filter-item">
+                        <label>🏭 发货仓库:</label>
+                        <select id="filter-warehouse">
+                            <option value="jiaxing">嘉兴仓</option>
+                            <option value="us">美国仓</option>
+                            <option value="uk">英国仓</option>
+                            <option value="ca">加拿大仓</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>🌍 国家:</label>
+                        <select id="filter-country">
+                            <option value="all">全部</option>
+                            <option value="US">美国</option>
+                            <option value="UK">英国</option>
+                            <option value="CA">加拿大</option>
+                            <option value="AU">澳大利亚</option>
+                            <option value="OTHER">其他</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>💰 货币:</label>
+                        <select id="filter-currency">
+                            <option value="USD">USD</option>
+                            <option value="CNY">CNY</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 指标卡片 -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-price-kg">$0.00</div>
+                    <div class="stat-label">单价/KG</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-price-pkg">$0.00</div>
+                    <div class="stat-label">单价/包裹</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-packages">0</div>
+                    <div class="stat-label">发货包裹数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-orders">0</div>
+                    <div class="stat-label">订单数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-items-pkg">0.0</div>
+                    <div class="stat-label">包单件</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-weight-pkg">0.0 kg</div>
+                    <div class="stat-label">每包裹重量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-logistics-ratio">0%</div>
+                    <div class="stat-label">正向物流占收入比</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total-logistics">$0</div>
+                    <div class="stat-label">累计物流费</div>
+                </div>
+            </div>
+
+            <!-- 订单结构和发货仓库占比 -->
+            <div class="charts-grid">
+                <!-- 订单结构 -->
+                <div class="chart-container">
+                    <div class="chart-title">📊 订单结构（订单口径）</div>
+                    <div id="order-structure-chart" class="chart"></div>
+                </div>
+                
+                <!-- 发货仓库占比 -->
+                <div class="chart-container">
+                    <div class="chart-title">🏭 发货仓库占比（发货口径）</div>
+                    <div id="warehouse-ratio-chart" class="chart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let dashboardData = null;
+        let charts = {};
+
+        function init() {
+            // 加载数据
+            fetch('dashboard_data.json')
+                .then(res => res.json())
+                .then(data => {
+                    dashboardData = data;
+                    updateMetrics();
+                    renderOrderStructure();
+                    renderWarehouseRatio();
+                    
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    
+                    window.addEventListener('resize', () => {
+                        Object.values(charts).forEach(chart => chart.resize());
+                    });
+                })
+                .catch(err => {
+                    console.error('加载数据失败:', err);
+                    document.getElementById('loading').textContent = '加载数据失败，请刷新页面重试';
+                });
+        }
+
+        function updateMetrics() {
+            const m = dashboardData.metrics;
+            document.getElementById('stat-price-kg').textContent = '$' + m.pricePerKg.toFixed(2);
+            document.getElementById('stat-price-pkg').textContent = '$' + m.pricePerPkg.toFixed(2);
+            document.getElementById('stat-packages').textContent = m.totalPackages.toLocaleString();
+            document.getElementById('stat-orders').textContent = m.totalOrders.toLocaleString();
+            document.getElementById('stat-items-pkg').textContent = m.itemsPerPkg.toFixed(1);
+            document.getElementById('stat-weight-pkg').textContent = m.weightPerPkg.toFixed(1) + ' kg';
+            document.getElementById('stat-logistics-ratio').textContent = m.logisticsRatio.toFixed(1) + '%';
+            document.getElementById('stat-total-logistics').textContent = '$' + m.totalLogisticsFee.toLocaleString(undefined, {maximumFractionDigits: 0});
+        }
+
+        function renderOrderStructure() {
+            charts.orderStructure = echarts.init(document.getElementById('order-structure-chart'));
+            const data = dashboardData.orderStructure;
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' },
+                    formatter: function(params) {
+                        const item = data.find(d => d.country === params[0].name);
+                        return `<strong>${item.country}</strong><br/>` +
+                            `全部发货：${item._numbers.full} 单 (${item.full.toFixed(1)}%)<br/>` +
+                            `部分发货：${item._numbers.partial} 单 (${item.partial.toFixed(1)}%)<br/>` +
+                            `未发货：${item._numbers.unshipped} 单 (${item.unshipped.toFixed(1)}%)`;
+                    }
+                },
+                legend: {
+                    data: ['全部发货', '部分发货', '未发货'],
+                    bottom: 0,
+                    textStyle: { fontSize: 11 }
+                },
+                grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
+                xAxis: {
+                    type: 'value',
+                    max: 100,
+                    axisLabel: { formatter: '{value}%' }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: data.map(d => d.country).reverse()
+                },
+                series: [
+                    {
+                        name: '全部发货',
+                        type: 'bar',
+                        stack: 'total',
+                        data: data.map(d => d.full).reverse(),
+                        itemStyle: { color: '#4285f4' },
+                        label: {
+                            show: true,
+                            position: 'inside',
+                            formatter: '{c}%',
+                            color: '#fff',
+                            fontSize: 10
+                        }
+                    },
+                    {
+                        name: '部分发货',
+                        type: 'bar',
+                        stack: 'total',
+                        data: data.map(d => d.partial).reverse(),
+                        itemStyle: { color: '#ea4335' },
+                        label: {
+                            show: true,
+                            position: 'inside',
+                            formatter: '{c}%',
+                            color: '#fff',
+                            fontSize: 10
+                        }
+                    },
+                    {
+                        name: '未发货',
+                        type: 'bar',
+                        stack: 'total',
+                        data: data.map(d => d.unshipped).reverse(),
+                        itemStyle: { color: '#9b59b6' },
+                        label: {
+                            show: true,
+                            position: 'inside',
+                            formatter: '{c}%',
+                            color: '#fff',
+                            fontSize: 10
+                        }
+                    }
+                ]
+            };
+            charts.orderStructure.setOption(option);
+        }
+
+        function renderWarehouseRatio() {
+            charts.warehouseRatio = echarts.init(document.getElementById('warehouse-ratio-chart'));
+            const data = dashboardData.warehouseRatio;
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' },
+                    formatter: function(params) {
+                        const item = data.find(d => d.country === params[0].name);
+                        return `<strong>${item.country}</strong><br/>` +
+                            `嘉兴仓：${item._numbers.jiaxing} 单 (${item.jiaxing.toFixed(1)}%)<br/>` +
+                            `海外仓：${item._numbers.overseas} 单 (${item.overseas.toFixed(1)}%)`;
+                    }
+                },
+                legend: {
+                    data: ['嘉兴仓', '海外仓'],
+                    bottom: 0,
+                    textStyle: { fontSize: 11 }
+                },
+                grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
+                xAxis: {
+                    type: 'value',
+                    max: 100,
+                    axisLabel: { formatter: '{value}%' }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: data.map(d => d.country).reverse()
+                },
+                series: [
+                    {
+                        name: '嘉兴仓',
+                        type: 'bar',
+                        stack: 'total',
+                        data: data.map(d => d.jiaxing).reverse(),
+                        itemStyle: { color: '#4285f4' },
+                        label: {
+                            show: true,
+                            position: 'inside',
+                            formatter: '{c}%',
+                            color: '#fff',
+                            fontSize: 10
+                        }
+                    },
+                    {
+                        name: '海外仓',
+                        type: 'bar',
+                        stack: 'total',
+                        data: data.map(d => d.overseas).reverse(),
+                        itemStyle: { color: '#ea4335' },
+                        label: {
+                            show: true,
+                            position: 'inside',
+                            formatter: '{c}%',
+                            color: '#fff',
+                            fontSize: 10
+                        }
+                    }
+                ]
+            };
+            charts.warehouseRatio.setOption(option);
+        }
+
+        init();
+    </script>
+</body>
+</html>
