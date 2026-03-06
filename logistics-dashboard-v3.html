@@ -558,7 +558,9 @@
                 <div class="filter-row">
                     <div class="filter-item">
                         <label>📅 时间:</label>
-                        <select id="filter-time"><option value="all">最近 90 天</option></select>
+                        <input type="date" id="filter-date-start" value="2026-01-01" style="padding: 6px 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 13px;">
+                        <span style="color: #999;">-</span>
+                        <input type="date" id="filter-date-end" value="2026-02-28" style="padding: 6px 10px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 13px;">
                     </div>
                     <div class="filter-item">
                         <label>🌍 国家:</label>
@@ -574,9 +576,10 @@
                     <div class="filter-item">
                         <label>🏭 发货仓库:</label>
                         <select id="filter-warehouse" onchange="updateCharts()">
-                            <option value="all">全部</option>
                             <option value="jiaxing">嘉兴仓</option>
-                            <option value="overseas">海外仓</option>
+                            <option value="us">美国仓</option>
+                            <option value="uk">英国仓</option>
+                            <option value="ca">加拿大仓</option>
                         </select>
                     </div>
                     <div class="filter-item">
@@ -667,6 +670,7 @@
                 <div class="t-layout">
                     <!-- 左侧国家选择 -->
                     <div class="country-selector">
+                        <div class="country-btn" onclick="selectCountry('ALL', this)">全部</div>
                         <div class="country-btn active" onclick="selectCountry('US', this)">美国</div>
                         <div class="country-btn" onclick="selectCountry('UK', this)">英国</div>
                         <div class="country-btn" onclick="selectCountry('CA', this)">加拿大</div>
@@ -706,6 +710,7 @@
                 
                 <!-- 顶部国家筛选 -->
                 <div class="country-selector country-selector-top">
+                    <div class="country-btn" onclick="selectFlowCountry('ALL', this)">全部</div>
                     <div class="country-btn active" onclick="selectFlowCountry('US', this)">美国</div>
                     <div class="country-btn" onclick="selectFlowCountry('UK', this)">英国</div>
                     <div class="country-btn" onclick="selectFlowCountry('CA', this)">加拿大</div>
@@ -1020,8 +1025,14 @@
         function selectFlowCountry(country, btn) {
             document.querySelectorAll('.country-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            renderLeftTable(country);
-            renderRightTable(country);
+            if (country === 'ALL') {
+                // 显示所有国家数据（默认显示美国）
+                renderLeftTable('US');
+                renderRightTable('US');
+            } else {
+                renderLeftTable(country);
+                renderRightTable(country);
+            }
         }
 
         function renderLeftTable(country) {
@@ -1122,7 +1133,13 @@
         function selectCountry(country, btn) {
             document.querySelectorAll('.country-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            updateTCharts();
+            if (country === 'ALL') {
+                // 显示所有国家数据
+                renderJiaxingTChart();
+                renderOverseasTChart();
+            } else {
+                updateTCharts();
+            }
         }
 
         function selectTimeGranularity(granularity, btn) {
