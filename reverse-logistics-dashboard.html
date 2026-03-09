@@ -229,6 +229,9 @@
             padding: 10px 8px;
             border-bottom: 1px solid #e0e0e0;
         }
+        .product-table td.text-left {
+            text-align: left;
+        }
         .product-table td.text-right {
             text-align: right;
         }
@@ -417,9 +420,9 @@
                     <table class="product-table">
                         <thead>
                             <tr>
-                                <th>使用仓库</th>
-                                <th>一级产品</th>
-                                <th>二级产品</th>
+                                <th class="text-left">使用仓库</th>
+                                <th class="text-left">一级产品</th>
+                                <th class="text-left">二级产品</th>
                                 <th class="text-right">包裹数</th>
                                 <th class="text-center">占比</th>
                                 <th class="text-right">单价/包裹</th>
@@ -960,9 +963,9 @@
                     const rowClass = idx % 2 === 0 ? '' : 'level-2';
                     html += `
                         <tr class="${rowClass}">
-                            <td><strong>${mockData.warehouseNames[warehouse]}</strong></td>
-                            <td><strong>${product.level1}</strong></td>
-                            <td>${product.level2}</td>
+                            <td class="text-left"><strong>${mockData.warehouseNames[warehouse]}</strong></td>
+                            <td class="text-left"><strong>${product.level1}</strong></td>
+                            <td class="text-left">${product.level2}</td>
                             <td class="text-right">${product.packages.toLocaleString()}</td>
                             <td class="text-center"><span class="trend-badge ${trendClass}">${product.ratio}%</span></td>
                             <td class="text-right">$${product.pricePerPkg.toFixed(2)}</td>
