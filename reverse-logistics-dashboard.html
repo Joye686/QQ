@@ -219,9 +219,21 @@
         }
         .product-table th:first-child { border-radius: 8px 0 0 0; }
         .product-table th:last-child { border-radius: 0 8px 0 0; }
+        .product-table th.text-right {
+            text-align: right;
+        }
+        .product-table th.text-center {
+            text-align: center;
+        }
         .product-table td {
             padding: 10px 8px;
             border-bottom: 1px solid #e0e0e0;
+        }
+        .product-table td.text-right {
+            text-align: right;
+        }
+        .product-table td.text-center {
+            text-align: center;
         }
         .product-table tr:hover {
             background: #f8f9ff;
@@ -355,9 +367,9 @@
             <!-- 仓库选择标签 -->
             <div class="warehouse-tabs">
                 <div class="warehouse-btn active" onclick="selectWarehouse('all', this)">全部仓库</div>
-                <div class="warehouse-btn" onclick="selectWarehouse('US', this)">🇺 美国仓</div>
-                <div class="warehouse-btn" onclick="selectWarehouse('CA', this)">🇨🇦 加拿大仓</div>
-                <div class="warehouse-btn" onclick="selectWarehouse('UK', this)">🇬🇧 英国仓</div>
+                <div class="warehouse-btn" onclick="selectWarehouse('US', this)">🇺🇸 美国仓</div>
+                <div class="warehouse-btn" onclick="selectWarehouse('CA', this)">🇨 加拿大仓</div>
+                <div class="warehouse-btn" onclick="selectWarehouse('UK', this)">🇬 英国仓</div>
             </div>
 
             <!-- 图表区域 -->
@@ -405,14 +417,14 @@
                     <table class="product-table">
                         <thead>
                             <tr>
+                                <th>使用仓库</th>
                                 <th>一级产品</th>
                                 <th>二级产品</th>
-                                <th>使用仓库</th>
-                                <th>包裹数</th>
-                                <th>占比</th>
-                                <th>单价/包裹</th>
-                                <th>件数/包裹</th>
-                                <th>退货率</th>
+                                <th class="text-right">包裹数</th>
+                                <th class="text-center">占比</th>
+                                <th class="text-right">单价/包裹</th>
+                                <th class="text-right">件数/包裹</th>
+                                <th class="text-right">退货率</th>
                             </tr>
                         </thead>
                         <tbody id="product-table-body">
@@ -440,9 +452,9 @@
                 HR: ['HappyReturns']
             },
             
-            // 各仓可用产品
+            // 各仓可用产品（修正：RoyalMail 只在英国仓）
             warehouseProducts: {
-                US: ['USPS', 'RoyalMail', 'UNI', 'HR'],
+                US: ['USPS', 'UNI', 'HR'],
                 CA: ['CAPOST', 'UNI'],
                 UK: ['RoyalMail']
             },
@@ -506,15 +518,14 @@
                 UK: [12000, 13800, 15200]
             },
             
-            // 各仓产品结构（一级 + 二级）
+            // 各仓产品结构（一级 + 二级）- 修正：RoyalMail 只在英国仓
             productStructure: {
                 US: [
                     { level1: 'USPS', level2: 'JC-USPS', packages: 2556, ratio: 30, pricePerPkg: 7.20, itemsPerPkg: 2.9, returnRate: 11.5 },
                     { level1: 'USPS', level2: 'liumai-USPS', packages: 2130, ratio: 25, pricePerPkg: 7.50, itemsPerPkg: 2.8, returnRate: 12.0 },
-                    { level1: 'RoyalMail', level2: 'MPwarehouse-RM', packages: 852, ratio: 10, pricePerPkg: 9.00, itemsPerPkg: 2.6, returnRate: 10.5 },
                     { level1: 'UNI', level2: 'US-UNI', packages: 1278, ratio: 15, pricePerPkg: 8.20, itemsPerPkg: 3.0, returnRate: 11.0 },
                     { level1: 'UNI', level2: 'US-UNI2', packages: 852, ratio: 10, pricePerPkg: 8.50, itemsPerPkg: 2.9, returnRate: 11.2 },
-                    { level1: 'HR', level2: 'HappyReturns', packages: 852, ratio: 10, pricePerPkg: 6.80, itemsPerPkg: 3.2, returnRate: 13.5 }
+                    { level1: 'HR', level2: 'HappyReturns', packages: 1704, ratio: 20, pricePerPkg: 6.80, itemsPerPkg: 3.2, returnRate: 13.5 }
                 ],
                 CA: [
                     { level1: 'CAPOST', level2: 'LTWarehouse-CAPOST', packages: 2115, ratio: 50, pricePerPkg: 8.80, itemsPerPkg: 2.8, returnRate: 13.0 },
@@ -949,14 +960,14 @@
                     const rowClass = idx % 2 === 0 ? '' : 'level-2';
                     html += `
                         <tr class="${rowClass}">
+                            <td><strong>${mockData.warehouseNames[warehouse]}</strong></td>
                             <td><strong>${product.level1}</strong></td>
                             <td>${product.level2}</td>
-                            <td>${mockData.warehouseNames[warehouse]}</td>
-                            <td>${product.packages.toLocaleString()}</td>
-                            <td><span class="trend-badge ${trendClass}">${product.ratio}%</span></td>
-                            <td>$${product.pricePerPkg.toFixed(2)}</td>
-                            <td>${product.itemsPerPkg.toFixed(2)}</td>
-                            <td>${product.returnRate.toFixed(1)}%</td>
+                            <td class="text-right">${product.packages.toLocaleString()}</td>
+                            <td class="text-center"><span class="trend-badge ${trendClass}">${product.ratio}%</span></td>
+                            <td class="text-right">$${product.pricePerPkg.toFixed(2)}</td>
+                            <td class="text-right">${product.itemsPerPkg.toFixed(2)}</td>
+                            <td class="text-right">${product.returnRate.toFixed(1)}%</td>
                         </tr>
                     `;
                 });
