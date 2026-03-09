@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>逆向物流分析仪表板 - P0</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1600px; margin: 0 auto; }
+        h1 {
+            color: #e94560;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            text-align: center;
+            color: #a0a0a0;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        /* 筛选器 */
+        .filters {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .filter-item label {
+            font-weight: 600;
+            color: #555;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+        .filter-item select {
+            padding: 6px 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .filter-item select:hover, .filter-item select:focus {
+            border-color: #e94560;
+            outline: none;
+        }
+        
+        /* 指标卡片 */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            color: white;
+        }
+        .stat-card.warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .stat-card.success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        .stat-label {
+            color: rgba(255,255,255,0.9);
+            margin-top: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .stat-trend {
+            font-size: 11px;
+            margin-top: 4px;
+            opacity: 0.9;
+        }
+        .stat-trend.up { color: #ff6b6b; }
+        .stat-trend.down { color: #51cf66; }
+        
+        /* 图表容器 */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .chart-container {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .chart-container.full-width {
+            grid-column: 1 / -1;
+        }
+        .chart-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #e94560;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chart {
+            width: 100%;
+            height: 320px;
+        }
+        
+        /* 仓库选择器 */
+        .warehouse-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+        .warehouse-btn {
+            padding: 10px 24px;
+            border: 2px solid #e94560;
+            border-radius: 8px;
+            background: white;
+            color: #e94560;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        .warehouse-btn:hover {
+            background: #fff5f5;
+        }
+        .warehouse-btn.active {
+            background: #e94560;
+            color: white;
+        }
+        
+        /* 产品表格 */
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .product-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .product-table th:first-child { border-radius: 8px 0 0 0; }
+        .product-table th:last-child { border-radius: 0 8px 0 0; }
+        .product-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .product-table tr:hover {
+            background: #f8f9ff;
+        }
+        .product-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+        .trend-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .trend-badge.high { background: #ffe3e3; color: #e03131; }
+        .trend-badge.medium { background: #fff3bf; color: #f08c00; }
+        .trend-badge.low { background: #d3f9d8; color: #2b8a3e; }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: white;
+            font-size: 1.5em;
+        }
+        
+        @media (max-width: 1200px) {
+            .stats-row { grid-template-columns: repeat(3, 1fr); }
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .filter-row { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 逆向物流分析仪表板</h1>
+        <div class="subtitle">退货接收仓数据分析 | 实时更新</div>
+        
+        <div id="loading" class="loading">正在加载数据...</div>
+        
+        <div id="dashboard" style="display: none;">
+            <!-- 筛选器 -->
+            <div class="filters">
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label>📅 时间:</label>
+                        <select id="filter-time">
+                            <option value="30">最近 30 天</option>
+                            <option value="60">最近 60 天</option>
+                            <option value="90" selected>最近 90 天</option>
+                            <option value="180">最近 180 天</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>🏭 仓库:</label>
+                        <select id="filter-warehouse" onchange="updateDashboard()">
+                            <option value="all">全部仓库</option>
+                            <option value="US">美国仓</option>
+                            <option value="CA">加拿大仓</option>
+                            <option value="UK">英国仓</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>🌍 目的国:</label>
+                        <select id="filter-country" onchange="updateDashboard()">
+                            <option value="all">全部国家</option>
+                            <option value="US">美国</option>
+                            <option value="CA">加拿大</option>
+                            <option value="UK">英国</option>
+                            <option value="AU">澳大利亚</option>
+                            <option value="DE">德国</option>
+                            <option value="FR">法国</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>📦 产品:</label>
+                        <select id="filter-product" onchange="updateDashboard()">
+                            <option value="all">全部产品</option>
+                            <option value="standard">Standard Return</option>
+                            <option value="express">Express Return</option>
+                            <option value="economy">Economy Return</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 核心指标卡片 -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-price-pkg">$8.45</div>
+                    <div class="stat-label">💰 单价/包裹</div>
+                    <div class="stat-trend down">↓ 2.3% vs 上期</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-value" id="stat-items-pkg">2.8</div>
+                    <div class="stat-label">📦 包单件</div>
+                    <div class="stat-trend up">↑ 5.1% vs 上期</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-value" id="stat-return-rate">12.4%</div>
+                    <div class="stat-label">🔄 退货率</div>
+                    <div class="stat-trend up">↑ 1.2% vs 上期</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total-packages">18,452</div>
+                    <div class="stat-label">📥 收货包裹数</div>
+                    <div class="stat-trend down">↓ 3.8% vs 上期</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total-items">51,665</div>
+                    <div class="stat-label">📦 收货件数</div>
+                    <div class="stat-trend down">↓ 2.1% vs 上期</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total-cost">$155,919</div>
+                    <div class="stat-label">💵 退货总成本</div>
+                    <div class="stat-trend down">↓ 5.2% vs 上期</div>
+                </div>
+            </div>
+
+            <!-- 仓库选择标签 -->
+            <div class="warehouse-tabs">
+                <div class="warehouse-btn active" onclick="selectWarehouse('all', this)">全部仓库</div>
+                <div class="warehouse-btn" onclick="selectWarehouse('US', this)">🇺🇸 美国仓</div>
+                <div class="warehouse-btn" onclick="selectWarehouse('CA', this)">🇨🇦 加拿大仓</div>
+                <div class="warehouse-btn" onclick="selectWarehouse('UK', this)">🇬🇧 英国仓</div>
+            </div>
+
+            <!-- 图表区域 -->
+            <div class="charts-grid">
+                <!-- 各仓收货价格对比 -->
+                <div class="chart-container">
+                    <div class="chart-title">💰 各仓收货价格对比</div>
+                    <div id="warehouse-price-chart" class="chart"></div>
+                </div>
+                
+                <!-- 各仓收货件数对比 -->
+                <div class="chart-container">
+                    <div class="chart-title">📦 各仓收货件数对比</div>
+                    <div id="warehouse-items-chart" class="chart"></div>
+                </div>
+                
+                <!-- 各国退货率 -->
+                <div class="chart-container">
+                    <div class="chart-title">🌍 发往各国退货率</div>
+                    <div id="country-return-rate-chart" class="chart"></div>
+                </div>
+                
+                <!-- 仓库收货包裹数趋势 -->
+                <div class="chart-container">
+                    <div class="chart-title">📈 各仓收货包裹数趋势</div>
+                    <div id="warehouse-trend-chart" class="chart"></div>
+                </div>
+                
+                <!-- 产品结构分析 -->
+                <div class="chart-container full-width">
+                    <div class="chart-title">📊 各仓产品结构分析</div>
+                    <div id="product-structure-chart" class="chart" style="height: 400px;"></div>
+                </div>
+                
+                <!-- 产品详细数据表 -->
+                <div class="chart-container full-width">
+                    <div class="chart-title">📋 产品详细数据</div>
+                    <table class="product-table">
+                        <thead>
+                            <tr>
+                                <th>产品名称</th>
+                                <th>使用仓库</th>
+                                <th>包裹数</th>
+                                <th>占比</th>
+                                <th>单价/包裹</th>
+                                <th>件数/包裹</th>
+                                <th>退货率</th>
+                            </tr>
+                        </thead>
+                        <tbody id="product-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟数据
+        const mockData = {
+            warehouses: ['US', 'CA', 'UK'],
+            warehouseNames: { US: '美国仓', CA: '加拿大仓', UK: '英国仓' },
+            countries: ['US', 'CA', 'UK', 'AU', 'DE', 'FR'],
+            countryNames: { US: '美国', CA: '加拿大', UK: '英国', AU: '澳大利亚', DE: '德国', FR: '法国' },
+            products: ['standard', 'express', 'economy'],
+            productNames: { standard: 'Standard Return', express: 'Express Return', economy: 'Economy Return' },
+            
+            // 各仓数据
+            warehouseData: {
+                US: { 
+                    pricePerPkg: 7.85, 
+                    totalPackages: 8520, 
+                    totalItems: 24708,
+                    totalCost: 66882
+                },
+                CA: { 
+                    pricePerPkg: 9.20, 
+                    totalPackages: 4230, 
+                    totalItems: 11844,
+                    totalCost: 38916
+                },
+                UK: { 
+                    pricePerPkg: 8.95, 
+                    totalPackages: 5702, 
+                    totalItems: 15113,
+                    totalCost: 51033
+                }
+            },
+            
+            // 各国退货率
+            countryReturnRates: {
+                US: { shipped: 125000, returned: 14250, rate: 11.4 },
+                CA: { shipped: 42000, returned: 5460, rate: 13.0 },
+                UK: { shipped: 58000, returned: 7540, rate: 13.0 },
+                AU: { shipped: 28000, returned: 3920, rate: 14.0 },
+                DE: { shipped: 35000, returned: 4550, rate: 13.0 },
+                FR: { shipped: 22000, returned: 3080, rate: 14.0 }
+            },
+            
+            // 各仓趋势数据（按周）
+            warehouseTrends: {
+                US: [1850, 1920, 2100, 1980, 2050, 2200, 2150, 2270],
+                CA: [920, 980, 1050, 1020, 1100, 1150, 1080, 1130],
+                UK: [1200, 1280, 1350, 1320, 1400, 1450, 1380, 1422]
+            },
+            
+            // 各仓产品结构
+            productStructure: {
+                US: [
+                    { product: 'standard', packages: 4686, ratio: 55, pricePerPkg: 7.20, itemsPerPkg: 2.9 },
+                    { product: 'express', packages: 2556, ratio: 30, pricePerPkg: 9.50, itemsPerPkg: 2.6 },
+                    { product: 'economy', packages: 1278, ratio: 15, pricePerPkg: 6.80, itemsPerPkg: 3.0 }
+                ],
+                CA: [
+                    { product: 'standard', packages: 2115, ratio: 50, pricePerPkg: 8.80, itemsPerPkg: 2.8 },
+                    { product: 'express', packages: 1480, ratio: 35, pricePerPkg: 10.20, itemsPerPkg: 2.7 },
+                    { product: 'economy', packages: 635, ratio: 15, pricePerPkg: 7.50, itemsPerPkg: 2.9 }
+                ],
+                UK: [
+                    { product: 'standard', packages: 2851, ratio: 50, pricePerPkg: 8.50, itemsPerPkg: 2.7 },
+                    { product: 'express', packages: 1996, ratio: 35, pricePerPkg: 10.00, itemsPerPkg: 2.6 },
+                    { product: 'economy', packages: 855, ratio: 15, pricePerPkg: 7.20, itemsPerPkg: 2.8 }
+                ]
+            },
+            
+            // 时间序列
+            timeSeries: ['第 1 周', '第 2 周', '第 3 周', '第 4 周', '第 5 周', '第 6 周', '第 7 周', '第 8 周']
+        };
+
+        let charts = {};
+        let currentWarehouse = 'all';
+
+        function init() {
+            renderWarehousePriceChart();
+            renderWarehouseItemsChart();
+            renderCountryReturnRateChart();
+            renderWarehouseTrendChart();
+            renderProductStructureChart();
+            renderProductTable();
+            updateStats();
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            
+            window.addEventListener('resize', () => {
+                Object.values(charts).forEach(chart => chart.resize());
+            });
+        }
+
+        function selectWarehouse(warehouse, btn) {
+            currentWarehouse = warehouse;
+            document.querySelectorAll('.warehouse-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('filter-warehouse').value = warehouse;
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            const warehouse = document.getElementById('filter-warehouse').value;
+            currentWarehouse = warehouse;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.warehouse-btn').forEach(b => {
+                b.classList.remove('active');
+                if (b.textContent.includes(warehouse === 'all' ? '全部' : mockData.warehouseNames[warehouse])) {
+                    b.classList.add('active');
+                }
+            });
+            
+            renderWarehousePriceChart();
+            renderWarehouseItemsChart();
+            renderCountryReturnRateChart();
+            renderWarehouseTrendChart();
+            renderProductStructureChart();
+            renderProductTable();
+            updateStats();
+        }
+
+        function updateStats() {
+            const warehouse = currentWarehouse;
+            let avgPrice = 8.45, totalPackages = 18452, totalItems = 51665, totalCost = 155919;
+            
+            if (warehouse !== 'all') {
+                const data = mockData.warehouseData[warehouse];
+                avgPrice = data.pricePerPkg;
+                totalPackages = data.totalPackages;
+                totalItems = data.totalItems;
+                totalCost = data.totalCost;
+            }
+            
+            document.getElementById('stat-price-pkg').textContent = '$' + avgPrice.toFixed(2);
+            document.getElementById('stat-items-pkg').textContent = '2.8';
+            document.getElementById('stat-return-rate').textContent = '12.4%';
+            document.getElementById('stat-total-packages').textContent = totalPackages.toLocaleString();
+            document.getElementById('stat-total-items').textContent = totalItems.toLocaleString();
+            document.getElementById('stat-total-cost').textContent = '$' + totalCost.toLocaleString();
+        }
+
+        function renderWarehousePriceChart() {
+            if (charts.warehousePrice) charts.warehousePrice.dispose();
+            charts.warehousePrice = echarts.init(document.getElementById('warehouse-price-chart'));
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: '{b}: ${c}'
+                },
+                grid: { left: '3%', right: '4%', bottom: '10%', top: '10%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    data: mockData.warehouses.map(w => mockData.warehouseNames[w]),
+                    axisLabel: { fontSize: 12, fontWeight: 'bold' }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '美元',
+                    axisLabel: { formatter: '${value}', fontSize: 11 }
+                },
+                series: [{
+                    type: 'bar',
+                    data: mockData.warehouses.map(w => mockData.warehouseData[w].pricePerPkg),
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#e94560' },
+                            { offset: 1, color: '#ff6b6b' }
+                        ]),
+                        borderRadius: [8, 8, 0, 0]
+                    },
+                    label: {
+                        show: true,
+                        position: 'top',
+                        formatter: '${c}',
+                        fontSize: 12,
+                        fontWeight: 'bold'
+                    }
+                }]
+            };
+            charts.warehousePrice.setOption(option);
+        }
+
+        function renderWarehouseItemsChart() {
+            if (charts.warehouseItems) charts.warehouseItems.dispose();
+            charts.warehouseItems = echarts.init(document.getElementById('warehouse-items-chart'));
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: '{b}: {c} 件'
+                },
+                grid: { left: '3%', right: '4%', bottom: '10%', top: '10%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    data: mockData.warehouses.map(w => mockData.warehouseNames[w]),
+                    axisLabel: { fontSize: 12, fontWeight: 'bold' }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '件数',
+                    axisLabel: { fontSize: 11 }
+                },
+                series: [{
+                    type: 'bar',
+                    data: mockData.warehouses.map(w => mockData.warehouseData[w].totalItems),
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#4facfe' },
+                            { offset: 1, color: '#00f2fe' }
+                        ]),
+                        borderRadius: [8, 8, 0, 0]
+                    },
+                    label: {
+                        show: true,
+                        position: 'top',
+                        formatter: '{c}',
+                        fontSize: 11
+                    }
+                }]
+            };
+            charts.warehouseItems.setOption(option);
+        }
+
+        function renderCountryReturnRateChart() {
+            if (charts.countryReturnRate) charts.countryReturnRate.dispose();
+            charts.countryReturnRate = echarts.init(document.getElementById('country-return-rate-chart'));
+            
+            const data = Object.keys(mockData.countryReturnRates).map(key => ({
+                name: mockData.countryNames[key],
+                value: mockData.countryReturnRates[key].rate
+            }));
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: '{b}: {c}%'
+                },
+                grid: { left: '3%', right: '4%', bottom: '10%', top: '10%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    data: data.map(d => d.name),
+                    axisLabel: { fontSize: 11, rotate: 0 }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '退货率',
+                    axisLabel: { formatter: '{value}%', fontSize: 11 }
+                },
+                series: [{
+                    type: 'bar',
+                    data: data.map(d => d.value),
+                    itemStyle: {
+                        color: function(params) {
+                            const colors = ['#e94560', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#fee140'];
+                            return colors[params.dataIndex % colors.length];
+                        },
+                        borderRadius: [8, 8, 0, 0]
+                    },
+                    label: {
+                        show: true,
+                        position: 'top',
+                        formatter: '{c}%',
+                        fontSize: 11,
+                        fontWeight: 'bold'
+                    },
+                    markLine: {
+                        data: [{ type: 'average', name: '平均值' }],
+                        lineStyle: { color: '#e94560', type: 'dashed' },
+                        label: { formatter: '平均：{c}%' }
+                    }
+                }]
+            };
+            charts.countryReturnRate.setOption(option);
+        }
+
+        function renderWarehouseTrendChart() {
+            if (charts.warehouseTrend) charts.warehouseTrend.dispose();
+            charts.warehouseTrend = echarts.init(document.getElementById('warehouse-trend-chart'));
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: '{b}<br/>{a0}: {c0}<br/>{a1}: {c1}<br/>{a2}: {c2}'
+                },
+                legend: {
+                    data: ['美国仓', '加拿大仓', '英国仓'],
+                    bottom: 0,
+                    textStyle: { fontSize: 11 }
+                },
+                grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    data: mockData.timeSeries,
+                    axisLabel: { fontSize: 10 }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '包裹数',
+                    axisLabel: { fontSize: 11 }
+                },
+                series: [
+                    {
+                        name: '美国仓',
+                        type: 'line',
+                        smooth: true,
+                        data: mockData.warehouseTrends.US,
+                        itemStyle: { color: '#e94560' },
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#e9456040' },
+                                { offset: 1, color: '#e9456005' }
+                            ])
+                        },
+                        symbol: 'circle',
+                        symbolSize: 6
+                    },
+                    {
+                        name: '加拿大仓',
+                        type: 'line',
+                        smooth: true,
+                        data: mockData.warehouseTrends.CA,
+                        itemStyle: { color: '#4facfe' },
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#4facfe40' },
+                                { offset: 1, color: '#4facfe05' }
+                            ])
+                        },
+                        symbol: 'circle',
+                        symbolSize: 6
+                    },
+                    {
+                        name: '英国仓',
+                        type: 'line',
+                        smooth: true,
+                        data: mockData.warehouseTrends.UK,
+                        itemStyle: { color: '#43e97b' },
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: '#43e97b40' },
+                                { offset: 1, color: '#43e97b05' }
+                            ])
+                        },
+                        symbol: 'circle',
+                        symbolSize: 6
+                    }
+                ]
+            };
+            charts.warehouseTrend.setOption(option);
+        }
+
+        function renderProductStructureChart() {
+            if (charts.productStructure) charts.productStructure.dispose();
+            charts.productStructure = echarts.init(document.getElementById('product-structure-chart'));
+            
+            const warehouses = mockData.warehouses;
+            const products = mockData.products;
+            
+            const series = products.map((product, idx) => ({
+                name: mockData.productNames[product],
+                type: 'bar',
+                stack: 'total',
+                data: warehouses.map(w => mockData.productStructure[w][idx].packages),
+                label: {
+                    show: true,
+                    formatter: '{c}'
+                }
+            }));
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' },
+                    formatter: function(params) {
+                        let result = params[0].name + '<br/>';
+                        params.forEach(p => {
+                            const warehouse = p.name;
+                            const productIdx = products.indexOf(p.seriesName);
+                            const data = mockData.productStructure[Object.keys(mockData.warehouseData)[productIdx]][productIdx];
+                            result += p.seriesName + ': ' + p.value + ' 包裹 (' + data.ratio + '%)<br/>';
+                        });
+                        return result;
+                    }
+                },
+                legend: {
+                    data: products.map(p => mockData.productNames[p]),
+                    top: 0,
+                    textStyle: { fontSize: 12 }
+                },
+                grid: { left: '3%', right: '4%', bottom: '10%', top: '15%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    data: warehouses.map(w => mockData.warehouseNames[w]),
+                    axisLabel: { fontSize: 13, fontWeight: 'bold' }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '包裹数',
+                    axisLabel: { fontSize: 11 }
+                },
+                series: series.map((s, idx) => ({
+                    ...s,
+                    itemStyle: {
+                        color: ['#667eea', '#e94560', '#43e97b'][idx]
+                    }
+                }))
+            };
+            charts.productStructure.setOption(option);
+        }
+
+        function renderProductTable() {
+            const tbody = document.getElementById('product-table-body');
+            let html = '';
+            
+            mockData.warehouses.forEach(warehouse => {
+                mockData.productStructure[warehouse].forEach(product => {
+                    const trendClass = product.ratio >= 50 ? 'high' : (product.ratio >= 30 ? 'medium' : 'low');
+                    html += `
+                        <tr>
+                            <td><strong>${mockData.productNames[product.product]}</strong></td>
+                            <td>${mockData.warehouseNames[warehouse]}</td>
+                            <td>${product.packages.toLocaleString()}</td>
+                            <td><span class="trend-badge ${trendClass}">${product.ratio}%</span></td>
+                            <td>$${product.pricePerPkg.toFixed(2)}</td>
+                            <td>${product.itemsPerPkg.toFixed(1)}</td>
+                            <td>${(Math.random() * 5 + 10).toFixed(1)}%</td>
+                        </tr>
+                    `;
+                });
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        init();
+    </script>
+</body>
+</html>
