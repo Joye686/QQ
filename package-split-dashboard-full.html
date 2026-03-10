@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📦 分包分析看板 - 完整版</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1600px; margin: 0 auto; }
+        .header {
+            text-align: center; color: white; margin-bottom: 30px;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header p { font-size: 1.1em; opacity: 0.9; }
+        .update-time { font-size: 0.9em; opacity: 0.8; margin-top: 10px; }
+        
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .kpi-card {
+            background: white; border-radius: 12px; padding: 18px;
+            text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+        .kpi-card:hover { transform: translateY(-3px); }
+        .kpi-card.warning { background: linear-gradient(135deg, #ff6b6b, #ee5a5a); color: white; }
+        .kpi-card.success { background: linear-gradient(135deg, #51cf66, #40c057); color: white; }
+        .kpi-card.info { background: linear-gradient(135deg, #4dabf7, #339af0); color: white; }
+        .kpi-card.purple { background: linear-gradient(135deg, #b197fc, #9775fa); color: white; }
+        .kpi-value { font-size: 2em; font-weight: bold; margin-bottom: 5px; }
+        .kpi-label { font-size: 0.85em; opacity: 0.9; }
+        .kpi-sub { font-size: 0.75em; opacity: 0.8; margin-top: 5px; }
+        
+        /* Section Title */
+        .section-title {
+            color: white; font-size: 1.4em; font-weight: bold;
+            margin: 30px 0 15px 0; padding-left: 10px;
+            border-left: 4px solid white;
+        }
+        
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .chart-card {
+            background: white; border-radius: 12px; padding: 18px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        .chart-title {
+            font-size: 1.1em; font-weight: bold; color: #333;
+            margin-bottom: 12px; padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+        .chart-container { height: 280px; width: 100%; }
+        .full-width { grid-column: 1 / -1; }
+        .half-width { grid-column: span 1; }
+        
+        /* Tables */
+        .table-card {
+            background: white; border-radius: 12px; padding: 18px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            margin-bottom: 25px; overflow-x: auto;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #667eea; color: white; font-weight: 600; }
+        tr:hover { background: #f8f9fa; }
+        .cost-waste { color: #e03131; font-weight: bold; }
+        .tag { padding: 3px 8px; border-radius: 12px; font-size: 0.8em; }
+        .tag-red { background: #ffe3e3; color: #c92a2a; }
+        .tag-orange { background: #fff0e6; color: #d9480f; }
+        .tag-blue { background: #e7f5ff; color: #1864ab; }
+        
+        /* Alerts */
+        .alert-box {
+            background: linear-gradient(135deg, #fff5f5, #ffe3e3);
+            border-left: 4px solid #e03131;
+            padding: 15px 20px; border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .alert-title { font-weight: bold; color: #c92a2a; margin-bottom: 8px; }
+        .alert-item { display: flex; justify-content: space-between; padding: 5px 0; }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .kpi-value { font-size: 1.6em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 分包分析看板 - 完整版</h1>
+            <p>订单拆分监控 · 物流成本优化 · 多维度分析</p>
+            <div class="update-time" id="updateTime">数据更新时间：--</div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card info">
+                <div class="kpi-value" id="kpi-orders">0</div>
+                <div class="kpi-label">订单数</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="kpi-packages">0</div>
+                <div class="kpi-label">总包裹数</div>
+            </div>
+            <div class="kpi-card warning">
+                <div class="kpi-value" id="kpi-split-orders">0</div>
+                <div class="kpi-label">被拆分订单</div>
+            </div>
+            <div class="kpi-card purple">
+                <div class="kpi-value" id="kpi-ratio">0</div>
+                <div class="kpi-label">包裹拆分比</div>
+                <div class="kpi-sub">包裹数/订单数</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="kpi-avg-items">0</div>
+                <div class="kpi-label">平均包单件</div>
+                <div class="kpi-sub">件数/包裹数</div>
+            </div>
+            <div class="kpi-card warning">
+                <div class="kpi-value" id="kpi-split-rate">0%</div>
+                <div class="kpi-label">分包率</div>
+            </div>
+            <div class="kpi-card info">
+                <div class="kpi-value" id="kpi-total-cost">¥0</div>
+                <div class="kpi-label">总物流成本</div>
+            </div>
+            <div class="kpi-card warning">
+                <div class="kpi-value" id="kpi-waste">¥0</div>
+                <div class="kpi-label">成本浪费</div>
+                <div class="kpi-sub">可优化空间</div>
+            </div>
+        </div>
+
+        <!-- 预警区域 -->
+        <h2 class="section-title">⚠️ 异常预警</h2>
+        <div class="alert-box" id="alertBox">
+            <div class="alert-title">🚨 需要关注的异常</div>
+            <div id="alertContent"></div>
+        </div>
+
+        <!-- 核心分析 -->
+        <h2 class="section-title">📊 核心分析</h2>
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-title">🔍 拆分原因分布</div>
+                <div class="chart-container" id="chart-reason"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">🏭 仓库分包对比</div>
+                <div class="chart-container" id="chart-warehouse"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">📦 包裹数分布</div>
+                <div class="chart-container" id="chart-package-dist"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">💰 成本浪费分析</div>
+                <div class="chart-container" id="chart-cost"></div>
+            </div>
+        </div>
+
+        <!-- 订单类型/渠道分析 -->
+        <h2 class="section-title">📋 订单类型 & 渠道分析</h2>
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-title">📝 订单类型分包率</div>
+                <div class="chart-container" id="chart-order-type"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">🛒 销售渠道分包率</div>
+                <div class="chart-container" id="chart-channel"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">🚚 物流商分包率</div>
+                <div class="chart-container" id="chart-logistics"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">👤 客户等级分包率</div>
+                <div class="chart-container" id="chart-customer"></div>
+            </div>
+        </div>
+
+        <!-- 商品分析 -->
+        <h2 class="section-title">🎯 商品维度分析</h2>
+        <div class="charts-grid">
+            <div class="chart-card half-width">
+                <div class="chart-title">🔥 高拆分 SKU TOP10</div>
+                <div class="chart-container" id="chart-sku-top"></div>
+            </div>
+            <div class="chart-card half-width">
+                <div class="chart-title">📊 品类拆分率</div>
+                <div class="chart-container" id="chart-category"></div>
+            </div>
+        </div>
+
+        <!-- 趋势分析 -->
+        <h2 class="section-title">📈 趋势分析</h2>
+        <div class="charts-grid">
+            <div class="chart-card full-width">
+                <div class="chart-title">📅 日趋势分析（订单/拆分/成本）</div>
+                <div class="chart-container" id="chart-trend"></div>
+            </div>
+        </div>
+
+        <!-- 可优化订单 -->
+        <h2 class="section-title">💡 可优化订单识别</h2>
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>订单号</th>
+                        <th>商品件数</th>
+                        <th>包裹数</th>
+                        <th>物流成本</th>
+                        <th>理论最优</th>
+                        <th>浪费金额</th>
+                        <th>拆分原因</th>
+                        <th>优化建议</th>
+                    </tr>
+                </thead>
+                <tbody id="optimizable-table"></tbody>
+            </table>
+        </div>
+
+        <!-- 成本浪费 TOP -->
+        <h2 class="section-title">💸 成本浪费 TOP 订单</h2>
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>订单号</th>
+                        <th>日期</th>
+                        <th>商品件数</th>
+                        <th>包裹数</th>
+                        <th>物流成本</th>
+                        <th>理论最优</th>
+                        <th>浪费金额</th>
+                        <th>拆分原因</th>
+                        <th>仓库</th>
+                    </tr>
+                </thead>
+                <tbody id="waste-table"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // 完整模拟数据 - 包含所有维度
+        const mockData = [
+            { orderNo: "ORD20260301001", date: "2026-03-01", items: 5, packages: 1, isSplit: false, cost: 12.5, optimalCost: 12.5, waste: 0, reason: "", warehouse: "华东仓", customerLevel: "VIP", sku: "SKU-A001", category: "服装", orderType: "普通订单", channel: "淘宝", logistics: "中通" },
+            { orderNo: "ORD20260301002", date: "2026-03-01", items: 8, packages: 2, isSplit: true, cost: 28, optimalCost: 18, waste: 10, reason: "库存不足", warehouse: "华东仓", customerLevel: "普通", sku: "SKU-B002", category: "电子", orderType: "普通订单", channel: "抖音", logistics: "圆通" },
+            { orderNo: "ORD20260301003", date: "2026-03-01", items: 3, packages: 3, isSplit: true, cost: 45, optimalCost: 15, waste: 30, reason: "客户催发", warehouse: "华南仓", customerLevel: "VIP", sku: "SKU-C003", category: "美妆", orderType: "加急订单", channel: "京东", logistics: "顺丰" },
+            { orderNo: "ORD20260301004", date: "2026-03-02", items: 2, packages: 1, isSplit: false, cost: 10, optimalCost: 10, waste: 0, reason: "", warehouse: "华北仓", customerLevel: "普通", sku: "SKU-D004", category: "食品", orderType: "普通订单", channel: "淘宝", logistics: "中通" },
+            { orderNo: "ORD20260301005", date: "2026-03-02", items: 10, packages: 4, isSplit: true, cost: 52, optimalCost: 22, waste: 30, reason: "仓库调拨", warehouse: "华东仓", customerLevel: "普通", sku: "SKU-E005", category: "家居", orderType: "预售订单", channel: "独立站", logistics: "跨境物流" },
+            { orderNo: "ORD20260301006", date: "2026-03-03", items: 6, packages: 2, isSplit: true, cost: 24, optimalCost: 16, waste: 8, reason: "库存不足", warehouse: "华南仓", customerLevel: "VIP", sku: "SKU-F006", category: "服装", orderType: "促销订单", channel: "抖音", logistics: "圆通" },
+            { orderNo: "ORD20260301007", date: "2026-03-03", items: 4, packages: 1, isSplit: false, cost: 14, optimalCost: 14, waste: 0, reason: "", warehouse: "华北仓", customerLevel: "普通", sku: "SKU-G007", category: "电子", orderType: "普通订单", channel: "淘宝", logistics: "中通" },
+            { orderNo: "ORD20260301008", date: "2026-03-04", items: 12, packages: 3, isSplit: true, cost: 42, optimalCost: 25, waste: 17, reason: "客户催发", warehouse: "华东仓", customerLevel: "普通", sku: "SKU-H008", category: "美妆", orderType: "加急订单", channel: "京东", logistics: "顺丰" },
+            { orderNo: "ORD20260301009", date: "2026-03-04", items: 2, packages: 2, isSplit: true, cost: 22, optimalCost: 10, waste: 12, reason: "库存不足", warehouse: "华南仓", customerLevel: "VIP", sku: "SKU-I009", category: "食品", orderType: "大件订单", channel: "独立站", logistics: "京东物流" },
+            { orderNo: "ORD20260301010", date: "2026-03-05", items: 7, packages: 1, isSplit: false, cost: 18, optimalCost: 18, waste: 0, reason: "", warehouse: "华北仓", customerLevel: "普通", sku: "SKU-J010", category: "家居", orderType: "普通订单", channel: "淘宝", logistics: "中通" },
+            { orderNo: "ORD20260301011", date: "2026-03-05", items: 15, packages: 5, isSplit: true, cost: 68, optimalCost: 30, waste: 38, reason: "库存不足", warehouse: "华东仓", customerLevel: "VIP", sku: "SKU-K011", category: "电子", orderType: "促销订单", channel: "抖音", logistics: "顺丰" },
+            { orderNo: "ORD20260301012", date: "2026-03-06", items: 3, packages: 1, isSplit: false, cost: 11, optimalCost: 11, waste: 0, reason: "", warehouse: "华南仓", customerLevel: "普通", sku: "SKU-L012", category: "服装", orderType: "普通订单", channel: "淘宝", logistics: "圆通" },
+            { orderNo: "ORD20260301013", date: "2026-03-06", items: 9, packages: 3, isSplit: true, cost: 39, optimalCost: 20, waste: 19, reason: "客户催发", warehouse: "华北仓", customerLevel: "VIP", sku: "SKU-M013", category: "美妆", orderType: "加急订单", channel: "京东", logistics: "顺丰" },
+            { orderNo: "ORD20260301014", date: "2026-03-07", items: 4, packages: 2, isSplit: true, cost: 26, optimalCost: 14, waste: 12, reason: "仓库调拨", warehouse: "华东仓", customerLevel: "普通", sku: "SKU-N014", category: "食品", orderType: "预售订单", channel: "独立站", logistics: "跨境物流" },
+            { orderNo: "ORD20260301015", date: "2026-03-07", items: 6, packages: 1, isSplit: false, cost: 16, optimalCost: 16, waste: 0, reason: "", warehouse: "华南仓", customerLevel: "VIP", sku: "SKU-O015", category: "家居", orderType: "普通订单", channel: "抖音", logistics: "中通" }
+        ];
+
+        // 计算 KPI
+        function calculateKPIs() {
+            const totalOrders = mockData.length;
+            const totalPackages = mockData.reduce((sum, o) => sum + o.packages, 0);
+            const totalItems = mockData.reduce((sum, o) => sum + o.items, 0);
+            const splitOrders = mockData.filter(o => o.isSplit).length;
+            const totalCost = mockData.reduce((sum, o) => sum + o.cost, 0);
+            const totalOptimal = mockData.reduce((sum, o) => sum + o.optimalCost, 0);
+            const totalWaste = mockData.reduce((sum, o) => sum + o.waste, 0);
+
+            return {
+                orders: totalOrders,
+                packages: totalPackages,
+                splitOrders: splitOrders,
+                ratio: (totalPackages / totalOrders).toFixed(2),
+                avgItems: (totalItems / totalPackages).toFixed(1),
+                splitRate: ((splitOrders / totalOrders) * 100).toFixed(0),
+                totalCost: totalCost.toFixed(1),
+                waste: totalWaste.toFixed(1),
+                wasteRate: ((totalWaste / totalCost) * 100).toFixed(1)
+            };
+        }
+
+        // 更新 KPI 显示
+        function updateKPIs() {
+            const kpis = calculateKPIs();
+            document.getElementById('kpi-orders').textContent = kpis.orders;
+            document.getElementById('kpi-packages').textContent = kpis.packages;
+            document.getElementById('kpi-split-orders').textContent = kpis.splitOrders;
+            document.getElementById('kpi-ratio').textContent = kpis.ratio;
+            document.getElementById('kpi-avg-items').textContent = kpis.avgItems;
+            document.getElementById('kpi-split-rate').textContent = kpis.splitRate + '%';
+            document.getElementById('kpi-total-cost').textContent = '¥' + kpis.totalCost;
+            document.getElementById('kpi-waste').textContent = '¥' + kpis.waste;
+            document.getElementById('updateTime').textContent = '数据更新时间：' + new Date().toLocaleString('zh-CN');
+        }
+
+        // 生成预警
+        function generateAlerts() {
+            const kpis = calculateKPIs();
+            const alerts = [];
+            
+            if (parseFloat(kpis.splitRate) > 50) {
+                alerts.push({ level: 'high', msg: `分包率 ${kpis.splitRate}% 超过警戒线 (50%)` });
+            }
+            if (parseFloat(kpis.wasteRate) > 30) {
+                alerts.push({ level: 'high', msg: `成本浪费率 ${kpis.wasteRate}% 过高` });
+            }
+            if (parseFloat(kpis.ratio) > 2) {
+                alerts.push({ level: 'medium', msg: `包裹拆分比 ${kpis.ratio} 偏高` });
+            }
+            
+            // 检查仓库异常
+            const whData = {};
+            mockData.forEach(o => {
+                if (!whData[o.warehouse]) whData[o.warehouse] = { total: 0, split: 0 };
+                whData[o.warehouse].total++;
+                if (o.isSplit) whData[o.warehouse].split++;
+            });
+            Object.entries(whData).forEach(([wh, d]) => {
+                const rate = (d.split / d.total * 100).toFixed(0);
+                if (rate > 80) alerts.push({ level: 'high', msg: `${wh} 分包率 ${rate}% 异常偏高` });
+            });
+
+            const alertBox = document.getElementById('alertBox');
+            const alertContent = document.getElementById('alertContent');
+            
+            if (alerts.length === 0) {
+                alertBox.style.background = 'linear-gradient(135deg, #ebfbee, #d3f9d8)';
+                alertBox.style.borderLeftColor = '#40c057';
+                alertContent.innerHTML = '<div class="alert-item" style="color: #2b8a3e;">✅ 当前无异常，各项指标正常</div>';
+            } else {
+                alertContent.innerHTML = alerts.map(a => `
+                    <div class="alert-item">
+                        <span>${a.level === 'high' ? '🔴' : '🟡'} ${a.msg}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 拆分原因分布
+        function renderReasonChart() {
+            const reasonCount = {};
+            mockData.filter(o => o.isSplit).forEach(o => {
+                reasonCount[o.reason] = (reasonCount[o.reason] || 0) + 1;
+            });
+
+            const chart = echarts.init(document.getElementById('chart-reason'));
+            chart.setOption({
+                tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+                legend: { top: '0%', left: 'center', textStyle: { fontSize: 10 } },
+                series: [{
+                    type: 'pie', radius: ['40%', '70%'],
+                    itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+                    label: { show: false },
+                    data: Object.entries(reasonCount).map(([name, value]) => ({ name, value }))
+                }]
+            });
+        }
+
+        // 仓库分包对比
+        function renderWarehouseChart() {
+            const whData = {};
+            mockData.forEach(o => {
+                if (!whData[o.warehouse]) whData[o.warehouse] = { total: 0, split: 0, waste: 0 };
+                whData[o.warehouse].total++;
+                if (o.isSplit) { whData[o.warehouse].split++; whData[o.warehouse].waste += o.waste; }
+            });
+
+            const chart = echarts.init(document.getElementById('chart-warehouse'));
+            chart.setOption({
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['总订单', '拆分订单'], textStyle: { fontSize: 10 } },
+                grid: { left: '3%', right: '4%', bottom: '3%', top: '15%', containLabel: true },
+                xAxis: { type: 'category', data: Object.keys(whData), axisLabel: { fontSize: 10 } },
+                yAxis: { type: 'value', axisLabel: { fontSize: 10 } },
+                series: [
+                    { name: '总订单', type: 'bar', data: Object.values(whData).map(d => d.total) },
+                    { name: '拆分订单', type: 'bar', data: Object.values(whData).map(d => d.split) }
+                ]
+            });
+        }
+
+        // 包裹数分布
+        function renderPackageDistChart() {
+            const pkgCount = {};
+            mockData.forEach(o => { pkgCount[o.packages] = (pkgCount[o.packages] || 0) + 1; });
+
+            const chart = echarts.init(document.getElementById('chart-package-dist'));
+            chart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
+                xAxis: { type: 'category', data: Object.keys(pkgCount).map(k => k + '包'), axisLabel: { fontSize: 10 } },
+                yAxis: { type: 'value', axisLabel: { fontSize: 10 } },
+                series: [{
+                    type: 'bar',
+                    data: Object.values(pkgCount),
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#667eea' }, { offset: 1, color: '#764ba2' }
+                        ])
+                    }
+                }]
+            });
+        }
+
+        // 成本浪费分析
+        function renderCostChart() {
+            const kpis = calculateKPIs();
+            const chart = echarts.init(document.getElementById('chart-cost'));
+            chart.setOption({
+                series: [{
+                    type: 'gauge',
+                    startAngle: 180, endAngle: 0, min: 0, max: 100,
+                    progress: { show: true, width: 25 },
+                    axisLine: { lineStyle: { width: 25 } },
+                    detail: { fontSize: 20, offsetCenter: [0, '30%'], formatter: '浪费率\n{value}%' },
+                    data: [{ value: parseFloat(kpis.wasteRate) }]
+                }]
+            });
+        }
+
+        // 订单类型分包率
+        function renderOrderTypeChart() {
+            const typeData = {};
+            mockData.forEach(o => {
+                if (!typeData[o.orderType]) typeData[o.orderType] = { total: 0, split: 0 };
+                typeData[o.orderType].total++;
+                if (o.isSplit) typeData[o.orderType].split++;
+            });
+
+            const chart = echarts.init(document.getElementById('chart-order-type'));
+            chart.setOption({
+                tooltip: { trigger: 'axis', formatter: '{b}: {c}%' },
+                grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
+                xAxis: { type: 'category', data: Object.keys(typeData), axisLabel: { fontSize: 10, rotate: 30 } },
+                yAxis: { type: 'value', name: '分包率%', axisLabel: { fontSize: 10 } },
+                series: [{
+                    type: 'bar',
+                    data: Object.entries(typeData).map(([k, v]) => ({
+                        value: (v.split / v.total * 100).toFixed(0),
+                        itemStyle: { color: (v.split / v.total) > 0.5 ? '#ff6b6b' : '#51cf66' }
+                    }))
+                }]
+            });
+        }
+
+        // 销售渠道分包率
+        function renderChannelChart() {
+            const chData = {};
+            mockData.forEach(o => {
+                if (!chData[o.channel]) chData[o.channel] = { total: 0, split: 0 };
+                chData[o.channel].total++;
+                if (o.isSplit) chData[o.channel].split++;
+            });
+
+            const chart = echarts.init(document.getElementById('chart-channel'));
+            chart.setOption({
+                tooltip: { trigger: 'axis', formatter: '{b}: {c}%' },
+                grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
+                xAxis: { type: 'category', data: Object.keys(chData), axisLabel: { fontSize: 10, rotate: 30 } },
+                yAxis: { type: 'value', name: '分包率%', axisLabel: { fontSize: 10 } },
+                series: [{
+                    type: 'bar',
+                    data: Object.entries(chData).map(([k, v]) => ({
+                        value: (v.split / v.total * 100).toFixed(0),
+                        itemStyle: { color: '#4dabf7' }
+                    }))
+                }]
+            });
+        }
+
+        // 物流商分包率
+        function renderLogisticsChart() {
+            const logData = {};
+            mockData.forEach(o => {
+                if (!logData[o.logistics]) logData[o.logistics] = { total: 0, split: 0 };
+                logData[o.logistics].total++;
+                if (o.isSplit) logData[o.logistics].split++;
+            });
+
+            const chart = echarts.init(document.getElementById('chart-logistics'));
+            chart.setOption({
+                tooltip: { trigger: 'axis', formatter: '{b}: {c}%' },
+                grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
+                xAxis: { type: 'category', data: Object.keys(logData), axisLabel: { fontSize: 10, rotate: 30 } },
+                yAxis: { type: 'value', name: '分包率%', axisLabel: { fontSize: 10 } },
+                series: [{
+                    type: 'bar',
+                    data: Object.entries(logData).map(([k, v]) => ({
+                        value: (v.split / v.total * 100).toFixed(0),
+                        itemStyle: { color: '#b197fc' }
+                    }))
+                }]
+            });
+        }
+
+        // 客户等级分包率
+        function renderCustomerChart() {
+            const custData = {};
+            mockData.forEach(o => {
+                if (!custData[o.customerLevel]) custData[o.customerLevel] = { total: 0, split: 0 };
+                custData[o.customerLevel].total++;
+                if (o.isSplit) custData[o.customerLevel].split++;
+            });
+
+            const chart = echarts.init(document.getElementById('chart-customer'));
+            chart.setOption({
+                tooltip: { trigger: 'axis', formatter: '{b}: {c}%' },
+                grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
+                xAxis: { type: 'category', data: Object.keys(custData), axisLabel: { fontSize: 10 } },
+                yAxis: { type: 'value', name: '分包率%', axisLabel: { fontSize: 10 } },
+                series: [{
+                    type: 'bar',
+                    data: Object.entries(custData).map(([k, v]) => ({
+                        value: (v.split / v.total * 100).toFixed(0),
+                        itemStyle: { color: '#ff922b' }
+                    }))
+                }]
+            });
+        }
+
+        // 高拆分 SKU TOP10
+        function renderSkuTopChart() {
+            const skuData = {};
+            mockData.forEach(o => {
+                if (!skuData[o.sku]) skuData[o.sku] = { total: 0, split: 0 };
+                skuData[o.sku].total++;
+                if (o.isSplit) skuData[o.sku].split++;
+            });
+
+            const sorted = Object.entries(skuData)
+                .map(([sku, d]) => ({ sku, rate: d.split / d.total * 100, split: d.split }))
+                .sort((a, b) => b.split - a.split)
+                .slice(0, 10);
+
+            const chart = echarts.init(document.getElementById('chart-sku-top'));
+            chart.setOption({
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                grid: { left: '3%', right: '4%', bottom: '3%', top: '3%', containLabel: true },
+                xAxis: { type: 'value', name: '拆分次数', axisLabel: { fontSize: 10 } },
+                yAxis: { type: 'category', data: sorted.map(d => d.sku), axisLabel: { fontSize: 9 } },
+                series: [{
+                    type: 'bar',
+                    data: sorted.map(d => d.split),
+                    itemStyle: { color: '#e03131' }
+                }]
+            });
+        }
+
+        // 品类拆分率
+        function renderCategoryChart() {
+            const catData = {};
+            mockData.forEach(o => {
+                if (!catData[o.category]) catData[o.category] = { total: 0, split: 0 };
+                catData[o.category].total++;
+                if (o.isSplit) catData[o.category].split++;
+            });
+
+            const chart = echarts.init(document.getElementById('chart-category'));
+            chart.setOption({
+                tooltip: { trigger: 'item', formatter: '{b}: {c}%' },
+                series: [{
+                    type: 'pie',
+                    radius: ['35%', '65%'],
+                    itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+                    label: { fontSize: 10 },
+                    data: Object.entries(catData).map(([name, d]) => ({
+                        name, value: (d.split / d.total * 100).toFixed(0)
+                    }))
+                }]
+            });
+        }
+
+        // 日趋势
+        function renderTrendChart() {
+            const dateData = {};
+            mockData.forEach(o => {
+                if (!dateData[o.date]) dateData[o.date] = { orders: 0, split: 0, waste: 0 };
+                dateData[o.date].orders++;
+                if (o.isSplit) dateData[o.date].split++;
+                dateData[o.date].waste += o.waste;
+            });
+
+            const dates = Object.keys(dateData).sort();
+            const chart = echarts.init(document.getElementById('chart-trend'));
+            chart.setOption({
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['订单数', '拆分订单', '成本浪费'], textStyle: { fontSize: 10 } },
+                grid: { left: '3%', right: '4%', bottom: '3%', top: '15%', containLabel: true },
+                xAxis: { type: 'category', data: dates, axisLabel: { fontSize: 10 } },
+                yAxis: { type: 'value', axisLabel: { fontSize: 10 } },
+                series: [
+                    { name: '订单数', type: 'line', smooth: true, data: dates.map(d => dateData[d].orders) },
+                    { name: '拆分订单', type: 'line', smooth: true, data: dates.map(d => dateData[d].split) },
+                    { name: '成本浪费', type: 'bar', data: dates.map(d => dateData[d].waste) }
+                ]
+            });
+        }
+
+        // 可优化订单表格
+        function renderOptimizableTable() {
+            const sorted = [...mockData]
+                .filter(o => o.waste > 5)
+                .sort((a, b) => b.waste - a.waste)
+                .slice(0, 10);
+
+            document.getElementById('optimizable-table').innerHTML = sorted.map(o => `
+                <tr>
+                    <td>${o.orderNo}</td>
+                    <td>${o.items}</td>
+                    <td>${o.packages}</td>
+                    <td>¥${o.cost}</td>
+                    <td>¥${o.optimalCost}</td>
+                    <td class="cost-waste">¥${o.waste}</td>
+                    <td><span class="tag tag-orange">${o.reason}</span></td>
+                    <td><span class="tag tag-blue">${o.packages > 2 ? '建议合并包裹' : '检查拆单规则'}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // 成本浪费 TOP 表格
+        function renderWasteTable() {
+            const sorted = [...mockData]
+                .filter(o => o.waste > 0)
+                .sort((a, b) => b.waste - a.waste)
+                .slice(0, 15);
+
+            document.getElementById('waste-table').innerHTML = sorted.map(o => `
+                <tr>
+                    <td>${o.orderNo}</td>
+                    <td>${o.date}</td>
+                    <td>${o.items}</td>
+                    <td>${o.packages}</td>
+                    <td>¥${o.cost}</td>
+                    <td>¥${o.optimalCost}</td>
+                    <td class="cost-waste">¥${o.waste}</td>
+                    <td><span class="tag tag-red">${o.reason}</span></td>
+                    <td>${o.warehouse}</td>
+                </tr>
+            `).join('');
+        }
+
+        // 初始化
+        function init() {
+            updateKPIs();
+            generateAlerts();
+            renderReasonChart();
+            renderWarehouseChart();
+            renderPackageDistChart();
+            renderCostChart();
+            renderOrderTypeChart();
+            renderChannelChart();
+            renderLogisticsChart();
+            renderCustomerChart();
+            renderSkuTopChart();
+            renderCategoryChart();
+            renderTrendChart();
+            renderOptimizableTable();
+            renderWasteTable();
+
+            window.addEventListener('resize', () => {
+                document.querySelectorAll('[id^="chart-"]').forEach(el => {
+                    echarts.getInstanceByDom(el)?.resize();
+                });
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
