@@ -633,11 +633,10 @@
                         <thead>
                             <tr>
                                 <th rowspan="2" style="cursor: pointer;" onclick="sortTable('jiaxing', 'speed')">客户选择<br>运送方式</th>
-                                <th rowspan="2">产品维度</th>
-                                <th colspan="6">指标（点击可排序）</th>
+                                <th rowspan="2" style="cursor: pointer;" onclick="sortTable('jiaxing', 'l1l2l3')">产品维度<br>一级 | 二级 | 三级</th>
+                                <th colspan="5">指标（点击可排序）</th>
                             </tr>
                             <tr>
-                                <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'l1l2l3')">一级 | 二级 | 三级</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'packages')">包裹数 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'ratio')">占比 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'promise')">承诺时效 ⇅</th>
@@ -657,11 +656,10 @@
                         <thead>
                             <tr>
                                 <th rowspan="2" style="cursor: pointer;" onclick="sortTable('overseas', 'speed')">客户选择<br>运送方式</th>
-                                <th rowspan="2">产品维度</th>
-                                <th colspan="6">指标（点击可排序）</th>
+                                <th rowspan="2" style="cursor: pointer;" onclick="sortTable('overseas', 'l1l2l3')">产品维度<br>一级 | 二级 | 三级</th>
+                                <th colspan="5">指标（点击可排序）</th>
                             </tr>
                             <tr>
-                                <th style="cursor: pointer;" onclick="sortTable('overseas', 'l1l2l3')">一级 | 二级 | 三级</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'packages')">包裹数 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'ratio')">占比 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'promise')">承诺时效 ⇅</th>
@@ -1810,7 +1808,7 @@
                 tr.style.background = index % 2 === 0 ? '#fff' : '#f9f9f9';
                 tr.innerHTML = `
                     <td><span style="padding: 2px 8px; border-radius: 4px; background: ${row.speed === '快' ? '#4285f4' : '#ea4335'}; color: white; font-size: 11px;">${row.speed}</span></td>
-                    <td>${row.l1l2l3}</td>
+                    <td style="text-align: left;">${row.l1l2l3}</td>
                     <td style="text-align: right;">${row.packages.toLocaleString()}</td>
                     <td style="text-align: right;">${row.ratio.toFixed(1)}%</td>
                     <td style="text-align: center;">${row.promise.toFixed(1)}</td>
