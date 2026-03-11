@@ -856,7 +856,18 @@
                     document.getElementById('endDate').value = currentEndDate.toISOString().split('T')[0];
                 }
                 
-                init();
+                // 数据加载完成后再初始化
+                initProductFilters();
+                renderOrderStructure();
+                renderWarehouseRatio();
+                updateCharts();
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                
+                window.addEventListener('resize', () => {
+                    Object.values(charts).forEach(chart => chart.resize());
+                });
             } catch (error) {
                 console.error('加载数据失败:', error);
                 document.getElementById('loading').textContent = '数据加载失败，请检查 demo_data_real.json 是否存在';
@@ -952,18 +963,6 @@
             return { timeSeries, data: metrics };
         }
 
-        function init() {
-            initProductFilters();
-            updateCharts();
-            
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
-            
-            window.addEventListener('resize', () => {
-                Object.values(charts).forEach(chart => chart.resize());
-            });
-        }
-        
         function updateCharts() {
             updateStats();
             renderOrderStructure();
