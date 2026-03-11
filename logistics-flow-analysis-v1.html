@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物流流向分析 - 客户选择 vs 实际发出 V1.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1600px; margin: 0 auto; }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        /* 筛选器 */
+        .filters {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-item label {
+            font-weight: 600;
+            color: #555;
+            white-space: nowrap;
+        }
+        .filter-item select {
+            padding: 8px 12px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .filter-item select:hover, .filter-item select:focus {
+            border-color: #764ba2;
+            outline: none;
+        }
+        .btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: scale(1.05); }
+        .btn.reset { background: #f0f0f0; color: #667eea; }
+        
+        /* 指标卡片 */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-label {
+            color: #888;
+            margin-top: 8px;
+            font-size: 13px;
+        }
+        
+        /* 主图表区域 */
+        .main-chart {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .chart { width: 100%; height: 500px; }
+        
+        /* 数据表格 */
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover { background: #f8f9ff; }
+        .speed-fast {
+            padding: 4px 10px;
+            border-radius: 4px;
+            background: #4285f4;
+            color: white;
+            font-size: 11px;
+        }
+        .speed-slow {
+            padding: 4px 10px;
+            border-radius: 4px;
+            background: #ea4335;
+            color: white;
+            font-size: 11px;
+        }
+        
+        /* 动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .stats-row { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .filter-row { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌊 物流流向分析 - 客户选择 vs 实际发出</h1>
+        
+        <!-- 筛选器 -->
+        <div class="filters fade-in">
+            <div class="filter-row">
+                <div class="filter-item">
+                    <label>🌍 国家:</label>
+                    <select id="filter-country">
+                        <option value="all">全部</option>
+                        <option value="US">美国</option>
+                        <option value="UK">英国</option>
+                        <option value="CA">加拿大</option>
+                        <option value="AU">澳大利亚</option>
+                        <option value="OTHER">其他</option>
+                    </select>
+                </div>
+                
+                <div class="filter-item">
+                    <label>🏭 仓库:</label>
+                    <select id="filter-warehouse">
+                        <option value="all">全部</option>
+                        <option value="jiaxing">嘉兴仓</option>
+                        <option value="overseas">海外仓</option>
+                    </select>
+                </div>
+                
+                <div class="filter-item">
+                    <label>⚡ 运送方式:</label>
+                    <select id="filter-speed">
+                        <option value="all">全部</option>
+                        <option value="fast">快</option>
+                        <option value="slow">慢</option>
+                    </select>
+                </div>
+                
+                <div class="filter-item">
+                    <label>📦 一级产品:</label>
+                    <select id="filter-product-l1">
+                        <option value="all">全部</option>
+                        <option value="Standard">Standard</option>
+                        <option value="Expedited">Expedited</option>
+                    </select>
+                </div>
+                
+                <button class="btn" onclick="applyFilters()">🔍 应用</button>
+                <button class="btn reset" onclick="resetFilters()">🔄 重置</button>
+            </div>
+        </div>
+        
+        <!-- 指标卡片 -->
+        <div class="stats-row fade-in">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-total-packages">0</div>
+                <div class="stat-label">总包裹数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-jiaxing-ratio">0%</div>
+                <div class="stat-label">嘉兴仓占比</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-overseas-ratio">0%</div>
+                <div class="stat-label">海外仓占比</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-fast-ratio">0%</div>
+                <div class="stat-label">快线占比</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-avg-price">$0</div>
+                <div class="stat-label">平均单价/KG</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-delivery-rate">0%</div>
+                <div class="stat-label">平均妥投率</div>
+            </div>
+        </div>
+        
+        <!-- 桑基图 -->
+        <div class="main-chart fade-in">
+            <div class="chart-title">
+                🌊 整体流向分析 - 客户选择 → 实际发出
+            </div>
+            <div id="sankey-chart" class="chart"></div>
+        </div>
+        
+        <!-- 详细数据表 -->
+        <div class="table-container fade-in">
+            <div class="chart-title">📋 详细数据</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>仓库</th>
+                        <th>运送方式</th>
+                        <th>一级产品</th>
+                        <th>二级产品</th>
+                        <th>三级产品</th>
+                        <th style="text-align: right;">包裹数</th>
+                        <th style="text-align: right;">占比</th>
+                        <th style="text-align: right;">单价/KG</th>
+                        <th style="text-align: center;">承诺时效</th>
+                        <th style="text-align: center;">实际时效</th>
+                        <th style="text-align: center;">妥投率</th>
+                    </tr>
+                </thead>
+                <tbody id="data-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // 产品三级对应关系
+        const productHierarchy = {
+            'Standard': {
+                'JD': ['JD Express'],
+                'JS': ['JS EXPRESS', 'JS clothing line'],
+                'LM': ['liumai-USPS', 'Liumai L01 USA'],
+                'HBT': ['HABIT POST delivery', 'HABIT Commercial delivery'],
+                'Yanwen': ['Yanwen Airmail Registered', 'Yanwen Huixuan', 'Yanwen Fully-tracked'],
+                'YT': ['YUNTU THPHR', 'Yuntu registration', 'yuntu remote'],
+                'CNE': ['CNE clothing line', 'CNE Global Smart'],
+                'JC': ['JC-USPS', 'JC-UPS Ground Return'],
+                'MP': ['MPwarehouse-RM', 'MP-Return-RM'],
+                'LT': ['LTWarehouse-CAPOST', 'LTWarehouse-UNIUNI', 'LT-CAPOST Expedited', 'LTRemote-USPS-K', 'LT-Return-CA', 'LT-Return-USPS'],
+                'YHB': ['US-UNI', 'US-UNI2'],
+                'HR': ['Happy Returns'],
+                'winit': ['Winit Fulfillment-2D', 'Winit Fulfillment-5D', 'Winit Fulfillment-7D'],
+                'CK1': ['CK1-usps'],
+                'USPS': ['USPS Return'],
+                '4PX': ['4PX-Linkpost Economy']
+            },
+            'Expedited': {
+                'JS': ['JS Super Express'],
+                'LM': ['liumai L01'],
+                'YT': ['Yuntu Commercial delivery'],
+                'Fedex': ['FedEx Priority', 'FedEx Economy'],
+                'winit': ['Winit Fulfillment-2D'],
+                'CNE': ['CNE global priority'],
+                'DHL': ['DHL Express', 'AWPHK-DHL MAX']
+            }
+        };
+
+        // 原始数据模板
+        const rawDataTemplate = [
+            { country: 'US', warehouse: 'jiaxing', speed: 'fast', l1: 'Standard', l2: 'JS', l3: 'JS EXPRESS', packages: 1250, priceKg: 85, promiseDays: 7, actualDays: 6.5, deliveryRate: 0.98 },
+            { country: 'US', warehouse: 'jiaxing', speed: 'fast', l1: 'Standard', l2: 'JS', l3: 'JS clothing line', packages: 850, priceKg: 78, promiseDays: 7, actualDays: 6.8, deliveryRate: 0.97 },
+            { country: 'US', warehouse: 'jiaxing', speed: 'slow', l1: 'Standard', l2: 'Yanwen', l3: 'Yanwen Airmail Registered', packages: 2100, priceKg: 45, promiseDays: 15, actualDays: 14, deliveryRate: 0.95 },
+            { country: 'US', warehouse: 'jiaxing', speed: 'slow', l1: 'Standard', l2: 'YT', l3: 'YUNTU THPHR', packages: 1800, priceKg: 42, promiseDays: 15, actualDays: 13.5, deliveryRate: 0.96 },
+            { country: 'US', warehouse: 'overseas', speed: 'fast', l1: 'Expedited', l2: 'Fedex', l3: 'FedEx Priority', packages: 950, priceKg: 120, promiseDays: 3, actualDays: 2.5, deliveryRate: 0.99 },
+            { country: 'US', warehouse: 'overseas', speed: 'fast', l1: 'Expedited', l2: 'DHL', l3: 'DHL Express', packages: 680, priceKg: 115, promiseDays: 3, actualDays: 2.8, deliveryRate: 0.98 },
+            { country: 'US', warehouse: 'overseas', speed: 'slow', l1: 'Standard', l2: 'USPS', l3: 'USPS Return', packages: 1100, priceKg: 35, promiseDays: 7, actualDays: 6.5, deliveryRate: 0.94 },
+            
+            { country: 'UK', warehouse: 'jiaxing', speed: 'fast', l1: 'Standard', l2: 'JS', l3: 'JS EXPRESS', packages: 680, priceKg: 65, promiseDays: 7, actualDays: 6.8, deliveryRate: 0.97 },
+            { country: 'UK', warehouse: 'jiaxing', speed: 'slow', l1: 'Standard', l2: 'Yanwen', l3: 'Yanwen Airmail Registered', packages: 1200, priceKg: 38, promiseDays: 15, actualDays: 14.5, deliveryRate: 0.94 },
+            { country: 'UK', warehouse: 'overseas', speed: 'fast', l1: 'Expedited', l2: 'DHL', l3: 'DHL Express', packages: 520, priceKg: 95, promiseDays: 3, actualDays: 2.6, deliveryRate: 0.98 },
+            { country: 'UK', warehouse: 'overseas', speed: 'slow', l1: 'Standard', l2: 'YT', l3: 'Yuntu registration', packages: 780, priceKg: 32, promiseDays: 7, actualDays: 6.8, deliveryRate: 0.93 },
+            
+            { country: 'CA', warehouse: 'jiaxing', speed: 'fast', l1: 'Standard', l2: 'LT', l3: 'LTWarehouse-CAPOST', packages: 450, priceKg: 75, promiseDays: 7, actualDays: 6.5, deliveryRate: 0.96 },
+            { country: 'CA', warehouse: 'jiaxing', speed: 'slow', l1: 'Standard', l2: 'Yanwen', l3: 'Yanwen Huixuan', packages: 620, priceKg: 40, promiseDays: 15, actualDays: 14, deliveryRate: 0.94 },
+            { country: 'CA', warehouse: 'overseas', speed: 'fast', l1: 'Expedited', l2: 'Fedex', l3: 'FedEx Priority', packages: 380, priceKg: 110, promiseDays: 3, actualDays: 2.7, deliveryRate: 0.98 },
+            
+            { country: 'AU', warehouse: 'jiaxing', speed: 'fast', l1: 'Standard', l2: 'JS', l3: 'JS EXPRESS', packages: 320, priceKg: 70, promiseDays: 10, actualDays: 9, deliveryRate: 0.95 },
+            { country: 'AU', warehouse: 'jiaxing', speed: 'slow', l1: 'Standard', l2: 'Yanwen', l3: 'Yanwen Fully-tracked', packages: 580, priceKg: 42, promiseDays: 18, actualDays: 17, deliveryRate: 0.93 },
+            
+            { country: 'OTHER', warehouse: 'jiaxing', speed: 'slow', l1: 'Standard', l2: 'CNE', l3: 'CNE Global Smart', packages: 280, priceKg: 48, promiseDays: 20, actualDays: 19, deliveryRate: 0.92 },
+        ];
+
+        let filteredData = [];
+        let sankeyChart = null;
+
+        // 初始化
+        function init() {
+            resetFilters();
+            sankeyChart = echarts.init(document.getElementById('sankey-chart'));
+            window.addEventListener('resize', () => sankeyChart.resize());
+        }
+
+        // 应用筛选
+        function applyFilters() {
+            const country = document.getElementById('filter-country').value;
+            const warehouse = document.getElementById('filter-warehouse').value;
+            const speed = document.getElementById('filter-speed').value;
+            const l1 = document.getElementById('filter-product-l1').value;
+
+            filteredData = rawDataTemplate.filter(item => {
+                if (country !== 'all' && item.country !== country) return false;
+                if (warehouse !== 'all' && item.warehouse !== warehouse) return false;
+                if (speed !== 'all' && item.speed !== speed) return false;
+                if (l1 !== 'all' && item.l1 !== l1) return false;
+                return true;
+            });
+
+            updateDashboard();
+        }
+
+        // 重置筛选
+        function resetFilters() {
+            document.getElementById('filter-country').value = 'all';
+            document.getElementById('filter-warehouse').value = 'all';
+            document.getElementById('filter-speed').value = 'all';
+            document.getElementById('filter-product-l1').value = 'all';
+            applyFilters();
+        }
+
+        // 更新仪表板
+        function updateDashboard() {
+            updateStats();
+            renderSankey();
+            renderTable();
+        }
+
+        // 更新统计卡片
+        function updateStats() {
+            const totalPackages = filteredData.reduce((sum, d) => sum + d.packages, 0);
+            const jiaxingPackages = filteredData.filter(d => d.warehouse === 'jiaxing').reduce((sum, d) => sum + d.packages, 0);
+            const overseasPackages = filteredData.filter(d => d.warehouse === 'overseas').reduce((sum, d) => sum + d.packages, 0);
+            const fastPackages = filteredData.filter(d => d.speed === 'fast').reduce((sum, d) => sum + d.packages, 0);
+            const avgPrice = filteredData.length > 0 ? filteredData.reduce((sum, d) => sum + d.priceKg, 0) / filteredData.length : 0;
+            const avgDeliveryRate = filteredData.length > 0 ? filteredData.reduce((sum, d) => sum + d.deliveryRate, 0) / filteredData.length : 0;
+
+            document.getElementById('stat-total-packages').textContent = totalPackages.toLocaleString();
+            document.getElementById('stat-jiaxing-ratio').textContent = totalPackages > 0 ? ((jiaxingPackages / totalPackages) * 100).toFixed(1) + '%' : '0%';
+            document.getElementById('stat-overseas-ratio').textContent = totalPackages > 0 ? ((overseasPackages / totalPackages) * 100).toFixed(1) + '%' : '0%';
+            document.getElementById('stat-fast-ratio').textContent = totalPackages > 0 ? ((fastPackages / totalPackages) * 100).toFixed(1) + '%' : '0%';
+            document.getElementById('stat-avg-price').textContent = '$' + avgPrice.toFixed(2);
+            document.getElementById('stat-delivery-rate').textContent = (avgDeliveryRate * 100).toFixed(1) + '%';
+        }
+
+        // 渲染桑基图
+        function renderSankey() {
+            const nodes = [];
+            const links = [];
+            const nodeMap = new Map();
+
+            // 添加节点
+            const addNode = (name, category) => {
+                if (!nodeMap.has(name)) {
+                    nodeMap.set(name, nodes.length);
+                    nodes.push({
+                        name: name,
+                        category: category,
+                        itemStyle: { color: getCategoryColor(category) }
+                    });
+                }
+            };
+
+            // 添加连线
+            const addLink = (source, target, value) => {
+                links.push({
+                    source: source,
+                    target: target,
+                    value: value
+                });
+            };
+
+            // 构建数据
+            filteredData.forEach(item => {
+                const warehouseName = item.warehouse === 'jiaxing' ? '嘉兴仓' : '海外仓';
+                const speedName = item.speed === 'fast' ? '快线' : '慢线';
+                const l1Name = item.l1;
+                const l3Name = item.l3;
+
+                addNode(warehouseName, 'warehouse');
+                addNode(speedName, 'speed');
+                addNode(l1Name, 'product_l1');
+                addNode(l3Name, 'product_l3');
+
+                addLink(warehouseName, speedName, item.packages);
+                addLink(speedName, l1Name, item.packages);
+                addLink(l1Name, l3Name, item.packages);
+            });
+
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    triggerOn: 'mousemove',
+                    formatter: function(params) {
+                        if (params.dataType === 'edge') {
+                            return `${params.data.source} → ${params.data.target}<br/>包裹数：${params.data.value.toLocaleString()}`;
+                        }
+                        return `${params.name}<br/>总包裹数：${params.value ? params.value.toLocaleString() : '0'}`;
+                    }
+                },
+                series: [{
+                    type: 'sankey',
+                    layout: 'none',
+                    focusNodeAdjacency: 'allEdges',
+                    data: nodes,
+                    links: links,
+                    emphasis: {
+                        focus: 'adjacency',
+                        lineStyle: {
+                            color: 'source',
+                            opacity: 0.8
+                        }
+                    },
+                    lineStyle: {
+                        color: 'source',
+                        opacity: 0.5,
+                        curveness: 0.5
+                    },
+                    label: {
+                        position: 'right',
+                        fontSize: 12,
+                        fontWeight: 'bold'
+                    },
+                    levels: [
+                        {
+                            depth: 0,
+                            itemStyle: { color: '#4285f4' },
+                            lineStyle: { color: 'source', opacity: 0.6 }
+                        },
+                        {
+                            depth: 1,
+                            itemStyle: { color: '#ea4335' },
+                            lineStyle: { color: 'source', opacity: 0.6 }
+                        },
+                        {
+                            depth: 2,
+                            itemStyle: { color: '#34a853' },
+                            lineStyle: { color: 'source', opacity: 0.6 }
+                        },
+                        {
+                            depth: 3,
+                            itemStyle: { color: '#fbbc04' },
+                            lineStyle: { color: 'source', opacity: 0.6 }
+                        }
+                    ]
+                }]
+            };
+
+            sankeyChart.setOption(option);
+        }
+
+        // 获取类别颜色
+        function getCategoryColor(category) {
+            const colors = {
+                'warehouse': '#4285f4',
+                'speed': '#ea4335',
+                'product_l1': '#34a853',
+                'product_l3': '#fbbc04'
+            };
+            return colors[category] || '#4285f4';
+        }
+
+        // 渲染表格
+        function renderTable() {
+            const tbody = document.getElementById('data-table-body');
+            tbody.innerHTML = '';
+
+            filteredData.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.style.background = index % 2 === 0 ? '#fff' : '#f9f9f9';
+                
+                const warehouseName = item.warehouse === 'jiaxing' ? '嘉兴仓' : '海外仓';
+                const speedClass = item.speed === 'fast' ? 'speed-fast' : 'speed-slow';
+                const speedName = item.speed === 'fast' ? '快' : '慢';
+
+                tr.innerHTML = `
+                    <td>${warehouseName}</td>
+                    <td><span class="${speedClass}">${speedName}</span></td>
+                    <td>${item.l1}</td>
+                    <td>${item.l2}</td>
+                    <td>${item.l3}</td>
+                    <td style="text-align: right;">${item.packages.toLocaleString()}</td>
+                    <td style="text-align: right;">${((item.packages / filteredData.reduce((sum, d) => sum + d.packages, 0)) * 100).toFixed(1)}%</td>
+                    <td style="text-align: right;">$${item.priceKg.toFixed(2)}</td>
+                    <td style="text-align: center;">${item.promiseDays}天</td>
+                    <td style="text-align: center;">${item.actualDays}天</td>
+                    <td style="text-align: center;">${(item.deliveryRate * 100).toFixed(1)}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 启动
+        init();
+    </script>
+</body>
+</html>
