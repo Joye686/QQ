@@ -633,10 +633,13 @@
                         <thead>
                             <tr>
                                 <th rowspan="2" style="cursor: pointer;" onclick="sortTable('jiaxing', 'speed')">客户选择<br>运送方式</th>
-                                <th rowspan="2" style="cursor: pointer;" onclick="sortTable('jiaxing', 'l1l2l3')">产品维度<br>一级 | 二级 | 三级</th>
+                                <th colspan="3">产品维度</th>
                                 <th colspan="5">指标（点击可排序）</th>
                             </tr>
                             <tr>
+                                <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'l1')">一级</th>
+                                <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'l2')">二级</th>
+                                <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'l3')">三级</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'packages')">包裹数 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'ratio')">占比 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'promise')">承诺时效 ⇅</th>
@@ -656,10 +659,13 @@
                         <thead>
                             <tr>
                                 <th rowspan="2" style="cursor: pointer;" onclick="sortTable('overseas', 'speed')">客户选择<br>运送方式</th>
-                                <th rowspan="2" style="cursor: pointer;" onclick="sortTable('overseas', 'l1l2l3')">产品维度<br>一级 | 二级 | 三级</th>
+                                <th colspan="3">产品维度</th>
                                 <th colspan="5">指标（点击可排序）</th>
                             </tr>
                             <tr>
+                                <th style="cursor: pointer;" onclick="sortTable('overseas', 'l1')">一级</th>
+                                <th style="cursor: pointer;" onclick="sortTable('overseas', 'l2')">二级</th>
+                                <th style="cursor: pointer;" onclick="sortTable('overseas', 'l3')">三级</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'packages')">包裹数 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'ratio')">占比 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'promise')">承诺时效 ⇅</th>
@@ -1786,7 +1792,9 @@
                 rows.sort((a, b) => {
                     let valA, valB;
                     if (state.column === 'speed') { valA = a.speed; valB = b.speed; }
-                    else if (state.column === 'l1l2l3') { valA = a.l1l2l3; valB = b.l1l2l3; }
+                    else if (state.column === 'l1') { valA = a.l1; valB = b.l1; }
+                    else if (state.column === 'l2') { valA = a.l2; valB = b.l2; }
+                    else if (state.column === 'l3') { valA = a.l3; valB = b.l3; }
                     else if (state.column === 'packages') { valA = a.packages; valB = b.packages; }
                     else if (state.column === 'ratio') { valA = a.ratio; valB = b.ratio; }
                     else if (state.column === 'promise') { valA = a.promise; valB = b.promise; }
@@ -1808,7 +1816,9 @@
                 tr.style.background = index % 2 === 0 ? '#fff' : '#f9f9f9';
                 tr.innerHTML = `
                     <td><span style="padding: 2px 8px; border-radius: 4px; background: ${row.speed === '快' ? '#4285f4' : '#ea4335'}; color: white; font-size: 11px;">${row.speed}</span></td>
-                    <td style="text-align: left;">${row.l1l2l3}</td>
+                    <td style="text-align: left;">${row.l1}</td>
+                    <td style="text-align: left;">${row.l2}</td>
+                    <td style="text-align: left;">${row.l3}</td>
                     <td style="text-align: right;">${row.packages.toLocaleString()}</td>
                     <td style="text-align: right;">${row.ratio.toFixed(1)}%</td>
                     <td style="text-align: center;">${row.promise.toFixed(1)}</td>
@@ -1825,7 +1835,7 @@
             
             tfoot.innerHTML = `
                 <tr style="background: #e8f4f8; font-weight: bold;">
-                    <td colspan="2" style="text-align: left;">汇总</td>
+                    <td colspan="4" style="text-align: left;">汇总</td>
                     <td style="text-align: right;">${totalPackages.toLocaleString()}</td>
                     <td style="text-align: right;">100.0%</td>
                     <td style="text-align: center;">${avgPromise.toFixed(1)}</td>
