@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>物流分析仪表板 v3</title>
+    <title>物流分析仪表板 v3.2</title>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -316,12 +316,21 @@
                         </select>
                     </div>
                     <div class="filter-item">
-                        <label>📦 产品:</label>
-                        <select id="filter-product" onchange="updateCharts()">
+                        <label>📦 一级产品:</label>
+                        <select id="filter-product-l1" onchange="updateProductL2()">
                             <option value="all">全部</option>
-                            <option value="standard">Standard Shipping</option>
-                            <option value="express">Express Shipping</option>
-                            <option value="quickship">Quickship</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>📦 二级产品:</label>
+                        <select id="filter-product-l2" onchange="updateProductL3()" disabled>
+                            <option value="all">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>📦 三级产品:</label>
+                        <select id="filter-product-l3" onchange="updateCharts()" disabled>
+                            <option value="all">全部</option>
                         </select>
                     </div>
                     <div class="filter-item">
@@ -466,6 +475,100 @@
     </div>
 
     <script>
+        // 产品三级对应关系
+        const productHierarchy = {
+            'Standard': {
+                'JD': ['JD Express'],
+                'JS': ['JS EXPRESS', 'JS clothing line'],
+                'LM': ['liumai-USPS', 'Liumai L01 USA'],
+                'HBT': ['HABIT POST delivery', 'HABIT Commercial delivery'],
+                'Yanwen': ['Yanwen Airmail Registered', 'Yanwen Huixuan', 'Yanwen Fully-tracked'],
+                'YT': ['YUNTU THPHR', 'Yuntu registration', 'yuntu remote'],
+                'CNE': ['CNE clothing line', 'CNE Global Smart'],
+                'JC': ['JC-USPS', 'JC-UPS Ground Return'],
+                'MP': ['MPwarehouse-RM', 'MP-Return-RM'],
+                'LT': ['LTWarehouse-CAPOST', 'LTWarehouse-UNIUNI', 'LT-CAPOST Expedited', 'LTRemote-USPS-K', 'LT-Return-CA', 'LT-Return-USPS'],
+                'YHB': ['US-UNI', 'US-UNI2'],
+                'HR': ['Happy Returns'],
+                'winit': ['Winit Fulfillment-2D', 'Winit Fulfillment-5D', 'Winit Fulfillment-7D'],
+                'CK1': ['CK1-usps'],
+                'USPS': ['USPS Return'],
+                '4PX': ['4PX-Linkpost Economy']
+            },
+            'Expedited': {
+                'JS': ['JS Super Express'],
+                'LM': ['liumai L01'],
+                'YT': ['Yuntu Commercial delivery'],
+                'Fedex': ['FedEx Priority', 'FedEx Economy'],
+                'winit': ['Winit Fulfillment-2D'],
+                'CNE': ['CNE global priority'],
+                'DHL': ['DHL Express', 'AWPHK-DHL MAX']
+            }
+        };
+
+        // 初始化产品筛选器
+        function initProductFilters() {
+            const l1Select = document.getElementById('filter-product-l1');
+            const l2Select = document.getElementById('filter-product-l2');
+            const l3Select = document.getElementById('filter-product-l3');
+            
+            // 添加一级产品选项
+            Object.keys(productHierarchy).forEach(level1 => {
+                const option = document.createElement('option');
+                option.value = level1;
+                option.textContent = level1;
+                l1Select.appendChild(option);
+            });
+        }
+
+        // 更新二级产品选项
+        function updateProductL2() {
+            const l1Value = document.getElementById('filter-product-l1').value;
+            const l2Select = document.getElementById('filter-product-l2');
+            const l3Select = document.getElementById('filter-product-l3');
+            
+            l2Select.innerHTML = '<option value="all">全部</option>';
+            l3Select.innerHTML = '<option value="all">全部</option>';
+            l3Select.disabled = true;
+            
+            if (l1Value === 'all') {
+                l2Select.disabled = true;
+                return;
+            }
+            
+            l2Select.disabled = false;
+            const level2Options = productHierarchy[l1Value] || {};
+            Object.keys(level2Options).forEach(level2 => {
+                const option = document.createElement('option');
+                option.value = level2;
+                option.textContent = level2;
+                l2Select.appendChild(option);
+            });
+        }
+
+        // 更新三级产品选项
+        function updateProductL3() {
+            const l1Value = document.getElementById('filter-product-l1').value;
+            const l2Value = document.getElementById('filter-product-l2').value;
+            const l3Select = document.getElementById('filter-product-l3');
+            
+            l3Select.innerHTML = '<option value="all">全部</option>';
+            
+            if (l1Value === 'all' || l2Value === 'all') {
+                l3Select.disabled = true;
+                return;
+            }
+            
+            l3Select.disabled = false;
+            const level3Options = productHierarchy[l1Value]?.[l2Value] || [];
+            level3Options.forEach(level3 => {
+                const option = document.createElement('option');
+                option.value = level3;
+                option.textContent = level3;
+                l3Select.appendChild(option);
+            });
+        }
+
         // 模拟数据
         const mockData = {
             countries: ['美国', '英国', '加拿大', '澳大利亚', '其他'],
@@ -517,6 +620,7 @@
         let currentTimeGranularity = 'week';
 
         function init() {
+            initProductFilters();
             renderJiaxingTChart();
             renderOverseasTChart();
             renderOrderStructure();
