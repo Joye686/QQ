@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV 转 JSON 转换器 - 物流仪表板 V3.14</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        /* 上传区域 */
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        .upload-area:hover {
+            background: #f8f9ff;
+            border-color: #764ba2;
+        }
+        .upload-area.dragover {
+            background: #e8f0fe;
+            border-color: #4285f4;
+        }
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .upload-text {
+            color: #555;
+            font-size: 16px;
+        }
+        .upload-hint {
+            color: #888;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+        
+        /* 文本输入区域 */
+        .input-section {
+            margin: 20px 0;
+        }
+        .section-title {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        /* 按钮 */
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #667eea;
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        /* 结果区域 */
+        .result-section {
+            margin-top: 30px;
+            display: none;
+        }
+        .result-section.show {
+            display: block;
+        }
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .result-stats {
+            color: #888;
+            font-size: 14px;
+        }
+        .result-stats strong {
+            color: #667eea;
+        }
+        
+        /* 预览表格 */
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .preview-table th, .preview-table td {
+            border: 1px solid #e0e0e0;
+            padding: 8px;
+            text-align: left;
+        }
+        .preview-table th {
+            background: #f8f9ff;
+            color: #667eea;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        .preview-table tr:hover {
+            background: #f5f5f5;
+        }
+        
+        /* 成功提示 */
+        .success-box {
+            background: #e8f4f8;
+            border-left: 4px solid #34a853;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .success-box h4 {
+            color: #34a853;
+            margin-bottom: 10px;
+        }
+        .success-box ol {
+            margin-left: 20px;
+            color: #555;
+            font-size: 14px;
+        }
+        .success-box li {
+            margin-bottom: 8px;
+        }
+        
+        /* 错误提示 */
+        .error-box {
+            background: #fce8e6;
+            border-left: 4px solid #ea4335;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        .error-box.show {
+            display: block;
+        }
+        .error-box h4 {
+            color: #ea4335;
+            margin-bottom: 10px;
+        }
+        .error-box p {
+            color: #555;
+            font-size: 14px;
+        }
+        
+        /* 字段映射配置 */
+        .mapping-section {
+            background: #f8f9ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .mapping-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .mapping-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .mapping-item label {
+            font-size: 12px;
+            color: #666;
+            min-width: 100px;
+        }
+        .mapping-item select, .mapping-item input {
+            flex: 1;
+            padding: 6px 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        /* 隐藏的文件输入 */
+        #fileInput {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📦 CSV 转 JSON 转换器</h1>
+        <p class="subtitle">物流仪表板 V3.14 数据转换工具</p>
+        
+        <!-- 上传区域 -->
+        <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">点击上传 CSV 文件</div>
+            <div class="upload-hint">或拖拽文件到此处，或直接粘贴 CSV 内容到下方</div>
+        </div>
+        <input type="file" id="fileInput" accept=".csv" onchange="handleFileSelect(event)">
+        
+        <!-- 文本输入 -->
+        <div class="input-section">
+            <div class="section-title">📋 或粘贴 CSV 内容</div>
+            <textarea id="csvInput" placeholder="order_no,ship_no,ship_date,warehouse,country,logistics_cost,weight_kg,item_count...
+MM2512300852047348,MM2512300852047348b1,2025-12-30，美国仓，美国，27.63,0.197,2..."></textarea>
+        </div>
+        
+        <!-- 字段映射 -->
+        <div class="mapping-section">
+            <div class="section-title">⚙️ 字段映射（如自动识别失败可手动调整）</div>
+            <div class="mapping-grid" id="mappingGrid"></div>
+        </div>
+        
+        <!-- 按钮 -->
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="convert()">🔄 开始转换</button>
+            <button class="btn btn-secondary" onclick="clearAll()">🗑️ 清空</button>
+        </div>
+        
+        <!-- 错误提示 -->
+        <div class="error-box" id="errorBox">
+            <h4>❌ 转换失败</h4>
+            <p id="errorMessage"></p>
+        </div>
+        
+        <!-- 结果区域 -->
+        <div class="result-section" id="resultSection">
+            <div class="result-header">
+                <div class="section-title">✅ 转换结果</div>
+                <div class="result-stats" id="resultStats"></div>
+            </div>
+            
+            <div class="btn-group" style="margin-top: 10px;">
+                <button class="btn btn-primary" onclick="downloadJson()">💾 下载 JSON 文件</button>
+                <button class="btn btn-secondary" onclick="copyJson()">📋 复制 JSON</button>
+            </div>
+            
+            <!-- 预览表格 -->
+            <table class="preview-table" id="previewTable">
+                <thead id="previewThead"></thead>
+                <tbody id="previewTbody"></tbody>
+            </table>
+            
+            <!-- 成功提示 -->
+            <div class="success-box">
+                <h4>🎉 下一步操作</h4>
+                <ol>
+                    <li>下载 JSON 文件，保存为 <code>demo_data_real.json</code></li>
+                    <li>将文件放到仪表板目录（与 <code>logistics-dashboard-v3.14.html</code> 同级）</li>
+                    <li>刷新浏览器打开仪表板，数据已更新！</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 目标字段列表
+        const targetFields = [
+            'order_no', 'ship_no', 'order_date', 'site', 'speed_type', 'product_l3',
+            'tracking_no', 'warehouse', 'country', 'item_count', 'order_status',
+            'promise_ship_date', 'ship_date', 'promise_delivery_date', 'delivery_date',
+            'delivery_days', 'weight_kg', 'logistics_cost', 'ship_month', 'order_month',
+            'product_l1', 'is_overdue_ship', 'is_overdue_delivery', 'overdue_days',
+            'supplier', 'promise_days', 'package_count', 'order_count', 'revenue',
+            'order_type', 'country_code', 'warehouse_code', 'speed_type_code', 'product_l2'
+        ];
+        
+        // 必填字段
+        const requiredFields = ['order_no', 'ship_no', 'ship_date', 'warehouse', 'country', 'logistics_cost', 'weight_kg', 'item_count'];
+        
+        // 当前 CSV 列名
+        let csvColumns = [];
+        let fieldMapping = {};
+        let convertedData = null;
+        
+        // 国家映射
+        const countryMap = {
+            '美国': 'US', 'US': 'US', 'USA': 'US', 'United States': 'US',
+            '英国': 'UK', 'UK': 'UK', 'GB': 'UK', 'United Kingdom': 'UK',
+            '加拿大': 'CA', 'CA': 'CA', 'Canada': 'CA',
+            '澳大利亚': 'AU', 'AU': 'AU', 'Australia': 'AU',
+        };
+        
+        // 仓库映射
+        const warehouseMap = {
+            '嘉兴仓': 'jiaxing', '嘉兴': 'jiaxing', '中国仓': 'jiaxing', 'CN': 'jiaxing',
+            '美国仓': 'overseas', '海外仓': 'overseas', '海外': 'overseas', 'US': 'overseas',
+            '英国仓': 'overseas', '加拿大仓': 'overseas', '澳大利亚仓': 'overseas',
+        };
+        
+        // 速度映射
+        const speedMap = {
+            '快速': '快', '快': '快', 'Expedited': '快', 'Express': '快',
+            '普通': '慢', '慢': '慢', 'Standard': '慢', 'Regular': '慢',
+        };
+        
+        // 产品 L1 映射
+        const productL1Standard = [
+            'JC-USPS', 'JC-UPS Ground Return', 'HABIT POST delivery', 'HABIT Commercial delivery',
+            'Yanwen Airmail Registered', 'Yanwen Huixuan', 'Yanwen Fully-tracked',
+            'YUNTU THPHR', 'Yuntu registration', 'yuntu remote', 'Yuntu Commercial delivery',
+            'CNE clothing line', 'CNE Global Smart', 'CNE global priority',
+            'liumai-USPS', 'Liumai L01 USA', 'liumai L01',
+            'JS EXPRESS', 'JS clothing line', 'JS Super Express',
+            'MPwarehouse-RM', 'MP-Return-RM',
+            'LTWarehouse-CAPOST', 'LTWarehouse-UNIUNI', 'LT-CAPOST Expedited',
+            'LTRemote-USPS-K', 'LT-Return-CA', 'LT-Return-USPS',
+            'US-UNI', 'US-UNI2', 'Happy Returns',
+            'Winit Fulfillment-2D', 'Winit Fulfillment-5D', 'Winit Fulfillment-7D',
+            'CK1-usps', 'USPS Return', '4PX-Linkpost Economy'
+        ];
+        
+        function getProductL1(productL3) {
+            if (productL1Standard.includes(productL3)) return 'Standard';
+            if (['FedEx Priority', 'FedEx Economy', 'DHL Express', 'AWPHK-DHL MAX'].includes(productL3)) return 'Expedited';
+            return 'Standard';
+        }
+        
+        // 初始化字段映射界面
+        function initMappingUI(columns) {
+            const grid = document.getElementById('mappingGrid');
+            grid.innerHTML = '';
+            
+            targetFields.forEach(field => {
+                const item = document.createElement('div');
+                item.className = 'mapping-item';
+                
+                const label = document.createElement('label');
+                label.textContent = field;
+                
+                const select = document.createElement('select');
+                select.dataset.field = field;
+                
+                // 空选项
+                const emptyOption = document.createElement('option');
+                emptyOption.value = '';
+                emptyOption.textContent = '— 跳过 —';
+                select.appendChild(emptyOption);
+                
+                // CSV 列选项
+                columns.forEach(col => {
+                    const option = document.createElement('option');
+                    option.value = col;
+                    option.textContent = col;
+                    
+                    // 自动匹配
+                    if (col.toLowerCase().includes(field.toLowerCase()) || field.toLowerCase().includes(col.toLowerCase())) {
+                        option.selected = true;
+                    }
+                    
+                    select.appendChild(option);
+                });
+                
+                select.onchange = () => {
+                    fieldMapping[field] = select.value;
+                };
+                
+                item.appendChild(label);
+                item.appendChild(select);
+                grid.appendChild(item);
+            });
+            
+            // 保存映射
+            targetFields.forEach(field => {
+                const select = grid.querySelector(`select[data-field="${field}"]`);
+                fieldMapping[field] = select.value;
+            });
+        }
+        
+        // 处理文件选择
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('csvInput').value = e.target.result;
+                    parseCsvColumns(e.target.result);
+                };
+                reader.readAsText(file, 'utf-8');
+            }
+        }
+        
+        // 拖拽处理
+        const uploadArea = document.getElementById('uploadArea');
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.name.endsWith('.csv')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('csvInput').value = e.target.result;
+                    parseCsvColumns(e.target.result);
+                };
+                reader.readAsText(file, 'utf-8');
+            }
+        });
+        
+        // 解析 CSV 列名
+        function parseCsvColumns(csvText) {
+            const lines = csvText.trim().split('\n');
+            if (lines.length > 0) {
+                // 尝试检测分隔符
+                const firstLine = lines[0];
+                const separator = firstLine.includes('\t') ? '\t' : ',';
+                csvColumns = firstLine.split(separator).map(col => col.trim().replace(/^"|"$/g, ''));
+                initMappingUI(csvColumns);
+            }
+        }
+        
+        // 解析 CSV 行
+        function parseCsvRow(line, separator) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === separator && !inQuotes) {
+                    result.push(current.trim().replace(/^"|"$/g, ''));
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim().replace(/^"|"$/g, ''));
+            return result;
+        }
+        
+        // 转换数值
+        function convertNumber(value, defaultValue = 0) {
+            if (value === '' || value === null || value === undefined) return defaultValue;
+            const num = parseFloat(value);
+            return isNaN(num) ? defaultValue : num;
+        }
+        
+        // 转换
+        function convert() {
+            const csvText = document.getElementById('csvInput').value.trim();
+            const errorBox = document.getElementById('errorBox');
+            const resultSection = document.getElementById('resultSection');
+            
+            errorBox.classList.remove('show');
+            resultSection.classList.remove('show');
+            
+            if (!csvText) {
+                showError('请输入 CSV 内容或上传文件');
+                return;
+            }
+            
+            try {
+                // 检测分隔符
+                const firstLine = csvText.split('\n')[0];
+                const separator = firstLine.includes('\t') ? '\t' : ',';
+                
+                // 解析列名
+                const lines = csvText.split('\n').filter(line => line.trim());
+                if (lines.length < 2) {
+                    showError('CSV 内容至少需要包含表头和一数据');
+                    return;
+                }
+                
+                const headers = parseCsvRow(lines[0], separator);
+                const data = [];
+                
+                // 解析数据行
+                for (let i = 1; i < lines.length; i++) {
+                    const values = parseCsvRow(lines[i], separator);
+                    const row = {};
+                    
+                    headers.forEach((header, index) => {
+                        row[header] = values[index] || '';
+                    });
+                    
+                    data.push(row);
+                }
+                
+                // 转换为目标格式
+                const converted = data.map(row => {
+                    const getValue = (field) => {
+                        const mappedField = fieldMapping[field];
+                        return mappedField ? (row[mappedField] || '') : '';
+                    };
+                    
+                    const productL3 = getValue('product_l3');
+                    
+                    return {
+                        order_no: getValue('order_no'),
+                        ship_no: getValue('ship_no'),
+                        order_date: getValue('order_date'),
+                        site: getValue('site') || 'M',
+                        speed_type: getValue('speed_type') || '普通',
+                        product_l3: productL3,
+                        tracking_no: getValue('tracking_no'),
+                        warehouse: getValue('warehouse'),
+                        country: getValue('country'),
+                        item_count: convertNumber(getValue('item_count'), 1),
+                        order_status: getValue('order_status') || '已发货',
+                        promise_ship_date: getValue('promise_ship_date'),
+                        ship_date: getValue('ship_date'),
+                        promise_delivery_date: getValue('promise_delivery_date'),
+                        delivery_date: getValue('delivery_date'),
+                        delivery_days: convertNumber(getValue('delivery_days'), 0),
+                        weight_kg: convertNumber(getValue('weight_kg'), 0),
+                        logistics_cost: convertNumber(getValue('logistics_cost'), 0),
+                        ship_month: getValue('ship_month'),
+                        order_month: getValue('order_month'),
+                        product_l1: getValue('product_l1') || getProductL1(productL3),
+                        is_overdue_ship: getValue('is_overdue_ship') || '否',
+                        is_overdue_delivery: getValue('is_overdue_delivery') || '未超期',
+                        overdue_days: convertNumber(getValue('overdue_days'), 0),
+                        supplier: getValue('supplier'),
+                        promise_days: convertNumber(getValue('promise_days'), 0),
+                        package_count: convertNumber(getValue('package_count'), 1),
+                        order_count: convertNumber(getValue('order_count'), 1),
+                        revenue: convertNumber(getValue('revenue'), 0),
+                        order_type: getValue('order_type') || 'shipped',
+                        country_code: countryMap[getValue('country_code')] || countryMap[getValue('country')] || 'OTHER',
+                        warehouse_code: warehouseMap[getValue('warehouse_code')] || warehouseMap[getValue('warehouse')] || 'jiaxing',
+                        speed_type_code: speedMap[getValue('speed_type_code')] || speedMap[getValue('speed_type')] || '慢',
+                        product_l2: getValue('product_l2')
+                    };
+                });
+                
+                convertedData = converted;
+                
+                // 显示结果
+                document.getElementById('resultStats').innerHTML = 
+                    `共 <strong>${converted.length}</strong> 条记录`;
+                
+                // 预览表格
+                renderPreview(converted);
+                
+                resultSection.classList.add('show');
+                
+            } catch (error) {
+                showError('转换失败：' + error.message);
+            }
+        }
+        
+        // 渲染预览表格
+        function renderPreview(data) {
+            const thead = document.getElementById('previewThead');
+            const tbody = document.getElementById('previewTbody');
+            
+            // 表头
+            const fields = ['order_no', 'ship_no', 'ship_date', 'warehouse', 'country', 'logistics_cost', 'weight_kg'];
+            thead.innerHTML = '<tr>' + fields.map(f => `<th>${f}</th>`).join('') + '</tr>';
+            
+            // 数据（最多显示 10 条）
+            const previewData = data.slice(0, 10);
+            tbody.innerHTML = previewData.map(row => 
+                '<tr>' + fields.map(f => `<td>${row[f]}</td>`).join('') + '</tr>'
+            ).join('');
+        }
+        
+        // 显示错误
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorBox').classList.add('show');
+        }
+        
+        // 下载 JSON
+        function downloadJson() {
+            if (!convertedData) return;
+            
+            const json = JSON.stringify(convertedData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'demo_data_real.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // 复制 JSON
+        function copyJson() {
+            if (!convertedData) return;
+            
+            const json = JSON.stringify(convertedData, null, 2);
+            navigator.clipboard.writeText(json).then(() => {
+                alert('✅ JSON 已复制到剪贴板！');
+            }).catch(() => {
+                alert('❌ 复制失败，请手动复制');
+            });
+        }
+        
+        // 清空
+        function clearAll() {
+            document.getElementById('csvInput').value = '';
+            document.getElementById('resultSection').classList.remove('show');
+            document.getElementById('errorBox').classList.remove('show');
+            document.getElementById('mappingGrid').innerHTML = '';
+            convertedData = null;
+        }
+        
+        // 自动检测 CSV 列名（当用户粘贴内容时）
+        document.getElementById('csvInput').addEventListener('blur', function() {
+            if (this.value.trim()) {
+                parseCsvColumns(this.value);
+            }
+        });
+    </script>
+</body>
+</html>
