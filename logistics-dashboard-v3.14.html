@@ -889,7 +889,7 @@
         // 加载真实数据
         async function loadData() {
             try {
-                const response = await fetch('demo_data_real.json');
+                const response = await fetch('demo_data_real.min.json');
                 rawData = await response.json();
                 console.log('加载数据:', rawData.length, '条');
                 
