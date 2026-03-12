@@ -35,7 +35,7 @@ COLUMN_MAP = {
     '保价费': 'insurance_fee',
     '运保费收入': 'shipping_insurance_revenue',
     '实际运费': 'actual_shipping_fee',
-    '物流运费 (实际运费/预估运费)': 'logistics_cost',
+    '物流运费(实际运费/预估运费)': 'logistics_cost',
     '是否分单': 'is_split',
     '分单原因': 'split_reason',
     '一级产品': 'product_l1',
@@ -165,7 +165,7 @@ def convert_csv_to_json(csv_path, json_path):
             'delivery_date': convert_date(get_value('妥投时间', 'delivery_date')),
             'delivery_days': convert_number(get_value('妥投时效', 'delivery_days'), 0),
             'weight_kg': convert_number(get_value('实际/预估重量', 'weight_kg'), 0),
-            'logistics_cost': convert_number(get_value('物流运费 (实际运费/预估运费)', 'logistics_cost'), 0),
+            'logistics_cost': convert_number(get_value('物流运费(实际运费/预估运费)', '物流运费', '实际运费', '运费', 'logistics_cost'), 0),
             'ship_month': '',  # 可以从 ship_date 提取
             'order_month': '',
             'product_l1': get_value('一级产品', 'product_l1') or get_product_l1(product_l3),
