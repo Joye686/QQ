@@ -391,6 +391,11 @@
         let charts = {};
         let exchangeRate = 1; // USD to CNY
 
+        // 页面加载完成后自动加载示例数据
+        window.addEventListener('DOMContentLoaded', function() {
+            loadDemoData();
+        });
+
         // 仓库类型识别 - 自动判断是嘉兴仓还是海外仓
         function getWarehouseType(warehouseName) {
             if (!warehouseName) return '未知';
@@ -502,7 +507,7 @@
 
         // 加载示例数据
         function loadDemoData() {
-            fetch('demo_data_real.min.json')
+            fetch('demo_data_sample.json')
                 .then(res => res.json())
                 .then(data => {
                     rawData = data.map(row => processRow(row));
@@ -514,7 +519,7 @@
                 })
                 .catch(err => {
                     console.error('加载示例数据失败:', err);
-                    alert('加载示例数据失败，请确保 demo_data_real.min.json 存在');
+                    document.getElementById('loading').textContent = '加载失败，请上传 Excel 文件';
                 });
         }
 
