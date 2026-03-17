@@ -1201,7 +1201,11 @@
             const countryMap = { '全部': 'all', '美国': 'US', '英国': 'UK', '加拿大': 'CA', '澳大利亚': 'AU', '其他': 'OTHER' };
             const selectedCountry = countryMap[country] || 'all';
             
-            let jiaxingData = rawData.filter(d => d.warehouse_code === 'jiaxing');
+            // 【修复 3】智能识别嘉兴仓和海外仓
+            let jiaxingData = rawData.filter(d => {
+                const wh = (d.warehouse_code || '').toLowerCase();
+                return wh.includes('jiaxing') || wh.includes('嘉兴');
+            });
             
             // 应用发货时间筛选
             jiaxingData = jiaxingData.filter(d => {
@@ -1352,7 +1356,13 @@
             const countryMap = { '全部': 'all', '美国': 'US', '英国': 'UK', '加拿大': 'CA', '澳大利亚': 'AU', '其他': 'OTHER' };
             const selectedCountry = countryMap[country] || 'all';
             
-            let overseasData = rawData.filter(d => d.warehouse_code === 'overseas');
+            // 【修复 3】智能识别海外仓
+            let overseasData = rawData.filter(d => {
+                const wh = (d.warehouse_code || '').toLowerCase();
+                return wh.includes('us') || wh.includes('ca') || wh.includes('uk') || 
+                       wh.includes('america') || wh.includes('canada') || wh.includes('britain') ||
+                       wh.includes('overseas') || wh.includes('海外');
+            });
             
             overseasData = overseasData.filter(d => {
                 const shipDate = new Date(d.ship_date);
