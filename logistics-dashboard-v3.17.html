@@ -645,6 +645,7 @@
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'promise')">承诺时效 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'actual')">实际时效 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'delivery')">妥投率 ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'achievement')">时效达成率 ⇅</th>
                             </tr>
                         </thead>
                         <tbody id="jiaxing-table-body"></tbody>
@@ -671,6 +672,7 @@
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'promise')">承诺时效 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'actual')">实际时效 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'delivery')">妥投率 ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('overseas', 'achievement')">时效达成率 ⇅</th>
                             </tr>
                         </thead>
                         <tbody id="overseas-table-body"></tbody>
@@ -1616,9 +1618,14 @@
                 if (!stats[country]) return;
                 
                 const orders = stats[country];
-                if (d.warehouse_code === 'jiaxing') {
+                const wh = (d.warehouse_code || '').toLowerCase();
+                
+                // 【修复 1】智能识别仓库类型
+                if (wh.includes('jiaxing') || wh.includes('嘉兴')) {
                     orders.jiaxing++;
-                } else if (d.warehouse_code === 'overseas') {
+                } else if (wh.includes('us') || wh.includes('ca') || wh.includes('uk') || 
+                           wh.includes('america') || wh.includes('canada') || wh.includes('britain') ||
+                           wh.includes('overseas') || wh.includes('海外')) {
                     orders.overseas++;
                 }
                 orders.total++;
@@ -1893,7 +1900,8 @@
                         promiseDaysCount: 0,
                         actualDaysSum: 0,
                         actualDaysCount: 0,
-                        deliveredCount: 0
+                        deliveredCount: 0,
+                        onTimeCount: 0  // 时效达成数量
                     };
                 }
                 grouped[key].packages++;
@@ -1940,6 +1948,32 @@
                 if (d.delivery_date && d.delivery_date.trim() !== '') {
                     grouped[key].deliveredCount++;
                 }
+                
+                // 【修复 2】时效达成率 = 妥投订单中实际时效 <= 承诺时效的占比
+                if (d.delivery_date && d.delivery_date.trim() !== '' && d.promise_days !== undefined) {
+                    const deliveryDate = new Date(d.delivery_date);
+                    const shipDate = new Date(d.ship_date);
+                    if (!isNaN(deliveryDate.getTime()) && !isNaN(shipDate.getTime())) {
+                        const actualDays = (deliveryDate - shipDate) / (1000 * 60 * 60 * 24);
+                        const promiseDays = parseFloat(d.promise_days) || 0;
+                        // 承诺最晚发货时间 = order_date + promise_days
+                        let orderDate;
+                        const orderDateStr = String(d.order_date);
+                        if (orderDateStr.length === 8) {
+                            orderDate = new Date(`${orderDateStr.slice(0,4)}-${orderDateStr.slice(4,6)}-${orderDateStr.slice(6,8)}`);
+                        } else {
+                            orderDate = new Date(d.order_date);
+                        }
+                        if (!isNaN(orderDate.getTime())) {
+                            const promiseShipDate = new Date(orderDate.getTime() + (promiseDays * 24 * 60 * 60 * 1000));
+                            const promisedDays = (promiseShipDate - shipDate) / (1000 * 60 * 60 * 24);
+                            // 实际时效 <= 承诺时效
+                            if (actualDays <= promisedDays) {
+                                grouped[key].onTimeCount++;
+                            }
+                        }
+                    }
+                }
             });
             
             // 计算总计
@@ -1947,6 +1981,7 @@
             const totalPromise = Object.values(grouped).reduce((sum, g) => sum + (g.promiseDaysCount > 0 ? g.promiseDaysSum / g.promiseDaysCount * g.packages : 0), 0);
             const totalActual = Object.values(grouped).reduce((sum, g) => sum + (g.actualDaysCount > 0 ? g.actualDaysSum / g.actualDaysCount * g.packages : 0), 0);
             const totalDelivered = Object.values(grouped).reduce((sum, g) => sum + g.deliveredCount, 0);
+            const totalOnTime = Object.values(grouped).reduce((sum, g) => sum + g.onTimeCount, 0);
             
             // 转换为数组并排序
             let rows = Object.values(grouped).map(row => {
@@ -1954,12 +1989,14 @@
                 const avgPromise = row.promiseDaysCount > 0 ? (row.promiseDaysSum / row.promiseDaysCount) : 0;
                 const avgActual = row.actualDaysCount > 0 ? (row.actualDaysSum / row.actualDaysCount) : 0;
                 const deliveryRate = row.packages > 0 ? (row.deliveredCount / row.packages * 100) : 0;
+                const achievementRate = row.deliveredCount > 0 ? (row.onTimeCount / row.deliveredCount * 100) : 0;
                 return {
                     ...row,
                     ratio: ratio,
                     promise: avgPromise,
                     actual: avgActual,
-                    delivery: deliveryRate
+                    delivery: deliveryRate,
+                    achievement: achievementRate  // 时效达成率
                 };
             });
             
@@ -1977,6 +2014,7 @@
                     else if (state.column === 'promise') { valA = a.promise; valB = b.promise; }
                     else if (state.column === 'actual') { valA = a.actual; valB = b.actual; }
                     else if (state.column === 'delivery') { valA = a.delivery; valB = b.delivery; }
+                    else if (state.column === 'achievement') { valA = a.achievement; valB = b.achievement; }
                     
                     if (typeof valA === 'string') {
                         return state.ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
@@ -2001,6 +2039,7 @@
                     <td style="text-align: center;">${row.promise.toFixed(1)}</td>
                     <td style="text-align: center;">${row.actual.toFixed(1)}</td>
                     <td style="text-align: center;">${row.delivery.toFixed(1)}%</td>
+                    <td style="text-align: center;">${row.achievement.toFixed(1)}%</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -2018,6 +2057,7 @@
                     <td style="text-align: center;">${avgPromise.toFixed(1)}</td>
                     <td style="text-align: center;">${avgActual.toFixed(1)}</td>
                     <td style="text-align: center;">${deliveryRate.toFixed(1)}%</td>
+                    <td style="text-align: center;">${totalDelivered > 0 ? (totalOnTime / totalDelivered * 100).toFixed(1) : 0}%</td>
                 </tr>
             `;
         }
