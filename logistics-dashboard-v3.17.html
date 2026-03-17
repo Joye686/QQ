@@ -582,7 +582,7 @@
                     
                     <!-- 嘉兴仓图表 -->
                     <div class="jiaxing-chart">
-                        <div class="chart-label">🏭 嘉兴仓 by 周/月（实物用折线图按所选期间展示）</div>
+                        <div class="chart-label">🏭 嘉兴仓 by 周/月（折线图展示）</div>
                         <div id="jiaxing-t-chart" class="chart"></div>
                     </div>
                     
@@ -590,12 +590,6 @@
                     <div class="overseas-chart">
                         <div class="chart-label">🌍 海外仓 by 周/月（折线图展示）</div>
                         <div id="overseas-t-chart" class="chart"></div>
-                    </div>
-                    
-                    <!-- 【修复 2】全量数据图表（当选择"全部"国家时显示） -->
-                    <div id="total-t-chart-wrapper" class="jiaxing-chart" style="display: none; border-top: 2px dashed #e0e0e0; margin-top: 15px; padding-top: 15px;">
-                        <div class="chart-label">📈 全量数据（不区分国家）</div>
-                        <div id="total-t-chart" class="chart"></div>
                     </div>
                     
                     <!-- 右侧时间粒度选择 -->
@@ -998,7 +992,25 @@
             
             return rawData.filter(d => {
                 if (country !== 'all' && d.country_code !== country) return false;
-                if (warehouse !== 'all' && d.warehouse_code !== warehouse) return false;
+                
+                // 【修复 3】智能识别仓库 - 海外仓包含美国仓 + 加拿大仓 + 英国仓
+                if (warehouse !== 'all') {
+                    const wh = (d.warehouse_code || '').toLowerCase();
+                    if (warehouse === '海外仓') {
+                        // 海外仓 = 美国仓 + 加拿大仓 + 英国仓
+                        if (!wh.includes('us') && !wh.includes('ca') && !wh.includes('uk') && 
+                            !wh.includes('america') && !wh.includes('canada') && !wh.includes('britain')) {
+                            return false;
+                        }
+                    } else if (warehouse === '嘉兴') {
+                        if (!wh.includes('jiaxing') && !wh.includes('嘉兴')) {
+                            return false;
+                        }
+                    } else if (d.warehouse_code !== warehouse) {
+                        return false;
+                    }
+                }
+                
                 if (productL1 !== 'all' && d.product_l1 !== productL1) return false;
                 if (productL2 !== 'all' && d.product_l2 !== productL2) return false;
                 if (productL3 !== 'all' && d.product_l3 !== productL3) return false;
@@ -1459,85 +1471,11 @@
             charts.overseasT.setOption(option);
         }
 
-        // 【修复 2】渲染全量数据图表（不区分国家）
+        // 【修复 2】渲染全量数据图表（不区分国家）- 已整合到 renderMultiLineChart 中
+        // 此函数保留用于兼容性，但不再单独显示图表
         function renderTotalTChart() {
-            const country = document.querySelector('.country-btn.active')?.textContent || '全部';
-            const totalWrapper = document.getElementById('total-t-chart-wrapper');
-            
-            // 只有选择"全部"国家时才显示
-            if (country !== '全部') {
-                totalWrapper.style.display = 'none';
-                return;
-            }
-            
-            totalWrapper.style.display = 'block';
-            
-            if (charts.totalT) charts.totalT.dispose();
-            charts.totalT = echarts.init(document.getElementById('total-t-chart'));
-            
-            // 全量数据（不区分国家）
-            let totalData = rawData.filter(d => {
-                const shipDate = new Date(d.ship_date);
-                return !isNaN(shipDate.getTime()) && shipDate >= currentStartDate && shipDate <= currentEndDate;
-            });
-            
-            const { timeSeries, data } = calculateMetrics(totalData, currentTimeGranularity, currentStartDate, currentEndDate);
-            
-            const option = {
-                tooltip: {
-                    trigger: 'axis',
-                    formatter: function(params) {
-                        const point = params[0];
-                        return `${point.name}<br/>${getMetricName(currentMetric)}: ${point.value}`;
-                    }
-                },
-                grid: { left: '3%', right: '4%', bottom: '10%', top: '10%', containLabel: true },
-                xAxis: {
-                    type: 'category',
-                    data: timeSeries,
-                    axisLabel: { 
-                        fontSize: 10, 
-                        rotate: currentTimeGranularity === 'day' ? 45 : 0
-                    }
-                },
-                yAxis: {
-                    type: 'value',
-                    axisLabel: { fontSize: 10 }
-                },
-                series: [{
-                    name: getMetricName(currentMetric),
-                    type: 'line',
-                    data: data[currentMetric],
-                    smooth: true,
-                    itemStyle: { color: '#34a853' },
-                    areaStyle: {
-                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-                            offset: 0,
-                            color: '#34a853' + '40'
-                        }, {
-                            offset: 1,
-                            color: '#34a853' + '05'
-                        }])
-                    },
-                    symbol: 'circle',
-                    symbolSize: 6,
-                    label: {
-                        show: true,
-                        position: 'top',
-                        formatter: '{c}',
-                        fontSize: 10,
-                        color: '#34a853',
-                        fontWeight: 'bold'
-                    },
-                    emphasis: {
-                        focus: 'series',
-                        lineStyle: {
-                            width: 4
-                        }
-                    }
-                }]
-            };
-            charts.totalT.setOption(option);
+            // 全量数据曲线已整合到 renderMultiLineChart 中作为"全部"曲线显示
+            // 不再单独显示图表，避免重复
         }
 
         function renderOrderStructure() {
@@ -1960,12 +1898,15 @@
                 }
                 grouped[key].packages++;
                 
-                // 承诺时效
-                if (d.promise_ship_date && d.ship_date) {
-                    const promiseDate = new Date(d.promise_ship_date);
+                // 【修复 4】承诺时效 = 承诺最晚发货时间 - 发货时间
+                // 使用 order_date + promise_days 计算承诺最晚发货时间
+                if (d.order_date && d.ship_date && d.promise_days) {
+                    const orderDate = new Date(d.order_date);
                     const shipDate = new Date(d.ship_date);
-                    if (!isNaN(promiseDate.getTime()) && !isNaN(shipDate.getTime())) {
-                        const days = (promiseDate - shipDate) / (1000 * 60 * 60 * 24);
+                    if (!isNaN(orderDate.getTime()) && !isNaN(shipDate.getTime())) {
+                        // 承诺最晚发货时间 = 下单时间 + 承诺时效天数
+                        const promiseShipDate = new Date(orderDate.getTime() + (d.promise_days * 24 * 60 * 60 * 1000));
+                        const days = (promiseShipDate - shipDate) / (1000 * 60 * 60 * 24);
                         grouped[key].promiseDaysSum += days;
                         grouped[key].promiseDaysCount++;
                     }
