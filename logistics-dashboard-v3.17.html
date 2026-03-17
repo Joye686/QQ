@@ -996,13 +996,13 @@
                 // 【修复 3】智能识别仓库 - 海外仓包含美国仓 + 加拿大仓 + 英国仓
                 if (warehouse !== 'all') {
                     const wh = (d.warehouse_code || '').toLowerCase();
-                    if (warehouse === '海外仓') {
+                    if (warehouse === 'overseas') {
                         // 海外仓 = 美国仓 + 加拿大仓 + 英国仓
                         if (!wh.includes('us') && !wh.includes('ca') && !wh.includes('uk') && 
                             !wh.includes('america') && !wh.includes('canada') && !wh.includes('britain')) {
                             return false;
                         }
-                    } else if (warehouse === '嘉兴') {
+                    } else if (warehouse === 'jiaxing') {
                         if (!wh.includes('jiaxing') && !wh.includes('嘉兴')) {
                             return false;
                         }
