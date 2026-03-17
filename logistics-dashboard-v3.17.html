@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物流分析仪表板 v3.17 (开档降档流向分析)</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1800px; margin: 0 auto; }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        /* 筛选器 */
+        .filters {
+            background: white;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .filter-item label {
+            font-weight: 600;
+            color: #555;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+        .filter-item select, .filter-item input {
+            padding: 6px 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .filter-item select:focus, .filter-item input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        .btn {
+            padding: 6px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .btn:hover { transform: scale(1.05); }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+        
+        /* 指标卡片 */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #888;
+            margin-top: 4px;
+            font-size: 11px;
+        }
+        
+        /* 图表容器 */
+        .charts-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .chart-wrapper {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .chart-label {
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        .chart {
+            width: 100%;
+            height: 280px;
+        }
+        .chart-full {
+            width: 100%;
+            height: 300px;
+            margin-top: 15px;
+            border-top: 2px dashed #e0e0e0;
+            padding-top: 15px;
+        }
+        
+        /* Excel 表格 */
+        .excel-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .excel-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .excel-section {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .excel-label {
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+            padding: 10px;
+            background: #f5f5f5;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .table-scroll {
+            max-height: 250px;
+            overflow: auto;
+        }
+        .excel-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        .excel-table th, .excel-table td {
+            padding: 6px 8px;
+            border: 1px solid #eee;
+            text-align: left;
+        }
+        .excel-table th {
+            background: #e8f0fe;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: white;
+            font-size: 1.5em;
+        }
+        
+        @media (max-width: 1400px) {
+            .stats-row { grid-template-columns: repeat(4, 1fr); }
+            .chart-grid, .excel-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 1024px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📦 物流分析仪表板 v3.17 (开档降档流向分析)</h1>
+        
+        <div id="loading" class="loading">正在加载数据...</div>
+        
+        <div id="dashboard" style="display: none;">
+            <!-- 文件上传 -->
+            <div class="filters">
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label>📁 选择 Excel 文件:</label>
+                        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+                    </div>
+                    <button class="btn" onclick="loadFile()">📂 加载数据</button>
+                    <button class="btn btn-secondary" onclick="loadDemoData()"> 使用示例数据</button>
+                </div>
+            </div>
+            
+            <!-- 筛选器 -->
+            <div class="filters">
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label>📅 时间:</label>
+                        <input type="date" id="filter-date-start" value="2025-12-01">
+                        <span>-</span>
+                        <input type="date" id="filter-date-end" value="2026-01-31">
+                    </div>
+                    <div class="filter-item">
+                        <label> 发货仓库:</label>
+                        <select id="filter-warehouse">
+                            <option value="all">全部</option>
+                            <option value="嘉兴">嘉兴仓</option>
+                            <option value="美国">美国仓</option>
+                            <option value="英国">英国仓</option>
+                            <option value="加拿大">加拿大仓</option>
+                            <option value="海外仓">海外仓</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>🌍 国家:</label>
+                        <select id="filter-country">
+                            <option value="all">全部</option>
+                            <option value="美国">美国</option>
+                            <option value="英国">英国</option>
+                            <option value="加拿大">加拿大</option>
+                            <option value="澳大利亚">澳大利亚</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>🚚 一级产品:</label>
+                        <select id="filter-product-l1">
+                            <option value="all">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>🚚 二级产品:</label>
+                        <select id="filter-product-l2">
+                            <option value="all">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>💰 货币:</label>
+                        <select id="filter-currency">
+                            <option value="USD">USD</option>
+                            <option value="CNY">CNY</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="applyFilters()">🔍 应用</button>
+                    <button class="btn btn-secondary" onclick="resetFilters()">🔄 重置</button>
+                </div>
+            </div>
+
+            <!-- 指标卡片 -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-price-kg">$0.00</div>
+                    <div class="stat-label">单价/KG</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-price-pkg">$0.00</div>
+                    <div class="stat-label">单价/包裹</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-packages">0</div>
+                    <div class="stat-label">发货包裹数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-orders">0</div>
+                    <div class="stat-label">订单数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-items-pkg">0.0</div>
+                    <div class="stat-label">包单件</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-weight-pkg">0.0 kg</div>
+                    <div class="stat-label">每包裹重量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-logistics-ratio">0%</div>
+                    <div class="stat-label">正向物流占收入比</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total-logistics">$0</div>
+                    <div class="stat-label">累计物流费</div>
+                </div>
+            </div>
+
+            <!-- 嘉兴仓 vs 海外仓 折线图 -->
+            <div class="charts-section">
+                <div class="section-title">📊 嘉兴仓 vs 海外仓 - 按国家/时间维度分析（发货口径）</div>
+                <div class="chart-grid">
+                    <div class="chart-wrapper">
+                        <div class="chart-label">🏭 嘉兴仓 by 周/月（实物用折线图按所选期间展示）</div>
+                        <div id="jiaxing-chart" class="chart"></div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <div class="chart-label">🌍 海外仓 by 周/月（折线图展示）</div>
+                        <div id="overseas-chart" class="chart"></div>
+                    </div>
+                </div>
+                <!-- 全量数据折线图（当选择"全部"国家时显示） -->
+                <div id="total-chart-wrapper" class="chart-full" style="display: none;">
+                    <div class="chart-label">📈 全量数据（不区分国家）</div>
+                    <div id="total-chart" class="chart"></div>
+                </div>
+            </div>
+
+            <!-- 产品明细表 -->
+            <div class="excel-container">
+                <div class="section-title">📋 产品明细表（按国家）</div>
+                <div class="excel-grid">
+                    <div class="excel-section">
+                        <div class="excel-label">🏭 嘉兴仓 - 客户选择</div>
+                        <div class="table-scroll">
+                            <table class="excel-table" id="jiaxing-table">
+                                <thead>
+                                    <tr>
+                                        <th>客户选择运送方式</th>
+                                        <th>产品维度</th>
+                                        <th class="text-right">包裹数</th>
+                                        <th class="text-right">占比</th>
+                                        <th class="text-right">承诺时效</th>
+                                        <th class="text-right">实际时效</th>
+                                        <th class="text-right">妥投率</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="excel-section">
+                        <div class="excel-label">🌍 海外仓 - 实际发出</div>
+                        <div class="table-scroll">
+                            <table class="excel-table" id="overseas-table">
+                                <thead>
+                                    <tr>
+                                        <th>实际物流方式</th>
+                                        <th>产品维度</th>
+                                        <th class="text-right">包裹数</th>
+                                        <th class="text-right">占比</th>
+                                        <th class="text-right">承诺时效</th>
+                                        <th class="text-right">实际时效</th>
+                                        <th class="text-right">妥投率</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let rawData = [];
+        let filteredData = [];
+        let charts = {};
+        let exchangeRate = 1; // USD to CNY
+
+        // 仓库映射
+        const warehouseMap = {
+            'jiaxing': '嘉兴',
+            '嘉兴': '嘉兴',
+            '美国': '美国',
+            '英国': '英国',
+            '加拿大': '加拿大',
+            'overseas': '海外仓',
+            '海外仓': '海外仓'
+        };
+
+        // 国家映射
+        const countryMap = {
+            'US': '美国',
+            'USA': '美国',
+            '美国': '美国',
+            'UK': '英国',
+            'GB': '英国',
+            '英国': '英国',
+            'CA': '加拿大',
+            'CAN': '加拿大',
+            '加拿大': '加拿大',
+            'AU': '澳大利亚',
+            'AUS': '澳大利亚',
+            '澳大利亚': '澳大利亚',
+            '其他': '其他'
+        };
+
+        // 加载 Excel 文件
+        function loadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('请先选择文件！');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    rawData = jsonData.map(row => processRow(row));
+                    initProductFilters();
+                    applyFilters();
+                    
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                } catch (err) {
+                    console.error('加载失败:', err);
+                    alert('加载失败：' + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 处理每一行数据
+        function processRow(row) {
+            // 字段映射 - 使用正确的列名
+            const warehouse = warehouseMap[row['发货地']] || row['发货地'] || '未知';
+            const country = countryMap[row['收货地']] || countryMap[row['country_code']] || '其他';
+            
+            // 【修复 1】使用"物流运费 (实际运费/预估运费)"列作为物流费用
+            let logisticsFee = 0;
+            if (row['物流运费 (实际运费/预估运费)']) {
+                logisticsFee = parseFloat(row['物流运费 (实际运费/预估运费)']) || 0;
+            } else if (row['logistics_cost']) {
+                logisticsFee = parseFloat(row['logistics_cost']) || 0;
+            }
+            
+            // 发货日期处理
+            let shipDate = row['发货时间'] || row['ship_date'] || '';
+            if (shipDate && typeof shipDate === 'number') {
+                // Excel 日期序列号转换
+                const date = new Date(Math.round((shipDate - 25569) * 86400 * 1000));
+                shipDate = date.toISOString().split('T')[0];
+            }
+            
+            return {
+                orderNo: row['订单号'] || row['order_no'] || '',
+                shipNo: row['发货单号'] || row['ship_no'] || '',
+                shipDate: shipDate,
+                warehouse: warehouse,
+                country: country,
+                customerShipping: row['客户选择的运送方式'] || '',
+                actualShipping: row['实际物流方式'] || row['actual_shipping_method'] || '',
+                packageCount: parseInt(row['商品数量']) || parseInt(row['package_count']) || 1,
+                status: row['订单发货状态'] || row['shipping_status'] || '',
+                promiseDays: parseFloat(row['承诺时效']) || parseFloat(row['promise_days']) || 0,
+                actualDays: parseFloat(row['妥投时效']) || parseFloat(row['actual_days']) || 0,
+                weight: parseFloat(row['实际/预估重量']) || parseFloat(row['weight_kg']) || 0,
+                logisticsFee: logisticsFee,
+                revenue: parseFloat(row['revenue']) || 0,
+                productL1: row['product_l1'] || row['一级产品'] || '',
+                productL2: row['product_l2'] || row['二级产品'] || '',
+                productL3: row['product_l3'] || row['三级产品'] || '',
+                isOverdue: row['发货是否超承诺时效'] || row['is_overdue'] || '否'
+            };
+        }
+
+        // 加载示例数据
+        function loadDemoData() {
+            fetch('demo_data_real.min.json')
+                .then(res => res.json())
+                .then(data => {
+                    rawData = data.map(row => processRow(row));
+                    initProductFilters();
+                    applyFilters();
+                    
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                })
+                .catch(err => {
+                    console.error('加载示例数据失败:', err);
+                    alert('加载示例数据失败，请确保 demo_data_real.min.json 存在');
+                });
+        }
+
+        // 初始化产品筛选器
+        function initProductFilters() {
+            const l1Set = new Set(rawData.map(d => d.productL1).filter(Boolean));
+            const l1Select = document.getElementById('filter-product-l1');
+            l1Select.innerHTML = '<option value="all">全部</option>';
+            l1Set.forEach(l1 => {
+                const option = document.createElement('option');
+                option.value = l1;
+                option.textContent = l1;
+                l1Select.appendChild(option);
+            });
+            
+            const l2Select = document.getElementById('filter-product-l2');
+            l2Select.innerHTML = '<option value="all">全部</option>';
+            
+            l1Select.addEventListener('change', function() {
+                const l1 = this.value;
+                const l2Set = new Set(rawData
+                    .filter(d => l1 === 'all' || d.productL1 === l1)
+                    .map(d => d.productL2)
+                    .filter(Boolean));
+                l2Select.innerHTML = '<option value="all">全部</option>';
+                l2Set.forEach(l2 => {
+                    const option = document.createElement('option');
+                    option.value = l2;
+                    option.textContent = l2;
+                    l2Select.appendChild(option);
+                });
+            });
+        }
+
+        // 应用筛选
+        function applyFilters() {
+            const startDate = document.getElementById('filter-date-start').value;
+            const endDate = document.getElementById('filter-date-end').value;
+            const warehouse = document.getElementById('filter-warehouse').value;
+            const country = document.getElementById('filter-country').value;
+            const productL1 = document.getElementById('filter-product-l1').value;
+            const productL2 = document.getElementById('filter-product-l2').value;
+            const currency = document.getElementById('filter-currency').value;
+            
+            exchangeRate = currency === 'CNY' ? 7.2 : 1;
+            
+            filteredData = rawData.filter(item => {
+                if (startDate && item.shipDate < startDate) return false;
+                if (endDate && item.shipDate > endDate) return false;
+                if (warehouse !== 'all' && item.warehouse !== warehouse) return false;
+                if (country !== 'all' && item.country !== country) return false;
+                if (productL1 !== 'all' && item.productL1 !== productL1) return false;
+                if (productL2 !== 'all' && item.productL2 !== productL2) return false;
+                return true;
+            });
+            
+            updateDashboard(country);
+        }
+
+        // 重置筛选
+        function resetFilters() {
+            document.getElementById('filter-date-start').value = '2025-12-01';
+            document.getElementById('filter-date-end').value = '2026-01-31';
+            document.getElementById('filter-warehouse').value = 'all';
+            document.getElementById('filter-country').value = 'all';
+            document.getElementById('filter-product-l1').value = 'all';
+            document.getElementById('filter-product-l2').value = 'all';
+            document.getElementById('filter-currency').value = 'USD';
+            applyFilters();
+        }
+
+        // 更新仪表板
+        function updateDashboard(selectedCountry) {
+            updateMetrics();
+            updateCharts(selectedCountry);
+            updateExcelTables();
+        }
+
+        // 更新指标
+        function updateMetrics() {
+            const totalPackages = filteredData.reduce((sum, d) => sum + d.packageCount, 0);
+            const totalOrders = filteredData.length;
+            const totalWeight = filteredData.reduce((sum, d) => sum + d.weight, 0);
+            const totalLogistics = filteredData.reduce((sum, d) => sum + d.logisticsFee, 0) * exchangeRate;
+            const totalRevenue = filteredData.reduce((sum, d) => sum + d.revenue, 0) * exchangeRate;
+            
+            const pricePerKg = totalWeight > 0 ? totalLogistics / totalWeight : 0;
+            const pricePerPkg = totalPackages > 0 ? totalLogistics / totalPackages : 0;
+            const itemsPerPkg = totalPackages > 0 ? totalOrders / totalPackages : 0;
+            const weightPerPkg = totalPackages > 0 ? totalWeight / totalPackages : 0;
+            const logisticsRatio = totalRevenue > 0 ? (totalLogistics / totalRevenue) * 100 : 0;
+            
+            const currency = document.getElementById('filter-currency').value === 'CNY' ? '¥' : '$';
+            
+            document.getElementById('stat-price-kg').textContent = currency + pricePerKg.toFixed(2);
+            document.getElementById('stat-price-pkg').textContent = currency + pricePerPkg.toFixed(2);
+            document.getElementById('stat-packages').textContent = totalPackages.toLocaleString();
+            document.getElementById('stat-orders').textContent = totalOrders.toLocaleString();
+            document.getElementById('stat-items-pkg').textContent = itemsPerPkg.toFixed(1);
+            document.getElementById('stat-weight-pkg').textContent = weightPerPkg.toFixed(1) + ' kg';
+            document.getElementById('stat-logistics-ratio').textContent = logisticsRatio.toFixed(1) + '%';
+            document.getElementById('stat-total-logistics').textContent = currency + totalLogistics.toLocaleString(undefined, {maximumFractionDigits: 0});
+        }
+
+        // 更新图表
+        function updateCharts(selectedCountry) {
+            // 按时间聚合数据
+            const jiaxingByDate = {};
+            const overseasByDate = {};
+            const totalByDate = {};
+            
+            filteredData.forEach(d => {
+                const date = d.shipDate;
+                const fee = d.logisticsFee * exchangeRate;
+                
+                if (d.warehouse === '嘉兴') {
+                    jiaxingByDate[date] = (jiaxingByDate[date] || 0) + fee;
+                } else if (d.warehouse === '海外仓' || ['美国', '英国', '加拿大'].includes(d.warehouse)) {
+                    overseasByDate[date] = (overseasByDate[date] || 0) + fee;
+                }
+                
+                // 全量数据（不区分仓库和国家）
+                totalByDate[date] = (totalByDate[date] || 0) + fee;
+            });
+            
+            const dates = Object.keys(jiaxingByDate).sort();
+            
+            // 【修复 3】海外仓数据可能为空，需要检查
+            const hasOverseasData = Object.keys(overseasByDate).length > 0;
+            
+            // 嘉兴仓图表
+            if (charts.jiaxing) charts.jiaxing.dispose();
+            charts.jiaxing = echarts.init(document.getElementById('jiaxing-chart'));
+            charts.jiaxing.setOption({
+                tooltip: { trigger: 'axis', formatter: '{b}: ${c}' },
+                xAxis: { type: 'category', data: dates, axisLabel: { rotate: 45, fontSize: 10 } },
+                yAxis: { type: 'value', axisLabel: { formatter: '${value}' } },
+                series: [{
+                    type: 'line',
+                    data: dates.map(d => jiaxingByDate[d] || 0),
+                    smooth: true,
+                    itemStyle: { color: '#4285f4' },
+                    areaStyle: { opacity: 0.2 }
+                }]
+            });
+            
+            // 海外仓图表
+            if (charts.overseas) charts.overseas.dispose();
+            charts.overseas = echarts.init(document.getElementById('overseas-chart'));
+            const overseasDates = Object.keys(overseasByDate).sort();
+            charts.overseas.setOption({
+                tooltip: { trigger: 'axis', formatter: '{b}: ${c}' },
+                xAxis: { type: 'category', data: overseasDates, axisLabel: { rotate: 45, fontSize: 10 } },
+                yAxis: { type: 'value', axisLabel: { formatter: '${value}' } },
+                series: [{
+                    type: 'line',
+                    data: overseasDates.map(d => overseasByDate[d] || 0),
+                    smooth: true,
+                    itemStyle: { color: '#ea4335' },
+                    areaStyle: { opacity: 0.2 }
+                }]
+            });
+            
+            // 【修复 2】当选择"全部"国家时，显示全量数据折线图
+            const totalChartWrapper = document.getElementById('total-chart-wrapper');
+            if (selectedCountry === 'all') {
+                totalChartWrapper.style.display = 'block';
+                if (charts.total) charts.total.dispose();
+                charts.total = echarts.init(document.getElementById('total-chart'));
+                const totalDates = Object.keys(totalByDate).sort();
+                charts.total.setOption({
+                    tooltip: { trigger: 'axis', formatter: '{b}: ${c}' },
+                    xAxis: { type: 'category', data: totalDates, axisLabel: { rotate: 45, fontSize: 10 } },
+                    yAxis: { type: 'value', axisLabel: { formatter: '${value}' } },
+                    series: [{
+                        type: 'line',
+                        data: totalDates.map(d => totalByDate[d] || 0),
+                        smooth: true,
+                        itemStyle: { color: '#34a853' },
+                        areaStyle: { opacity: 0.2 },
+                        name: '全量数据'
+                    }]
+                });
+            } else {
+                totalChartWrapper.style.display = 'none';
+            }
+            
+            window.addEventListener('resize', () => {
+                Object.values(charts).forEach(chart => chart.resize());
+            });
+        }
+
+        // 更新 Excel 表格
+        function updateExcelTables() {
+            // 嘉兴仓数据
+            const jiaxingData = filteredData.filter(d => d.warehouse === '嘉兴');
+            const jiaxingGroup = {};
+            jiaxingData.forEach(d => {
+                const key = `${d.customerShipping}|${d.productL1}`;
+                if (!jiaxingGroup[key]) {
+                    jiaxingGroup[key] = {
+                        shipping: d.customerShipping,
+                        product: d.productL1,
+                        packages: 0,
+                        promiseDays: 0,
+                        actualDays: 0,
+                        delivered: 0
+                    };
+                }
+                jiaxingGroup[key].packages += d.packageCount;
+                jiaxingGroup[key].promiseDays += d.promiseDays;
+                jiaxingGroup[key].actualDays += d.actualDays;
+                if (d.actualDays > 0) jiaxingGroup[key].delivered++;
+            });
+            
+            const jiaxingTotal = Object.values(jiaxingGroup).reduce((sum, d) => sum + d.packages, 0);
+            const jiaxingBody = document.querySelector('#jiaxing-table tbody');
+            let jiaxingHtml = '';
+            Object.values(jiaxingGroup).slice(0, 20).forEach(row => {
+                const ratio = jiaxingTotal > 0 ? (row.packages / jiaxingTotal * 100) : 0;
+                const avgPromise = row.packages > 0 ? row.promiseDays / row.packages : 0;
+                const avgActual = row.delivered > 0 ? row.actualDays / row.delivered : 0;
+                const deliveryRate = row.packages > 0 ? (row.delivered / row.packages * 100) : 0;
+                jiaxingHtml += `<tr>
+                    <td>${row.shipping || '-'}</td>
+                    <td>${row.product || '-'}</td>
+                    <td class="text-right">${row.packages}</td>
+                    <td class="text-right">${ratio.toFixed(1)}%</td>
+                    <td class="text-right">${avgPromise.toFixed(1)}</td>
+                    <td class="text-right">${avgActual.toFixed(1)}</td>
+                    <td class="text-right">${deliveryRate.toFixed(1)}%</td>
+                </tr>`;
+            });
+            jiaxingBody.innerHTML = jiaxingHtml || '<tr><td colspan="7" class="text-center">无数据</td></tr>';
+            
+            // 海外仓数据 - 【修复 3】正确处理海外仓数据
+            const overseasData = filteredData.filter(d => d.warehouse === '海外仓' || ['美国', '英国', '加拿大'].includes(d.warehouse));
+            const overseasGroup = {};
+            overseasData.forEach(d => {
+                const key = `${d.actualShipping}|${d.productL1}`;
+                if (!overseasGroup[key]) {
+                    overseasGroup[key] = {
+                        shipping: d.actualShipping,
+                        product: d.productL1,
+                        packages: 0,
+                        promiseDays: 0,
+                        actualDays: 0,
+                        delivered: 0
+                    };
+                }
+                overseasGroup[key].packages += d.packageCount;
+                overseasGroup[key].promiseDays += d.promiseDays;
+                overseasGroup[key].actualDays += d.actualDays;
+                if (d.actualDays > 0) overseasGroup[key].delivered++;
+            });
+            
+            const overseasTotal = Object.values(overseasGroup).reduce((sum, d) => sum + d.packages, 0);
+            const overseasBody = document.querySelector('#overseas-table tbody');
+            let overseasHtml = '';
+            Object.values(overseasGroup).slice(0, 20).forEach(row => {
+                const ratio = overseasTotal > 0 ? (row.packages / overseasTotal * 100) : 0;
+                const avgPromise = row.packages > 0 ? row.promiseDays / row.packages : 0;
+                const avgActual = row.delivered > 0 ? row.actualDays / row.delivered : 0;
+                const deliveryRate = row.packages > 0 ? (row.delivered / row.packages * 100) : 0;
+                overseasHtml += `<tr>
+                    <td>${row.shipping || '-'}</td>
+                    <td>${row.product || '-'}</td>
+                    <td class="text-right">${row.packages}</td>
+                    <td class="text-right">${ratio.toFixed(1)}%</td>
+                    <td class="text-right">${avgPromise.toFixed(1)}</td>
+                    <td class="text-right">${avgActual.toFixed(1)}</td>
+                    <td class="text-right">${deliveryRate.toFixed(1)}%</td>
+                </tr>`;
+            });
+            overseasBody.innerHTML = overseasHtml || '<tr><td colspan="7" class="text-center">无数据</td></tr>';
+        }
+    </script>
+</body>
+</html>
