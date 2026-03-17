@@ -1887,10 +1887,14 @@
             // 按仓库/运送方式/产品维度分组聚合
             const grouped = {};
             data.forEach(d => {
-                const key = `${d.speed_type_code}|${d.product_l1}|${d.product_l2}|${d.product_l3}`;
+                // 【修复 1】客户选择运送方式 = customer_shipping_method（快/中）
+                const customerShipping = d.customer_shipping_method || '';
+                const speed = customerShipping.includes('Expedited') ? '快' : '中';
+                
+                const key = `${speed}|${d.product_l1}|${d.product_l2}|${d.product_l3}`;
                 if (!grouped[key]) {
                     grouped[key] = {
-                        speed: d.speed_type_code === '慢' ? '慢' : '快',
+                        speed: speed,
                         l1: d.product_l1,
                         l2: d.product_l2,
                         l3: d.product_l3,
@@ -2076,17 +2080,20 @@
                 flowData = flowData.filter(d => d.country_code === detailCountry);
             }
             
-            // 统计流向数据
+            // 【修复 2】统计流向数据 - 按新逻辑计算
+            // 客户选择：customer_shipping_method（Expedited Shipping = 快，Standard Shipping = 中）
+            // 产品等级：product_l1（Expedited = 快线，Standard = 慢线）
             let fast2fast = 0, fast2slow = 0, slow2fast = 0, slow2slow = 0;
             
             flowData.forEach(d => {
-                const isFastChoice = d.speed_type_code === '快' || d.speed_type === '快速';
-                const isFastShip = d.product_l1 === 'Expedited';
+                const customerShipping = d.customer_shipping_method || '';
+                const isFastChoice = customerShipping.includes('Expedited'); // 客户选"快"
+                const isFastShip = d.product_l1 === 'Expedited'; // 实际发"快线产品"
                 
-                if (isFastChoice && isFastShip) fast2fast++;
-                else if (isFastChoice && !isFastShip) fast2slow++;
-                else if (!isFastChoice && isFastShip) slow2fast++;
-                else slow2slow++;
+                if (isFastChoice && isFastShip) fast2fast++;      // 快→快（保持）
+                else if (isFastChoice && !isFastShip) fast2slow++; // 快→慢（降档）⬇️
+                else if (!isFastChoice && isFastShip) slow2fast++; // 中→快（升档）⬆️
+                else slow2slow++;                                   // 中→中（保持）
             });
             
             const total = fast2fast + fast2slow + slow2fast + slow2slow;
@@ -2145,16 +2152,16 @@
                     nodeWidth: 20,
                     nodeGap: 80,
                     data: [
-                        { name: '快线\n客户选择', value: fastChoice, itemStyle: { color: '#4285f4' } },
-                        { name: '慢线\n客户选择', value: slowChoice, itemStyle: { color: '#ea4335' } },
-                        { name: '快线\n实际发出', value: fastShip, itemStyle: { color: '#4285f4' } },
-                        { name: '慢线\n实际发出', value: slowShip, itemStyle: { color: '#ea4335' } }
+                        { name: '快\n客户选择', value: fastChoice, itemStyle: { color: '#4285f4' } },
+                        { name: '中\n客户选择', value: slowChoice, itemStyle: { color: '#ea4335' } },
+                        { name: 'Expedited\n实际发出', value: fastShip, itemStyle: { color: '#4285f4' } },
+                        { name: 'Standard\n实际发出', value: slowShip, itemStyle: { color: '#ea4335' } }
                     ],
                     links: [
-                        { source: '快线\n客户选择', target: '快线\n实际发出', value: fast2fast, pct: fast2fastPct.toFixed(1), lineStyle: { color: '#34a853', opacity: 0.6 } },
-                        { source: '快线\n客户选择', target: '慢线\n实际发出', value: fast2slow, pct: fast2slowPct.toFixed(1), lineStyle: { color: '#ea4335', opacity: 0.6 } },
-                        { source: '慢线\n客户选择', target: '快线\n实际发出', value: slow2fast, pct: slow2fastPct.toFixed(1), lineStyle: { color: '#4285f4', opacity: 0.6 } },
-                        { source: '慢线\n客户选择', target: '慢线\n实际发出', value: slow2slow, pct: slow2slowPct.toFixed(1), lineStyle: { color: '#34a853', opacity: 0.6 } }
+                        { source: '快\n客户选择', target: 'Expedited\n实际发出', value: fast2fast, pct: fast2fastPct.toFixed(1), lineStyle: { color: '#34a853', opacity: 0.6 } },
+                        { source: '快\n客户选择', target: 'Standard\n实际发出', value: fast2slow, pct: fast2slowPct.toFixed(1), lineStyle: { color: '#ea4335', opacity: 0.6 } },
+                        { source: '中\n客户选择', target: 'Expedited\n实际发出', value: slow2fast, pct: slow2fastPct.toFixed(1), lineStyle: { color: '#4285f4', opacity: 0.6 } },
+                        { source: '中\n客户选择', target: 'Standard\n实际发出', value: slow2slow, pct: slow2slowPct.toFixed(1), lineStyle: { color: '#34a853', opacity: 0.6 } }
                     ],
                     emphasis: {
                         focus: 'adjacency',
