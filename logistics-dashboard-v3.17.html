@@ -1171,6 +1171,7 @@
         function updateTCharts() {
             renderJiaxingTChart();
             renderOverseasTChart();
+            renderTotalTChart();  // 【修复 2】同步更新全量数据图表
         }
 
         function getMetricName(key) {
@@ -1895,9 +1896,17 @@
                 detailData = detailData.filter(d => d.country_code === detailCountry);
             }
             
-            // 按仓库分组
-            const jiaxingData = detailData.filter(d => d.warehouse_code === 'jiaxing');
-            const overseasData = detailData.filter(d => d.warehouse_code === 'overseas');
+            // 【修复 3】按仓库分组 - 智能识别嘉兴仓和海外仓
+            const jiaxingData = detailData.filter(d => {
+                const wh = (d.warehouse_code || '').toLowerCase();
+                return wh.includes('jiaxing') || wh.includes('嘉兴');
+            });
+            const overseasData = detailData.filter(d => {
+                const wh = (d.warehouse_code || '').toLowerCase();
+                return wh.includes('us') || wh.includes('ca') || wh.includes('uk') || 
+                       wh.includes('america') || wh.includes('canada') || wh.includes('britain') ||
+                       wh.includes('overseas') || wh.includes('海外');
+            });
             
             // 渲染两个表格
             renderWarehouseTable(jiaxingBody, jiaxingFoot, jiaxingData, 'jiaxing');
