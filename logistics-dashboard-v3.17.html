@@ -244,9 +244,6 @@
                         <select id="filter-warehouse">
                             <option value="all">全部</option>
                             <option value="嘉兴">嘉兴仓</option>
-                            <option value="美国">美国仓</option>
-                            <option value="英国">英国仓</option>
-                            <option value="加拿大">加拿大仓</option>
                             <option value="海外仓">海外仓</option>
                         </select>
                     </div>
@@ -394,33 +391,36 @@
         let charts = {};
         let exchangeRate = 1; // USD to CNY
 
-        // 仓库映射
-        const warehouseMap = {
-            'jiaxing': '嘉兴',
-            '嘉兴': '嘉兴',
-            '美国': '美国',
-            '英国': '英国',
-            '加拿大': '加拿大',
-            'overseas': '海外仓',
-            '海外仓': '海外仓'
-        };
+        // 仓库类型识别 - 自动判断是嘉兴仓还是海外仓
+        function getWarehouseType(warehouseName) {
+            if (!warehouseName) return '未知';
+            const name = warehouseName.toLowerCase();
+            // 嘉兴仓关键词
+            if (name.includes('嘉兴') || name.includes('jiaxing') || name.includes('china')) {
+                return '嘉兴';
+            }
+            // 海外仓关键词（美国、英国、加拿大等）
+            if (name.includes('美国') || name.includes('美西') || name.includes('美东') || name.includes('us') ||
+                name.includes('英国') || name.includes('uk') || name.includes('gb') ||
+                name.includes('加拿大') || name.includes('ca') || name.includes('canada') ||
+                name.includes('海外') || name.includes('overseas')) {
+                return '海外仓';
+            }
+            // 其他仓库直接返回原名
+            return warehouseName;
+        }
 
-        // 国家映射
-        const countryMap = {
-            'US': '美国',
-            'USA': '美国',
-            '美国': '美国',
-            'UK': '英国',
-            'GB': '英国',
-            '英国': '英国',
-            'CA': '加拿大',
-            'CAN': '加拿大',
-            '加拿大': '加拿大',
-            'AU': '澳大利亚',
-            'AUS': '澳大利亚',
-            '澳大利亚': '澳大利亚',
-            '其他': '其他'
-        };
+        // 国家映射 - 支持多种格式
+        function normalizeCountry(countryName) {
+            if (!countryName) return '其他';
+            const map = {
+                'US': '美国', 'USA': '美国', '美国': '美国',
+                'UK': '英国', 'GB': '英国', '英国': '英国',
+                'CA': '加拿大', 'CAN': '加拿大', '加拿大': '加拿大',
+                'AU': '澳大利亚', 'AUS': '澳大利亚', '澳大利亚': '澳大利亚'
+            };
+            return map[countryName] || map[countryName.toUpperCase()] || countryName;
+        }
 
         // 加载 Excel 文件
         function loadFile() {
@@ -457,8 +457,10 @@
         // 处理每一行数据
         function processRow(row) {
             // 字段映射 - 使用正确的列名
-            const warehouse = warehouseMap[row['发货地']] || row['发货地'] || '未知';
-            const country = countryMap[row['收货地']] || countryMap[row['country_code']] || '其他';
+            const rawWarehouse = row['发货地'] || row['warehouse_code'] || row['warehouse'] || '';
+            const warehouse = getWarehouseType(rawWarehouse);
+            const rawCountry = row['收货地'] || row['country_code'] || row['country'] || '';
+            const country = normalizeCountry(rawCountry);
             
             // 【修复 1】使用"物流运费 (实际运费/预估运费)"列作为物流费用
             let logisticsFee = 0;
@@ -630,7 +632,7 @@
                 
                 if (d.warehouse === '嘉兴') {
                     jiaxingByDate[date] = (jiaxingByDate[date] || 0) + fee;
-                } else if (d.warehouse === '海外仓' || ['美国', '英国', '加拿大'].includes(d.warehouse)) {
+                } else if (d.warehouse === '海外仓') {
                     overseasByDate[date] = (overseasByDate[date] || 0) + fee;
                 }
                 
@@ -748,8 +750,8 @@
             });
             jiaxingBody.innerHTML = jiaxingHtml || '<tr><td colspan="7" class="text-center">无数据</td></tr>';
             
-            // 海外仓数据 - 【修复 3】正确处理海外仓数据
-            const overseasData = filteredData.filter(d => d.warehouse === '海外仓' || ['美国', '英国', '加拿大'].includes(d.warehouse));
+            // 海外仓数据
+            const overseasData = filteredData.filter(d => d.warehouse === '海外仓');
             const overseasGroup = {};
             overseasData.forEach(d => {
                 const key = `${d.actualShipping}|${d.productL1}`;
