@@ -1302,16 +1302,40 @@
                     symbol: 'circle',
                     symbolSize: 6,
                     label: {
-                        show: false,
+                        show: true,  // 【修改】显示数据标签
                         position: 'top',
                         formatter: '{c}',
-                        fontSize: 10
+                        fontSize: 9,
+                        fontWeight: 'bold'
                     },
                     emphasis: {
                         focus: 'series',
                         lineStyle: { width: 4 }
                     }
                 };
+            });
+            
+            // 【修复 2】新增"全部"曲线 - 不区分国家的汇总数据
+            const { data: totalMetrics } = calculateMetrics(data, currentTimeGranularity, currentStartDate, currentEndDate);
+            series.push({
+                name: '全部',
+                type: 'line',
+                data: totalMetrics[currentMetric],
+                smooth: true,
+                itemStyle: { color: '#000000' },  // 黑色
+                symbol: 'circle',
+                symbolSize: 8,
+                label: {
+                    show: true,  // 显示数据标签
+                    position: 'top',
+                    formatter: '{c}',
+                    fontSize: 10,
+                    fontWeight: 'bold'
+                },
+                emphasis: {
+                    focus: 'series',
+                    lineStyle: { width: 5 }
+                }
             });
             
             const option = {
@@ -1326,7 +1350,7 @@
                     }
                 },
                 legend: {
-                    data: countries.map(c => countryNames[c]),
+                    data: [...countries.map(c => countryNames[c]), '全部'],
                     bottom: 0,
                     textStyle: { fontSize: 11 }
                 },
