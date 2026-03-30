@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>运费 BI 可视化报表 v2.3</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 14px; }
+        .filters {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .filter-group label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 14px;
+        }
+        .filter-group select, .filter-group button {
+            padding: 8px 16px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .filter-group select:hover, .filter-group button:hover {
+            border-color: #3498db;
+        }
+        .filter-group button.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+        .kpi-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border-left: 4px solid #3498db;
+        }
+        .kpi-card h3 { font-size: 14px; color: #6c757d; margin-bottom: 10px; }
+        .kpi-card .value { font-size: 28px; font-weight: bold; color: #2c3e50; }
+        .kpi-card .trend { font-size: 12px; margin-top: 8px; }
+        .kpi-card .trend.up { color: #27ae60; }
+        .kpi-card .trend.down { color: #e74c3c; }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            padding: 0 30px 30px;
+        }
+        .chart-box {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 350px;
+        }
+        .chart-box.full-width {
+            grid-column: span 2;
+        }
+        .chart-box h3 {
+            font-size: 16px;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        .chart-container {
+            width: 100%;
+            height: 300px;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px 10px;
+            background: #f8f9fa;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .slice-filter {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .slice-btn {
+            padding: 6px 14px;
+            border: 2px solid #dee2e6;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.3s;
+        }
+        .slice-btn:hover { border-color: #3498db; }
+        .slice-btn.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        .legend-box {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-right: 15px;
+            margin-bottom: 6px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+        .currency-filter {
+            display: flex;
+            gap: 8px;
+        }
+        .currency-btn-small {
+            padding: 4px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.3s;
+        }
+        .currency-btn-small:hover { border-color: #3498db; }
+        .currency-btn-small.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        @media (max-width: 1024px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .chart-box.full-width { grid-column: span 1; }
+            .section-header { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 运费 BI 可视化报表 v2.3</h1>
+            <p>Interactive Freight Analytics Dashboard - Version 2.3</p>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label>🌍 国家筛选:</label>
+                <select id="countryFilter">
+                    <option value="all">全部国家</option>
+                    <option value="US">美国</option>
+                    <option value="UK">英国</option>
+                    <option value="CA">加拿大</option>
+                    <option value="AU">澳大利亚</option>
+                    <option value="other">其他国家</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>💱 全局货币:</label>
+                <button class="currency-btn active" data-currency="USD">USD</button>
+                <button class="currency-btn" data-currency="local">本地货币</button>
+            </div>
+            <div class="filter-group">
+                <label>📅 时间范围:</label>
+                <select id="timeRange">
+                    <option value="7">最近 7 天</option>
+                    <option value="30" selected>最近 30 天</option>
+                    <option value="90">最近 90 天</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <h3>🛡️ 保价费收入</h3>
+                <div class="value" id="kpi-insurance-revenue">$8,420</div>
+                <div class="trend up">↑ 8.3% vs 上期</div>
+            </div>
+            <div class="kpi-card">
+                <h3>📦 保价订单占比</h3>
+                <div class="value" id="kpi-insurance-rate">34.2%</div>
+                <div class="trend up">↑ 2.1% vs 上期</div>
+            </div>
+            <div class="kpi-card">
+                <h3>🔄 运费补偿率</h3>
+                <div class="value" id="kpi-compensation-rate">141.0%</div>
+                <div class="trend up">↑ 6.7% vs 上期</div>
+            </div>
+            <div class="kpi-card">
+                <h3>📬 分单订单数</h3>
+                <div class="value" id="kpi-split-orders">486</div>
+                <div class="trend up">↑ 12.5% vs 上期</div>
+            </div>
+            <div class="kpi-card">
+                <h3>📊 分单占比</h3>
+                <div class="value" id="kpi-split-ratio">19.8%</div>
+                <div class="trend down">↓ 3.8% vs 上期</div>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <div class="section-title">📈 核心指标趋势</div>
+        </div>
+        <div class="charts-grid">
+            <div class="chart-box full-width">
+                <h3>运费成本占比 & 补偿率趋势</h3>
+                <div id="trendChart" class="chart-container"></div>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <div class="section-title">🥧 运费区间分布（美/英/加/澳）</div>
+            <div class="slice-filter" id="rangeAovFilter">
+                <button class="slice-btn active" data-country="all">全部</button>
+                <button class="slice-btn" data-country="US">🇺 美国</button>
+                <button class="slice-btn" data-country="UK">🇬🇧 英国</button>
+                <button class="slice-btn" data-country="CA">🇨🇦 加拿大</button>
+                <button class="slice-btn" data-country="AU">🇦🇺 澳大利亚</button>
+                <button class="slice-btn" data-country="other">🌍 其他</button>
+            </div>
+        </div>
+        <div class="charts-grid">
+            <div class="chart-box">
+                <h3>各运费区间客单价</h3>
+                <div id="rangeAovChart" class="chart-container"></div>
+            </div>
+            <div class="chart-box">
+                <h3>各运费区间订单占比</h3>
+                <div id="rangeRatioChart" class="chart-container"></div>
+                <div class="legend-box" id="rangeLegend"></div>
+            </div>
+            <div class="chart-box">
+                <h3>分单次数分布</h3>
+                <div id="splitDistChart" class="chart-container"></div>
+            </div>
+            <div class="chart-box">
+                <h3>分单占比趋势</h3>
+                <div id="splitTrendChart" class="chart-container"></div>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <div class="section-title">🌏 国家维度分析</div>
+            <div class="currency-filter" id="aovCurrencyFilter">
+                <button class="currency-btn-small active" data-currency="local">本国币种</button>
+                <button class="currency-btn-small" data-currency="USD">美金</button>
+                <button class="currency-btn-small" data-currency="CNY">人民币</button>
+            </div>
+        </div>
+        <div class="charts-grid">
+            <div class="chart-box">
+                <h3>各国客单价</h3>
+                <div id="aovCountryChart" class="chart-container"></div>
+            </div>
+            <div class="chart-box">
+                <h3>各国订单数及占比</h3>
+                <div id="countryChart" class="chart-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ 模拟数据生成 ============
+        function generateMockData() {
+            const countries = ['US', 'UK', 'CA', 'AU', 'DE', 'FR', 'JP', 'BR', 'IN', 'MX'];
+            const countryNames = { US: '美国', UK: '英国', CA: '加拿大', AU: '澳大利亚', DE: '德国', FR: '法国', JP: '日本', BR: '巴西', IN: '印度', MX: '墨西哥' };
+            const currencies = { US: '$', UK: '£', CA: 'C$', AU: 'A$', DE: '€', FR: '€', JP: '¥', BR: 'R$', IN: '₹', MX: '$', CN: '¥' };
+            const exchangeRates = { US: 1, UK: 0.79, CA: 1.36, AU: 1.52, DE: 0.92, FR: 0.92, JP: 149, BR: 4.97, IN: 83, MX: 17, CN: 7.2 };
+
+            const orders = [];
+            const totalOrders = 2458;
+
+            for (let i = 0; i < totalOrders; i++) {
+                const country = countries[Math.floor(Math.random() * countries.length)];
+                const freightRange = Math.random();
+                let freightRevenue;
+                
+                if (freightRange < 0.25) freightRevenue = 10 + Math.random() * 20;
+                else if (freightRange < 0.50) freightRevenue = 30 + Math.random() * 30;
+                else if (freightRange < 0.70) freightRevenue = 60 + Math.random() * 40;
+                else if (freightRange < 0.85) freightRevenue = 100 + Math.random() * 100;
+                else freightRevenue = 200 + Math.random() * 300;
+
+                const hasInsurance = Math.random() < 0.342;
+                const insuranceFee = hasInsurance ? freightRevenue * 0.05 * (0.8 + Math.random() * 0.4) : 0;
+                const actualCost = freightRevenue * (0.55 + Math.random() * 0.35);
+                const estimatedCost = actualCost * (0.9 + Math.random() * 0.2);
+                const splitCount = Math.floor(Math.random() * 5);
+                const isCompensated = Math.random() < 0.15;
+                const compensationAmount = isCompensated ? freightRevenue * 0.1 * Math.random() : 0;
+
+                orders.push({
+                    id: i + 1,
+                    country,
+                    freightRevenue,
+                    insuranceFee,
+                    hasInsurance,
+                    actualCost,
+                    estimatedCost,
+                    splitCount,
+                    isCompensated,
+                    compensationAmount,
+                    date: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000)
+                });
+            }
+
+            return { orders, countries, countryNames, currencies, exchangeRates };
+        }
+
+        const data = generateMockData();
+
+        // ============ 数据聚合函数 ============
+        function aggregateData(orders, countryFilter, days) {
+            const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+            let filtered = orders.filter(o => o.date >= cutoffDate);
+            
+            if (countryFilter !== 'all') {
+                if (countryFilter === 'other') {
+                    filtered = filtered.filter(o => !['US', 'UK', 'CA', 'AU'].includes(o.country));
+                } else {
+                    filtered = filtered.filter(o => o.country === countryFilter);
+                }
+            }
+
+            const totalRevenue = filtered.reduce((sum, o) => sum + o.freightRevenue, 0);
+            const totalInsurance = filtered.reduce((sum, o) => sum + o.insuranceFee, 0);
+            const insuranceOrders = filtered.filter(o => o.hasInsurance).length;
+            const totalActualCost = filtered.reduce((sum, o) => sum + o.actualCost, 0);
+            const splitOrders = filtered.filter(o => o.splitCount >= 2).length;
+
+            return {
+                totalRevenue,
+                totalInsurance,
+                insuranceRate: insuranceOrders / filtered.length * 100,
+                actualCost: totalActualCost,
+                costRatio: totalActualCost / totalRevenue * 100,
+                compensationRate: totalRevenue / totalActualCost * 100,
+                splitOrders,
+                splitRatio: splitOrders / filtered.length * 100,
+                totalOrders: filtered.length,
+                orders: filtered
+            };
+        }
+
+        // ============ 图表初始化 ============
+        let trendChart, rangeRatioChart, rangeAovChart, splitDistChart, splitTrendChart, aovCountryChart, countryChart;
+        let currentRangeCountry = 'all';
+        let currentAovCurrency = 'local';
+
+        function initCharts() {
+            trendChart = echarts.init(document.getElementById('trendChart'));
+            rangeRatioChart = echarts.init(document.getElementById('rangeRatioChart'));
+            rangeAovChart = echarts.init(document.getElementById('rangeAovChart'));
+            splitDistChart = echarts.init(document.getElementById('splitDistChart'));
+            splitTrendChart = echarts.init(document.getElementById('splitTrendChart'));
+            aovCountryChart = echarts.init(document.getElementById('aovCountryChart'));
+            countryChart = echarts.init(document.getElementById('countryChart'));
+        }
+
+        // ============ 更新 KPI ============
+        function updateKPIs(metrics) {
+            document.getElementById('kpi-insurance-revenue').textContent = '$' + metrics.totalInsurance.toLocaleString(undefined, { maximumFractionDigits: 0 });
+            document.getElementById('kpi-insurance-rate').textContent = metrics.insuranceRate.toFixed(1) + '%';
+            document.getElementById('kpi-compensation-rate').textContent = metrics.compensationRate.toFixed(1) + '%';
+            document.getElementById('kpi-split-orders').textContent = metrics.splitOrders.toLocaleString();
+            document.getElementById('kpi-split-ratio').textContent = metrics.splitRatio.toFixed(1) + '%';
+        }
+
+        // ============ 货币转换 ============
+        function getCurrencyName(currencyMode) {
+            if (currencyMode === 'USD') return 'USD ($)';
+            if (currencyMode === 'CNY') return 'CNY (¥)';
+            return '本地货币';
+        }
+
+        // ============ 更新图表 ============
+        function updateCharts(metrics, useLocalCurrency = false) {
+            const orders = metrics.orders;
+
+            // 1. 趋势图
+            const trendData = [];
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+                const dayOrders = orders.filter(o => {
+                    const oDate = new Date(o.date);
+                    return oDate.getDate() === date.getDate() && oDate.getMonth() === date.getMonth() && oDate.getFullYear() === date.getFullYear();
+                });
+                if (dayOrders.length > 0) {
+                    const revenue = dayOrders.reduce((s, o) => s + o.freightRevenue, 0);
+                    const cost = dayOrders.reduce((s, o) => s + o.actualCost, 0);
+                    const splitCount = dayOrders.filter(o => o.splitCount >= 2).length;
+                    trendData.push({
+                        date: date.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' }),
+                        costRatio: cost / revenue * 100,
+                        compensationRate: revenue / cost * 100,
+                        splitRatio: splitCount / dayOrders.length * 100
+                    });
+                }
+            }
+
+            trendChart.setOption({
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['成本占比%', '补偿率%'] },
+                xAxis: { type: 'category', data: trendData.map(d => d.date) },
+                yAxis: [{ type: 'value', name: '百分比%', position: 'left' }, { type: 'value', name: '补偿率%', position: 'right' }],
+                series: [
+                    { name: '成本占比%', type: 'line', data: trendData.map(d => d.costRatio.toFixed(1)), smooth: true, itemStyle: { color: '#e74c3c' } },
+                    { name: '补偿率%', type: 'line', yAxisIndex: 1, data: trendData.map(d => d.compensationRate.toFixed(1)), smooth: true, itemStyle: { color: '#3498db' } }
+                ]
+            });
+
+            // 2. 运费区间分布
+            const targetCountries = ['US', 'UK', 'CA', 'AU'];
+            let targetOrders = orders.filter(o => targetCountries.includes(o.country));
+            
+            if (currentRangeCountry !== 'all') {
+                if (currentRangeCountry === 'other') {
+                    targetOrders = orders.filter(o => !targetCountries.includes(o.country));
+                } else {
+                    targetOrders = orders.filter(o => o.country === currentRangeCountry);
+                }
+            }
+
+            const ranges = ['$0-30', '$30-60', '$60-100', '$100-200', '$200+'];
+            const rangeCounts = [0, 0, 0, 0, 0];
+            const rangeRevenues = [0, 0, 0, 0, 0];
+
+            targetOrders.forEach(o => {
+                let idx;
+                if (o.freightRevenue < 30) idx = 0;
+                else if (o.freightRevenue < 60) idx = 1;
+                else if (o.freightRevenue < 100) idx = 2;
+                else if (o.freightRevenue < 200) idx = 3;
+                else idx = 4;
+                
+                rangeCounts[idx]++;
+                rangeRevenues[idx] += o.freightRevenue;
+            });
+
+            const rangeAov = rangeCounts.map((c, i) => c > 0 ? rangeRevenues[i] / c : 0);
+            rangeAovChart.setOption({
+                tooltip: { formatter: '{b}: ${c}' },
+                xAxis: { type: 'category', data: ranges },
+                yAxis: { type: 'value', name: '客单价 ($)' },
+                series: [{ 
+                    type: 'bar', 
+                    data: rangeAov.map(v => v.toFixed(0)), 
+                    itemStyle: { color: '#27ae60' }, 
+                    label: { show: true, position: 'top', formatter: '${c}' } 
+                }]
+            });
+
+            const colors = ['#3498db', '#27ae60', '#f39c12', '#e74c3c', '#9b59b6'];
+            rangeRatioChart.setOption({
+                tooltip: { formatter: '{b}: {c}%' },
+                color: colors,
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    data: rangeCounts.map((c, i) => ({ value: c, name: ranges[i] })),
+                    label: { formatter: '{b}: {d}%' },
+                    avoidLabelOverlap: true
+                }]
+            });
+
+            const legendHtml = `
+                <div style="font-weight:600;margin-bottom:8px;color:#2c3e50;">颜色说明：</div>
+                ${ranges.map((r, i) => `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background:${colors[i]}"></div>
+                        <span>${r}</span>
+                    </div>
+                `).join('')}
+            `;
+            document.getElementById('rangeLegend').innerHTML = legendHtml;
+
+            // 3. 分单次数分布
+            const splitCounts = [0, 0, 0, 0, 0];
+            orders.forEach(o => { 
+                if (o.splitCount < 2) splitCounts[0]++;
+                else if (o.splitCount < 5) splitCounts[o.splitCount]++;
+                else splitCounts[4]++;
+            });
+            splitDistChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: ['0-1 次', '2 次', '3 次', '4 次', '5 次+'] },
+                yAxis: { type: 'value', name: '订单数' },
+                series: [{ type: 'bar', data: splitCounts, itemStyle: { color: '#9b59b6' }, label: { show: true, position: 'top' } }]
+            });
+
+            // 4. 分单占比趋势
+            splitTrendChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: trendData.map(d => d.date) },
+                yAxis: { type: 'value', name: '分单占比 (%)' },
+                series: [{ 
+                    type: 'line', 
+                    data: trendData.map(d => d.splitRatio.toFixed(1)), 
+                    smooth: true, 
+                    itemStyle: { color: '#8e44ad' },
+                    label: { show: false }
+                }]
+            });
+
+            // 5. 各国客单价（支持三种货币模式）
+            const aovData = data.countries.map(c => {
+                const countryOrders = orders.filter(o => o.country === c);
+                const totalRev = countryOrders.reduce((s, o) => s + o.freightRevenue, 0);
+                const aovUSD = countryOrders.length > 0 ? totalRev / countryOrders.length : 0;
+                
+                let aovValue, currencySymbol;
+                if (currentAovCurrency === 'USD') {
+                    aovValue = aovUSD;
+                    currencySymbol = '$';
+                } else if (currentAovCurrency === 'CNY') {
+                    aovValue = aovUSD * 7.2;
+                    currencySymbol = '¥';
+                } else {
+                    aovValue = aovUSD * data.exchangeRates[c];
+                    currencySymbol = data.currencies[c] || '$';
+                }
+                
+                return {
+                    name: data.countryNames[c],
+                    code: c,
+                    aov: aovValue,
+                    symbol: currencySymbol
+                };
+            });
+
+            const aovValues = aovData.map(d => d.aov.toFixed(0));
+            const aovLabels = aovData.map(d => `${d.name} (${d.symbol}${d.aov.toFixed(0)})`);
+
+            aovCountryChart.setOption({
+                tooltip: { 
+                    formatter: function(params) {
+                        const item = aovData[params.dataIndex];
+                        return `${item.name}<br/>客单价：${item.symbol}${item.aov.toFixed(0)}`;
+                    }
+                },
+                xAxis: { 
+                    type: 'category', 
+                    data: aovLabels,
+                    axisLabel: { 
+                        rotate: 30,
+                        interval: 0
+                    }
+                },
+                yAxis: { type: 'value', name: getCurrencyName(currentAovCurrency) },
+                series: [{ 
+                    type: 'bar', 
+                    data: aovValues, 
+                    itemStyle: { color: '#e67e22' }, 
+                    label: { show: true, position: 'top', formatter: function(params) {
+                        const item = aovData[params.dataIndex];
+                        return `${item.symbol}${params.value}`;
+                    }} 
+                }]
+            });
+
+            // 6. 各国订单数及占比
+            const countryData = {};
+            data.countries.forEach(c => { countryData[c] = { count: 0, revenue: 0 }; });
+            orders.forEach(o => {
+                countryData[o.country].count++;
+                countryData[o.country].revenue += o.freightRevenue;
+            });
+
+            countryChart.setOption({
+                tooltip: { trigger: 'item' },
+                series: [{
+                    type: 'pie',
+                    radius: '70%',
+                    data: data.countries.map(c => ({ value: countryData[c].count, name: data.countryNames[c] })),
+                    label: { formatter: '{b}: {d}%' }
+                }]
+            });
+        }
+
+        // ============ 事件监听 ============
+        function refresh() {
+            const countryFilter = document.getElementById('countryFilter').value;
+            const days = parseInt(document.getElementById('timeRange').value);
+            const metrics = aggregateData(data.orders, countryFilter, days);
+            updateKPIs(metrics);
+            
+            const activeCurrency = document.querySelector('.currency-btn.active').dataset.currency;
+            updateCharts(metrics, activeCurrency === 'local');
+        }
+
+        document.getElementById('countryFilter').addEventListener('change', refresh);
+        document.getElementById('timeRange').addEventListener('change', refresh);
+
+        document.querySelectorAll('.currency-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.currency-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                refresh();
+            });
+        });
+
+        document.querySelectorAll('#rangeAovFilter .slice-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#rangeAovFilter .slice-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentRangeCountry = btn.dataset.country;
+                refresh();
+            });
+        });
+
+        document.querySelectorAll('#aovCurrencyFilter .currency-btn-small').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#aovCurrencyFilter .currency-btn-small').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentAovCurrency = btn.dataset.currency;
+                refresh();
+            });
+        });
+
+        // ============ 初始化 ============
+        window.addEventListener('load', () => {
+            initCharts();
+            refresh();
+        });
+
+        window.addEventListener('resize', () => {
+            trendChart.resize();
+            rangeRatioChart.resize();
+            rangeAovChart.resize();
+            splitDistChart.resize();
+            splitTrendChart.resize();
+            aovCountryChart.resize();
+            countryChart.resize();
+        });
+    </script>
+</body>
+</html>
