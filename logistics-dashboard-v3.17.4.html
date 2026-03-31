@@ -1,4 +1,5 @@
 <!-- Build: 2026-03-31T13:45:00+08:00 -->
+<!-- Build: 2026-03-31T16:05:00+08:00 v3.17.4 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -1100,8 +1101,14 @@
         // 加载真实数据
         async function loadData() {
             try {
+                console.log('开始加载数据...');
                 const response = await fetch('demo_data_real.min.json');
+                console.log('响应状态:', response.status);
+                if (!response.ok) {
+                    throw new Error('HTTP 错误：' + response.status);
+                }
                 const data = await response.json();
+                console.log('解析数据成功:', data.length, '条');
                 // 【修复 1】使用正确的列名映射，支持 Excel 列名
                 rawData = data.map(d => ({
                     ...d,
