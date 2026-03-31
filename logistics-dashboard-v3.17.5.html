@@ -708,8 +708,27 @@
                 </div>
             </div>
 
-            <!-- 第二行 4 个图表（分单分析 + 国家维度） -->
+            <!-- 第二行 4 个图表 -->
             <div class="second-charts-row">
+                <!-- 各运费区间订单占比 -->
+                <div class="chart-container" style="grid-column: span 1;">
+                    <div class="chart-title" style="font-size: 13px;">📊 各运费区间订单占比</div>
+                    <div id="range-ratio-chart" class="chart" style="height: 250px;"></div>
+                </div>
+                
+                <!-- 各运费区间客单价 -->
+                <div class="chart-container" style="grid-column: span 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div class="chart-title" style="font-size: 13px; margin: 0;">💰 各运费区间客单价</div>
+                        <div class="currency-filter-small" id="range-currency-filter">
+                            <button class="currency-btn-small active" data-currency="local">本国币种</button>
+                            <button class="currency-btn-small" data-currency="USD">美金</button>
+                            <button class="currency-btn-small" data-currency="CNY">人民币</button>
+                        </div>
+                    </div>
+                    <div id="range-aov-chart" class="chart" style="height: 250px;"></div>
+                </div>
+                
                 <!-- 分单次数分布 -->
                 <div class="chart-container" style="grid-column: span 1;">
                     <div class="chart-title" style="font-size: 13px;">📦 分单次数分布</div>
@@ -720,18 +739,6 @@
                 <div class="chart-container" style="grid-column: span 1;">
                     <div class="chart-title" style="font-size: 13px;">📈 分单占比趋势</div>
                     <div id="split-trend-chart" class="chart" style="height: 250px;"></div>
-                </div>
-                
-                <!-- 各国客单价 -->
-                <div class="chart-container" style="grid-column: span 1;">
-                    <div class="chart-title" style="font-size: 13px;">💰 各国客单价</div>
-                    <div id="country-aov-chart" class="chart" style="height: 250px;"></div>
-                </div>
-                
-                <!-- 各国订单数及占比 -->
-                <div class="chart-container" style="grid-column: span 1;">
-                    <div class="chart-title" style="font-size: 13px;">🌍 各国订单数及占比</div>
-                    <div id="country-orders-chart" class="chart" style="height: 250px;"></div>
                 </div>
             </div>
 
