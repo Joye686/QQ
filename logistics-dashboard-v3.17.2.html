@@ -428,32 +428,30 @@
             .kpi-row { grid-template-columns: repeat(2, 1fr); }
         }
         .kpi-card {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 12px;
-            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
             text-align: center;
-            border-left: 4px solid #3498db;
-            transition: transform 0.2s;
-        }
-        .kpi-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .kpi-card h3 {
-            font-size: 14px;
-            color: #6c757d;
-            margin-bottom: 10px;
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 6px;
             font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .kpi-card .value {
-            font-size: 28px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 8px;
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 4px;
         }
         .kpi-card .trend {
-            font-size: 12px;
-            margin-top: 8px;
+            font-size: 10px;
+            margin-top: 4px;
         }
         .kpi-card .trend.up {
             color: #27ae60;
@@ -600,30 +598,30 @@
                 </div>
             <!-- 运费 BI KPI 指标（来自 v2.3） -->
             <div class="kpi-row" style="margin-top: 15px;">
-                <div class="kpi-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 20px; text-align: center; border-left: 4px solid #3498db;">
-                    <h3 style="font-size: 14px; color: #6c757d; margin-bottom: 10px;">🛡️ 保价费收入</h3>
-                    <div class="value" id="kpi-insurance-revenue" style="font-size: 28px; font-weight: bold; color: #2c3e50;">$0</div>
-                    <div class="trend up" style="font-size: 12px; margin-top: 8px; color: #27ae60;">↑ 0.0% vs 上期</div>
+                <div class="kpi-card">
+                    <h3>🛡️ 保价费收入</h3>
+                    <div class="value" id="kpi-insurance-revenue">$0</div>
+                    <div class="trend up" id="kpi-insurance-revenue-trend">↑ 0.0% vs 上期</div>
                 </div>
-                <div class="kpi-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 20px; text-align: center; border-left: 4px solid #3498db;">
-                    <h3 style="font-size: 14px; color: #6c757d; margin-bottom: 10px;">📦 保价订单占比</h3>
-                    <div class="value" id="kpi-insurance-rate" style="font-size: 28px; font-weight: bold; color: #2c3e50;">0.0%</div>
-                    <div class="trend up" style="font-size: 12px; margin-top: 8px; color: #27ae60;">↑ 0.0% vs 上期</div>
+                <div class="kpi-card">
+                    <h3>📦 保价订单占比</h3>
+                    <div class="value" id="kpi-insurance-rate">0.0%</div>
+                    <div class="trend up" id="kpi-insurance-rate-trend">↑ 0.0% vs 上期</div>
                 </div>
-                <div class="kpi-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 20px; text-align: center; border-left: 4px solid #3498db;">
-                    <h3 style="font-size: 14px; color: #6c757d; margin-bottom: 10px;">🔄 运费补偿率</h3>
-                    <div class="value" id="kpi-compensation-rate" style="font-size: 28px; font-weight: bold; color: #2c3e50;">0.0%</div>
-                    <div class="trend up" style="font-size: 12px; margin-top: 8px; color: #27ae60;">↑ 0.0% vs 上期</div>
+                <div class="kpi-card">
+                    <h3>🔄 运费补偿率</h3>
+                    <div class="value" id="kpi-compensation-rate">0.0%</div>
+                    <div class="trend up" id="kpi-compensation-rate-trend">↑ 0.0% vs 上期</div>
                 </div>
-                <div class="kpi-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 20px; text-align: center; border-left: 4px solid #3498db;">
-                    <h3 style="font-size: 14px; color: #6c757d; margin-bottom: 10px;">📬 分单订单数</h3>
-                    <div class="value" id="kpi-split-orders" style="font-size: 28px; font-weight: bold; color: #2c3e50;">0</div>
-                    <div class="trend up" style="font-size: 12px; margin-top: 8px; color: #27ae60;">↑ 0.0% vs 上期</div>
+                <div class="kpi-card">
+                    <h3>📬 分单订单数</h3>
+                    <div class="value" id="kpi-split-orders">0</div>
+                    <div class="trend up" id="kpi-split-orders-trend">↑ 0.0% vs 上期</div>
                 </div>
-                <div class="kpi-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 20px; text-align: center; border-left: 4px solid #3498db;">
-                    <h3 style="font-size: 14px; color: #6c757d; margin-bottom: 10px;">📊 分单占比</h3>
-                    <div class="value" id="kpi-split-ratio" style="font-size: 28px; font-weight: bold; color: #2c3e50;">0.0%</div>
-                    <div class="trend down" style="font-size: 12px; margin-top: 8px; color: #e74c3c;">↓ 0.0% vs 上期</div>
+                <div class="kpi-card">
+                    <h3>📊 分单占比</h3>
+                    <div class="value" id="kpi-split-ratio">0.0%</div>
+                    <div class="trend down" id="kpi-split-ratio-trend">↓ 0.0% vs 上期</div>
                 </div>
             </div>
 
