@@ -164,6 +164,15 @@
             margin-top: 4px;
             font-size: 11px;
         }
+        .stat-trend {
+            font-size: 10px;
+            margin-top: 4px;
+            color: #27ae60;
+            font-weight: 600;
+        }
+        .stat-trend.down {
+            color: #e74c3c;
+        }
         
         /* 订单结构和仓库占比图表 */
         .top-charts-row {
@@ -562,66 +571,76 @@
                 </div>
             </div>
 
-            <!-- 指标卡片 -->
-            <div class="stats-row">
+            <!-- 第一行 KPI（8 个） -->
+            <div class="stats-row" style="grid-template-columns: repeat(8, 1fr); gap: 10px; margin-bottom: 10px;">
                 <div class="stat-card">
                     <div class="stat-value" id="stat-price-kg">$0.00</div>
                     <div class="stat-label">单价/KG</div>
+                    <div class="stat-trend" id="stat-price-kg-trend">↑ 0.0% vs 上期</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="stat-price-pkg">$0.00</div>
                     <div class="stat-label">单价/包裹</div>
+                    <div class="stat-trend" id="stat-price-pkg-trend">↑ 0.0% vs 上期</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="stat-packages">0</div>
                     <div class="stat-label">发货包裹数</div>
+                    <div class="stat-trend" id="stat-packages-trend">↑ 0.0% vs 上期</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="stat-orders">0</div>
                     <div class="stat-label">订单数</div>
+                    <div class="stat-trend" id="stat-orders-trend">↑ 0.0% vs 上期</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="stat-items-pkg">0.0</div>
                     <div class="stat-label">包单件</div>
+                    <div class="stat-trend" id="stat-items-pkg-trend">↑ 0.0% vs 上期</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="stat-weight-pkg">0.0 kg</div>
                     <div class="stat-label">每包裹重量</div>
+                    <div class="stat-trend" id="stat-weight-pkg-trend">↑ 0.0% vs 上期</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="stat-logistics-ratio">0%</div>
                     <div class="stat-label">正向物流占收入比</div>
+                    <div class="stat-trend" id="stat-logistics-ratio-trend">↑ 0.0% vs 上期</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="stat-total-logistics">$0</div>
                     <div class="stat-label">累计物流费</div>
+                    <div class="stat-trend" id="stat-total-logistics-trend">↑ 0.0% vs 上期</div>
                 </div>
-            <!-- 运费 BI KPI 指标（来自 v2.3） -->
-            <div class="kpi-row" style="margin-top: 15px;">
-                <div class="kpi-card">
-                    <h3>🛡️ 保价费收入</h3>
-                    <div class="value" id="kpi-insurance-revenue">$0</div>
-                    <div class="trend up" id="kpi-insurance-revenue-trend">↑ 0.0% vs 上期</div>
+            </div>
+            
+            <!-- 第二行 KPI（5 个，对齐第一行前 5 个） -->
+            <div class="stats-row" style="grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 15px;">
+                <div class="stat-card">
+                    <div class="stat-value" id="kpi-insurance-revenue">$0</div>
+                    <div class="stat-label">🛡️ 保价费收入</div>
+                    <div class="stat-trend" id="kpi-insurance-revenue-trend">↑ 0.0% vs 上期</div>
                 </div>
-                <div class="kpi-card">
-                    <h3>📦 保价订单占比</h3>
-                    <div class="value" id="kpi-insurance-rate">0.0%</div>
-                    <div class="trend up" id="kpi-insurance-rate-trend">↑ 0.0% vs 上期</div>
+                <div class="stat-card">
+                    <div class="stat-value" id="kpi-insurance-rate">0.0%</div>
+                    <div class="stat-label">📦 保价订单占比</div>
+                    <div class="stat-trend" id="kpi-insurance-rate-trend">↑ 0.0% vs 上期</div>
                 </div>
-                <div class="kpi-card">
-                    <h3>🔄 运费补偿率</h3>
-                    <div class="value" id="kpi-compensation-rate">0.0%</div>
-                    <div class="trend up" id="kpi-compensation-rate-trend">↑ 0.0% vs 上期</div>
+                <div class="stat-card">
+                    <div class="stat-value" id="kpi-compensation-rate">0.0%</div>
+                    <div class="stat-label">🔄 运费补偿率</div>
+                    <div class="stat-trend" id="kpi-compensation-rate-trend">↑ 0.0% vs 上期</div>
                 </div>
-                <div class="kpi-card">
-                    <h3>📬 分单订单数</h3>
-                    <div class="value" id="kpi-split-orders">0</div>
-                    <div class="trend up" id="kpi-split-orders-trend">↑ 0.0% vs 上期</div>
+                <div class="stat-card">
+                    <div class="stat-value" id="kpi-split-orders">0</div>
+                    <div class="stat-label">📬 分单订单数</div>
+                    <div class="stat-trend" id="kpi-split-orders-trend">↑ 0.0% vs 上期</div>
                 </div>
-                <div class="kpi-card">
-                    <h3>📊 分单占比</h3>
-                    <div class="value" id="kpi-split-ratio">0.0%</div>
-                    <div class="trend down" id="kpi-split-ratio-trend">↓ 0.0% vs 上期</div>
+                <div class="stat-card">
+                    <div class="stat-value" id="kpi-split-ratio">0.0%</div>
+                    <div class="stat-label">📊 分单占比</div>
+                    <div class="stat-trend" id="kpi-split-ratio-trend">↓ 0.0% vs 上期</div>
                 </div>
             </div>
 
