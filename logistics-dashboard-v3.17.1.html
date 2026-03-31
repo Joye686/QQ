@@ -1173,15 +1173,15 @@
         function updateCharts() {
 
         // ============ 计算运费 BI KPI 指标 ============
-        const totalRevenue = globalData.reduce((sum, o) => sum + (o.logistics_fee_actual || 0), 0);
+        const totalLogistics = globalData.reduce((sum, o) => sum + (o.logistics_cost || 0), 0);
         const totalInsurance = globalData.reduce((sum, o) => sum + (o.insurance_fee || 0), 0);
         const insuranceOrders = globalData.filter(o => o.has_insurance === 'Y' || o.has_insurance === 'y' || o.has_insurance === true).length;
-        const totalActualCost = totalRevenue; // 实际运费
-        const splitOrders = globalData.filter(o => o.split_count >= 2).length;
+        const totalRevenue = globalData.reduce((sum, o) => sum + (o.revenue || 0), 0);
+        const splitOrders = globalData.filter(o => o.is_split === '是' || o.is_split === 'Y' || o.is_split === true).length;
         
         const insuranceRevenue = totalInsurance;
         const insuranceRate = globalData.length > 0 ? (insuranceOrders / globalData.length * 100) : 0;
-        const compensationRate = totalRevenue > 0 ? (totalInsurance / totalRevenue * 100) : 0;
+        const compensationRate = totalLogistics > 0 ? (totalInsurance / totalLogistics * 100) : 0;
         const splitOrdersCount = splitOrders;
         const splitRatio = globalData.length > 0 ? (splitOrders / globalData.length * 100) : 0;
         
@@ -2007,10 +2007,18 @@
                         actualDaysSum: 0,
                         actualDaysCount: 0,
                         deliveredCount: 0,
-                        onTimeCount: 0  // 时效达成数量
+                        onTimeCount: 0,  // 时效达成数量
+                        logisticsFeeActual: 0,  // 物流运费 (实际)
+                        orderRevenue: 0,  // 订单收入
+                        insuranceFee: 0  // 保价费
                     };
                 }
                 grouped[key].packages++;
+                
+                // 累加成本和收入
+                grouped[key].logisticsFeeActual += parseFloat(d.logistics_cost) || 0;
+                grouped[key].orderRevenue += parseFloat(d.revenue) || 0;
+                grouped[key].insuranceFee += parseFloat(d.insurance_fee) || 0;
                 
                 // 【修复 4】承诺时效 = 承诺最晚发货时间 - 发货时间
                 // 使用 order_date + promise_days 计算承诺最晚发货时间
@@ -2104,9 +2112,9 @@
                     delivery: deliveryRate,
                     achievement: achievementRate,  // 时效达成率
                     // 成本占比 = 物流运费 (实际运费/预估运费)/订单收入
-                    costRatio: orderRevenue > 0 ? ((logisticsFeeActual / orderRevenue) * 100) : 0,
+                    costRatio: row.orderRevenue > 0 ? ((row.logisticsFeeActual / row.orderRevenue) * 100) : 0,
                     // 补偿率 = 运保费收入/物流运费 (实际运费/预估运费)
-                    compensationRate: logisticsFeeActual > 0 ? ((insuranceFee / logisticsFeeActual) * 100) : 0
+                    compensationRate: row.logisticsFeeActual > 0 ? ((row.insuranceFee / row.logisticsFeeActual) * 100) : 0
                 };
             });
             
