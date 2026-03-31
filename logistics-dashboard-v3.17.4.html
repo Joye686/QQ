@@ -1,10 +1,13 @@
 <!-- Build: 2026-03-31T13:45:00+08:00 -->
-<!-- Build: 2026-03-31T16:05:00+08:00 v3.17.4 -->
+<!-- Build: 2026-03-31T16:35:00+08:00 v3.17.4-FIX -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -1102,7 +1105,7 @@
         async function loadData() {
             try {
                 console.log('开始加载数据...');
-                const response = await fetch('demo_data_real.min.json');
+                const response = await fetch('demo_data_real.min.json?v=' + Date.now());
                 console.log('响应状态:', response.status);
                 if (!response.ok) {
                     throw new Error('HTTP 错误：' + response.status);
