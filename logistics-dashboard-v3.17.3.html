@@ -1942,7 +1942,7 @@
             
             // 筛选数据（美/英/加/澳）
             const targetCountries = ['US', 'UK', 'CA', 'AU'];
-            let targetData = globalData.filter(d => {
+            let targetData = rawData.filter(d => {
                 const country = (d.country_code || '').toUpperCase();
                 return targetCountries.includes(country);
             });
