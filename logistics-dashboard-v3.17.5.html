@@ -1943,20 +1943,20 @@
 
         // 渲染第二行 4 个图表
         function renderSecondRowCharts() {
-            // 1. 分单次数分布
+            // 1. 分单次数分布（用 is_split 模拟）
             const splitDistChart = echarts.init(document.getElementById('split-dist-chart'));
-            const splitData = [0, 0, 0, 0, 0]; // 0 次，1 次，2 次，3 次，4+ 次
+            const splitData = [0, 0]; // 否，是
             
             rawData.forEach(d => {
-                const splitCount = parseInt(d.split_count) || 0;
-                if (splitCount >= 4) splitData[4]++;
-                else splitData[splitCount]++;
+                const isSplit = d.is_split === '是' || d.is_split === 'Y' || d.is_split === true;
+                if (isSplit) splitData[1]++;
+                else splitData[0]++;
             });
             
             splitDistChart.setOption({
                 tooltip: { formatter: '{b}: {c}单' },
-                grid: { left: '10%', right: '5%', bottom: '15%', top: '5%', containLabel: true },
-                xAxis: { type: 'category', data: ['0 次', '1 次', '2 次', '3 次', '4+ 次'], axisLabel: { fontSize: 10 } },
+                grid: { left: '15%', right: '5%', bottom: '15%', top: '5%', containLabel: true },
+                xAxis: { type: 'category', data: ['未分单', '已分单'], axisLabel: { fontSize: 10 } },
                 yAxis: { type: 'value', axisLabel: { fontSize: 10 } },
                 series: [{
                     type: 'bar',
@@ -1973,7 +1973,7 @@
                 const date = d.ship_date || '';
                 if (!dateMap[date]) dateMap[date] = { total: 0, split: 0 };
                 dateMap[date].total++;
-                if ((parseInt(d.split_count) || 0) >= 2) dateMap[date].split++;
+                if (d.is_split === '是' || d.is_split === 'Y' || d.is_split === true) dateMap[date].split++;
             });
             
             const sortedDates = Object.keys(dateMap).sort().slice(-14); // 最近 14 天
