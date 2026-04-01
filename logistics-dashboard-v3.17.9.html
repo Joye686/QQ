@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>物流分析仪表板 v3.17.7 (升档降档流向分析)</title>
+    <title>物流分析仪表板 v3.17.5 (升档降档流向分析)</title>
     <script src="echarts.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -512,7 +512,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>📦 物流分析仪表板 v3.17.7 (升档降档流向分析)</h1>
+        <h1>📦 物流分析仪表板 v3.17.5 (升档降档流向分析)</h1>
         
         <div id="loading" class="loading">正在加载数据...</div>
         
@@ -681,20 +681,8 @@
 
             </div>
 
-            <!-- 第一行 4 个图表：各国订单数及占比、各国客单价、订单结构、发货仓库占比 -->
+            <!-- 订单结构和仓库占比图表（上移） -->
             <div class="top-charts-row">
-                <!-- 各国订单数及占比 -->
-                <div class="chart-container" style="grid-column: span 1;">
-                    <div class="chart-title" style="font-size: 13px;">🌍 各国订单数及占比</div>
-                    <div id="country-orders-chart" class="chart" style="height: 250px;"></div>
-                </div>
-                
-                <!-- 各国客单价 -->
-                <div class="chart-container" style="grid-column: span 1;">
-                    <div class="chart-title" style="font-size: 13px;">💰 各国客单价</div>
-                    <div id="country-aov-chart" class="chart" style="height: 250px;"></div>
-                </div>
-                
                 <!-- 订单结构 -->
                 <div class="chart-container" style="grid-column: span 1;">
                     <div class="chart-title" style="font-size: 13px;">📊 订单结构 - 订单口径</div>
@@ -706,9 +694,21 @@
                     <div class="chart-title" style="font-size: 13px;">🏭 发货仓库占比 - 发货口径</div>
                     <div id="warehouse-ratio-chart" class="chart" style="height: 250px;"></div>
                 </div>
+                
+                <!-- 运费区间客单价 -->
+                <div class="chart-container" style="grid-column: span 1;">
+                    <div class="chart-title" style="font-size: 13px;">💰 各运费区间客单价</div>
+                    <div id="range-aov-chart" class="chart" style="height: 250px;"></div>
+                </div>
+                
+                <!-- 运费区间订单占比 -->
+                <div class="chart-container" style="grid-column: span 1;">
+                    <div class="chart-title" style="font-size: 13px;">📊 各运费区间订单占比</div>
+                    <div id="range-ratio-chart" class="chart" style="height: 250px;"></div>
+                </div>
             </div>
 
-            <!-- 第二行 4 个图表：各运费区间订单占比、各运费区间客单价、分单次数分布、分单占比趋势 -->
+            <!-- 第二行 4 个图表 -->
             <div class="second-charts-row">
                 <!-- 各运费区间订单占比 -->
                 <div class="chart-container" style="grid-column: span 1;">
@@ -1140,58 +1140,16 @@
             try {
                 const response = await fetch('demo_data_real.min.json');
                 const data = await response.json();
-                
-                // 【字段映射】所有字段都保留原始中文字段名，同时添加英文映射
+                // 【修复 1】使用正确的列名映射，支持 Excel 列名
                 rawData = data.map(d => ({
-                    // 保留所有原始中文字段（用于图表渲染）
                     ...d,
-                    
-                    // 英文字段映射（用于 KPI 计算）
-                    order_no: d['订单号'],
-                    ship_no: d['发货单号'],
-                    site_code: d['站点'],
-                    shipping_status: d['订单发货状态'],
-                    
-                    // 时间字段 - 提取日期部分
-                    ship_date: d['发货时间'] ? d['发货时间'].split(' ')[0].replace(/\//g, '-') : '',
-                    
-                    // 产品字段
-                    product_l1: d['一级产品'],
-                    product_l2: d['二级产品'],
-                    product_l3: d['三级产品'],
-                    item_count: parseInt(d['商品数量']) || 0,
-                    
-                    // 物流字段
-                    customer_shipping_method: d['客户选择的运送方式'],
-                    actual_shipping_method: d['物流方式'],
-                    weight_kg: parseFloat(d['实际/预估重量']) || 0,
-                    
-                    // 仓库字段
-                    warehouse_code: d['发货地'],
-                    country_code: d['收货地'],
-                    
-                    // 金额字段
-                    revenue: parseFloat(d['订单收入']) || 0,
-                    freight: parseFloat(d['运费']) || 0,
-                    insurance_fee: parseFloat(d['保价费']) || 0,
-                    logistics_cost: parseFloat(d['物流运费 (实际运费/预估运费)']) || 0,
-                    
-                    // 分单字段
-                    is_split: d['是否分单'],
-                    
-                    // 订单属性
-                    is_presale: d['预售订单'],
-                    is_influencer: d['红人订单'],
-                    is_merged: d['发货合单'],
-                    
-                    // 辅助字段
-                    warehouse_type: getWarehouseType(d['发货地']),
-                    package_count: 1  // 每行一个包裹
+                    logistics_cost: d['物流运费 (实际运费/预估运费)'] || d.logistics_cost || 0,
+                    warehouse_type: getWarehouseType(d['发货地'])
                 }));
                 console.log('加载数据:', rawData.length, '条');
                 
-                // 自动设置日期范围（使用发货时间）
-                const dates = rawData.map(d => new Date(d.order_date)).filter(d => !isNaN(d));
+                // 自动设置日期范围
+                const dates = rawData.map(d => new Date(d.ship_date)).filter(d => !isNaN(d));
                 if (dates.length > 0) {
                     currentStartDate = new Date(Math.min(...dates));
                     currentEndDate = new Date(Math.max(...dates));
@@ -1217,7 +1175,7 @@
             }
         }
         
-        // 过滤数据（使用下单时间）
+        // 过滤数据（使用发货时间）
         function filterData() {
             const country = document.getElementById('filter-country').value;
             const warehouse = document.getElementById('filter-warehouse').value;
@@ -1227,7 +1185,6 @@
             const orderType = document.getElementById('filter-order-type').value;
             
             return rawData.filter(d => {
-                // 国家筛选 - 使用'收货地'字段
                 if (country !== 'all' && d['收货地'] !== country) return false;
                 
                 // 【修复 3】智能识别仓库 - 海外仓包含美国仓 + 加拿大仓 + 英国仓
@@ -1300,7 +1257,7 @@
                     timeData[timeIndex].weight += d.weight_kg || 0;
                     timeData[timeIndex].items += d.item_count || 0;
                     timeData[timeIndex].revenue += d.revenue || 0;
-                    timeData[timeIndex].insurance += parseFloat(d['保价费']) || 0;
+                    timeData[timeIndex].insurance += d.insurance_fee || 0;
                 }
             });
             
@@ -1338,27 +1295,22 @@
         }
 
         function updateCharts() {
-            const filteredData = filterData();
 
         // ============ 计算运费 BI KPI 指标 ============
-        const totalLogistics = filteredData.reduce((sum, o) => sum + (o.logistics_cost || 0), 0);
-        // 运保费收入 = 运费 + 保价费
-        const totalFreight = filteredData.reduce((sum, o) => sum + (parseFloat(o['运费']) || 0), 0);
-        const totalInsurance = filteredData.reduce((sum, o) => sum + (parseFloat(o['保价费']) || 0), 0);
-        const insuranceRevenue = totalFreight + totalInsurance;  // 运保费收入
-        const insuranceOrders = filteredData.filter(o => parseFloat(o['保价费']) > 0).length;
-        const totalRevenue = filteredData.reduce((sum, o) => sum + (o.revenue || 0), 0);
-        const splitOrders = filteredData.filter(o => o.is_split === '是' || o.is_split === 'Y' || o.is_split === true).length;
+        const totalLogistics = globalData.reduce((sum, o) => sum + (o.logistics_cost || 0), 0);
+        const totalInsurance = globalData.reduce((sum, o) => sum + (o.insurance_fee || 0), 0);
+        const insuranceOrders = globalData.filter(o => o.has_insurance === 'Y' || o.has_insurance === 'y' || o.has_insurance === true).length;
+        const totalRevenue = globalData.reduce((sum, o) => sum + (o.revenue || 0), 0);
+        const splitOrders = globalData.filter(o => o.is_split === '是' || o.is_split === 'Y' || o.is_split === true).length;
         
-        const insuranceRate = filteredData.length > 0 ? (insuranceOrders / filteredData.length * 100) : 0;
-        // 运费补偿率 = 运费 / 物流运费 (实际运费/预估运费)
-        const totalFreightCost = filteredData.reduce((sum, o) => sum + (o.freight || 0), 0);
-        const compensationRate = totalLogistics > 0 ? (totalFreightCost / totalLogistics * 100) : 0;
+        const insuranceRevenue = totalInsurance;
+        const insuranceRate = globalData.length > 0 ? (insuranceOrders / globalData.length * 100) : 0;
+        const compensationRate = totalLogistics > 0 ? (totalInsurance / totalLogistics * 100) : 0;
         const splitOrdersCount = splitOrders;
-        const splitRatio = filteredData.length > 0 ? (splitOrders / filteredData.length * 100) : 0;
+        const splitRatio = globalData.length > 0 ? (splitOrders / globalData.length * 100) : 0;
         
         // 更新 KPI 显示
-        document.getElementById('kpi-insurance-revenue').textContent = '$' + (totalFreight + totalInsurance).toLocaleString(undefined, {maximumFractionDigits: 0});  // 运保费收入
+        document.getElementById('kpi-insurance-revenue').textContent = '$' + insuranceRevenue.toLocaleString(undefined, {maximumFractionDigits: 0});
         document.getElementById('kpi-insurance-rate').textContent = insuranceRate.toFixed(1) + '%';
         document.getElementById('kpi-compensation-rate').textContent = compensationRate.toFixed(1) + '%';
         document.getElementById('kpi-split-orders').textContent = splitOrdersCount.toLocaleString();
@@ -1366,7 +1318,6 @@
         
 
             updateStats();
-            renderSecondRowCharts();  // 渲染 6 个图表：各国订单数/客单价、运费区间订单占比/客单价、分单分布/趋势
             renderOrderStructure();
             renderWarehouseRatio();
             renderJiaxingTChart();
@@ -1374,7 +1325,7 @@
             renderTotalTChart();  // 【修复 2】添加全量数据图表
             renderDetailTable();
             renderFlowChart();
-            // renderClaimCharts();  // 暂时注释，该函数未定义
+            renderClaimCharts();
             renderRangeCharts();  // 渲染运费区间图表
         }
 
@@ -1451,6 +1402,13 @@
             document.getElementById('stat-total-logistics').textContent = '$' + totalCost.toLocaleString(undefined, {maximumFractionDigits: 2});
         }
 
+        function updateCharts() {
+            updateStats();
+            renderJiaxingTChart();
+            renderOverseasTChart();
+            renderDetailTable();
+        }
+
         function updateTCharts() {
             renderJiaxingTChart();
             renderOverseasTChart();
@@ -1491,7 +1449,7 @@
             
             // 【修复 3】智能识别嘉兴仓和海外仓
             let jiaxingData = rawData.filter(d => {
-                const wh = (d.warehouse_code || '').toLowerCase();
+                const wh = (d['发货地'] || '').toLowerCase();
                 return wh.includes('jiaxing') || wh.includes('嘉兴');
             });
             
@@ -1508,7 +1466,7 @@
             }
             
             // 否则按单个国家筛选
-            jiaxingData = jiaxingData.filter(d => d.country_code === selectedCountry);
+            jiaxingData = jiaxingData.filter(d => d['收货地'] === selectedCountry);
             const { timeSeries, data } = calculateMetrics(jiaxingData, currentTimeGranularity, currentStartDate, currentEndDate);
             
             const option = {
@@ -1577,7 +1535,7 @@
             const { timeSeries } = calculateMetrics(data, currentTimeGranularity, currentStartDate, currentEndDate);
             
             const series = countries.map((country, index) => {
-                const countryData = data.filter(d => d.country_code === country);
+                const countryData = data.filter(d => d['收货地'] === country);
                 const { data: metrics } = calculateMetrics(countryData, currentTimeGranularity, currentStartDate, currentEndDate);
                 
                 return {
@@ -1670,7 +1628,7 @@
             
             // 【修复 3】智能识别海外仓
             let overseasData = rawData.filter(d => {
-                const wh = (d.warehouse_code || '').toLowerCase();
+                const wh = (d['发货地'] || '').toLowerCase();
                 return wh.includes('us') || wh.includes('ca') || wh.includes('uk') || 
                        wh.includes('america') || wh.includes('canada') || wh.includes('britain') ||
                        wh.includes('overseas') || wh.includes('海外');
@@ -1686,7 +1644,7 @@
                 return;
             }
             
-            overseasData = overseasData.filter(d => d.country_code === selectedCountry);
+            overseasData = overseasData.filter(d => d['收货地'] === selectedCountry);
             const { timeSeries, data } = calculateMetrics(overseasData, currentTimeGranularity, currentStartDate, currentEndDate);
             
             const option = {
@@ -1768,13 +1726,13 @@
             });
             
             filteredData.forEach(d => {
-                const country = countryMap[d.country_code] || '其他';
+                const country = countryMap[d['收货地']] || '其他';
                 if (!stats[country]) return;
                 
                 const orders = stats[country];
-                if (d.order_type === 'shipped') {
+                if (d['订单发货状态'] === 'shipped') {
                     orders.full++;
-                } else if (d.order_type === 'partial') {
+                } else if (d['订单发货状态'] === 'partial') {
                     orders.partial++;
                 } else {
                     orders.unshipped++;
@@ -1887,11 +1845,11 @@
             });
             
             filteredData.forEach(d => {
-                const country = countryMap[d.country_code] || '其他';
+                const country = countryMap[d['收货地']] || '其他';
                 if (!stats[country]) return;
                 
                 const orders = stats[country];
-                const wh = (d.warehouse_code || '').toLowerCase();
+                const wh = (d['发货地'] || '').toLowerCase();
                 
                 // 【修复 1】智能识别仓库类型
                 if (wh.includes('jiaxing') || wh.includes('嘉兴')) {
@@ -1985,13 +1943,11 @@
 
         // 渲染第二行 4 个图表
         function renderSecondRowCharts() {
-            const chartData = filterData();  // 使用筛选后的数据
-            
             // 1. 分单次数分布（用 is_split 模拟）
             const splitDistChart = echarts.init(document.getElementById('split-dist-chart'));
             const splitData = [0, 0]; // 否，是
             
-            chartData.forEach(d => {
+            rawData.forEach(d => {
                 const isSplit = d.is_split === '是' || d.is_split === 'Y' || d.is_split === true;
                 if (isSplit) splitData[1]++;
                 else splitData[0]++;
@@ -2010,11 +1966,11 @@
                 }]
             });
             
-            // 2. 分单占比趋势（按发货日期）
+            // 2. 分单占比趋势（按日期）
             const splitTrendChart = echarts.init(document.getElementById('split-trend-chart'));
             const dateMap = {};
-            chartData.forEach(d => {
-                let date = d.ship_date || '';
+            rawData.forEach(d => {
+                const date = d.ship_date || '';
                 if (!dateMap[date]) dateMap[date] = { total: 0, split: 0 };
                 dateMap[date].total++;
                 if (d.is_split === '是' || d.is_split === 'Y' || d.is_split === true) dateMap[date].split++;
@@ -2044,8 +2000,8 @@
             // 3. 各国客单价
             const countryAovChart = echarts.init(document.getElementById('country-aov-chart'));
             const countryData = {};
-            chartData.forEach(d => {
-                const country = d.country_code || 'Other';
+            rawData.forEach(d => {
+                const country = d['收货地'] || 'Other';
                 if (!countryData[country]) countryData[country] = { revenue: 0, orders: 0 };
                 countryData[country].revenue += parseFloat(d.revenue) || 0;
                 countryData[country].orders++;
@@ -2156,7 +2112,7 @@
             // 筛选数据（美/英/加/澳）
             const targetCountries = ['US', 'GB', 'CA', 'AU'];
             let targetData = rawData.filter(d => {
-                const country = (d.country_code || '').toUpperCase();
+                const country = (d['收货地'] || '').toUpperCase();
                 return targetCountries.includes(country);
             });
             
@@ -2316,16 +2272,16 @@
             // 应用筛选
             let detailData = filterData();
             if (detailCountry !== 'all') {
-                detailData = detailData.filter(d => d.country_code === detailCountry);
+                detailData = detailData.filter(d => d['收货地'] === detailCountry);
             }
             
             // 【修复 3】按仓库分组 - 智能识别嘉兴仓和海外仓
             const jiaxingData = detailData.filter(d => {
-                const wh = (d.warehouse_code || '').toLowerCase();
+                const wh = (d['发货地'] || '').toLowerCase();
                 return wh.includes('jiaxing') || wh.includes('嘉兴');
             });
             const overseasData = detailData.filter(d => {
-                const wh = (d.warehouse_code || '').toLowerCase();
+                const wh = (d['发货地'] || '').toLowerCase();
                 return wh.includes('us') || wh.includes('ca') || wh.includes('uk') || 
                        wh.includes('america') || wh.includes('canada') || wh.includes('britain') ||
                        wh.includes('overseas') || wh.includes('海外');
@@ -2345,14 +2301,14 @@
                 const customerShipping = d.customer_shipping_method || '';
                 const speed = customerShipping.includes('Expedited') ? '快' : '中';
                 
-                const key = `${speed}|${d.product_l1}|${d.product_l2}|${d.product_l3}`;
+                const key = `${speed}|${d['一级产品']}|${d['二级产品']}|${d['三级产品']}`;
                 if (!grouped[key]) {
                     grouped[key] = {
                         speed: speed,
-                        l1: d.product_l1,
-                        l2: d.product_l2,
-                        l3: d.product_l3,
-                        l1l2l3: `${d.product_l1} | ${d.product_l2} | ${d.product_l3}`,
+                        l1: d['一级产品'],
+                        l2: d['二级产品'],
+                        l3: d['三级产品'],
+                        l1l2l3: `${d['一级产品']} | ${d['二级产品']} | ${d['三级产品']}`,
                         packages: 0,
                         promiseDaysSum: 0,
                         promiseDaysCount: 0,
@@ -2370,7 +2326,7 @@
                 // 累加成本和收入
                 grouped[key].logisticsFeeActual += parseFloat(d.logistics_cost) || 0;
                 grouped[key].orderRevenue += parseFloat(d.revenue) || 0;
-                grouped[key].insuranceFee += parseFloat(d['保价费']) || 0;
+                grouped[key].insuranceFee += parseFloat(d.insurance_fee) || 0;
                 
                 // 【修复 4】承诺时效 = 承诺最晚发货时间 - 发货时间
                 // 使用 order_date + promise_days 计算承诺最晚发货时间
@@ -2551,7 +2507,7 @@
             const detailCountry = document.getElementById('detail-country').value;
             let flowData = filterData();
             if (detailCountry !== 'all') {
-                flowData = flowData.filter(d => d.country_code === detailCountry);
+                flowData = flowData.filter(d => d['收货地'] === detailCountry);
             }
             
             // 【修复 2】统计流向数据 - 按新逻辑计算
@@ -2562,7 +2518,7 @@
             flowData.forEach(d => {
                 const customerShipping = d.customer_shipping_method || '';
                 const isFastChoice = customerShipping.includes('Expedited'); // 客户选"快"
-                const isFastShip = d.product_l1 === 'Expedited'; // 实际发"快线产品"
+                const isFastShip = d['一级产品'] === 'Expedited'; // 实际发"快线产品"
                 
                 if (isFastChoice && isFastShip) fast2fast++;      // 快→快（保持）
                 else if (isFastChoice && !isFastShip) fast2slow++; // 快→慢（降档）⬇️
