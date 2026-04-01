@@ -1140,25 +1140,53 @@
             try {
                 const response = await fetch('demo_data_real.min.json');
                 const data = await response.json();
-                // 【字段映射】中文字段名映射
+                
+                // 【字段映射】所有字段都保留原始中文字段名，同时添加英文映射
                 rawData = data.map(d => ({
+                    // 保留所有原始中文字段（用于图表渲染）
                     ...d,
-                    // 保留所有原始中文字段（包括'运费'、'保价费'等）
+                    
+                    // 英文字段映射（用于 KPI 计算）
                     order_no: d['订单号'],
                     ship_no: d['发货单号'],
-                    // 使用发货时间作为筛选依据（方案一）
-                    order_date: d['发货时间'] ? d['发货时间'].split(' ')[0].replace(/\//g, '-') : '',
+                    site_code: d['站点'],
+                    shipping_status: d['订单发货状态'],
+                    
+                    // 时间字段 - 提取日期部分
                     ship_date: d['发货时间'] ? d['发货时间'].split(' ')[0].replace(/\//g, '-') : '',
-                    country_code: d['收货地'],
-                    warehouse_code: d['发货地'],
-                    logistics_cost: parseFloat(d['物流运费 (实际运费/预估运费)']) || 0,
-                    revenue: parseFloat(d['订单收入']) || 0,
-                    freight: parseFloat(d['运费']) || 0,  // 运费字段
-                    is_split: d['是否分单'],
-                    package_count: parseInt(d['商品数量']) || 1,
-                    weight_kg: parseFloat(d['实际/预估重量']) || 0,
+                    
+                    // 产品字段
+                    product_l1: d['一级产品'],
+                    product_l2: d['二级产品'],
+                    product_l3: d['三级产品'],
                     item_count: parseInt(d['商品数量']) || 0,
-                    warehouse_type: getWarehouseType(d['发货地'])
+                    
+                    // 物流字段
+                    customer_shipping_method: d['客户选择的运送方式'],
+                    actual_shipping_method: d['物流方式'],
+                    weight_kg: parseFloat(d['实际/预估重量']) || 0,
+                    
+                    // 仓库字段
+                    warehouse_code: d['发货地'],
+                    country_code: d['收货地'],
+                    
+                    // 金额字段
+                    revenue: parseFloat(d['订单收入']) || 0,
+                    freight: parseFloat(d['运费']) || 0,
+                    insurance_fee: parseFloat(d['保价费']) || 0,
+                    logistics_cost: parseFloat(d['物流运费 (实际运费/预估运费)']) || 0,
+                    
+                    // 分单字段
+                    is_split: d['是否分单'],
+                    
+                    // 订单属性
+                    is_presale: d['预售订单'],
+                    is_influencer: d['红人订单'],
+                    is_merged: d['发货合单'],
+                    
+                    // 辅助字段
+                    warehouse_type: getWarehouseType(d['发货地']),
+                    package_count: 1  // 每行一个包裹
                 }));
                 console.log('加载数据:', rawData.length, '条');
                 
