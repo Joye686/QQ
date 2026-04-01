@@ -1299,9 +1299,9 @@
         // ============ 计算运费 BI KPI 指标 ============
         const totalLogistics = globalData.reduce((sum, o) => sum + (o.logistics_cost || 0), 0);
         const totalInsurance = globalData.reduce((sum, o) => sum + (o.insurance_fee || 0), 0);
-        const insuranceOrders = globalData.filter(o => o.has_insurance === 'Y' || o.has_insurance === 'y' || o.has_insurance === true).length;
+        const insuranceOrders = globalData.filter(o => o.insurance_fee > 0).length;
         const totalRevenue = globalData.reduce((sum, o) => sum + (o.revenue || 0), 0);
-        const splitOrders = globalData.filter(o => o.is_split === '是' || o.is_split === 'Y' || o.is_split === true).length;
+        const splitOrders = globalData.filter(o => o.is_split === '是').length;
         
         const insuranceRevenue = totalInsurance;
         const insuranceRate = globalData.length > 0 ? (insuranceOrders / globalData.length * 100) : 0;
