@@ -1295,19 +1295,20 @@
         }
 
         function updateCharts() {
+            const filteredData = filterData();
 
         // ============ 计算运费 BI KPI 指标 ============
-        const totalLogistics = globalData.reduce((sum, o) => sum + (o.logistics_cost || 0), 0);
-        const totalInsurance = globalData.reduce((sum, o) => sum + (o.insurance_fee || 0), 0);
-        const insuranceOrders = globalData.filter(o => o.has_insurance === 'Y' || o.has_insurance === 'y' || o.has_insurance === true).length;
-        const totalRevenue = globalData.reduce((sum, o) => sum + (o.revenue || 0), 0);
-        const splitOrders = globalData.filter(o => o.is_split === '是' || o.is_split === 'Y' || o.is_split === true).length;
+        const totalLogistics = filteredData.reduce((sum, o) => sum + (o.logistics_cost || 0), 0);
+        const totalInsurance = filteredData.reduce((sum, o) => sum + (o.insurance_fee || 0), 0);
+        const insuranceOrders = filteredData.filter(o => o.has_insurance === 'Y' || o.has_insurance === 'y' || o.has_insurance === true).length;
+        const totalRevenue = filteredData.reduce((sum, o) => sum + (o.revenue || 0), 0);
+        const splitOrders = filteredData.filter(o => o.is_split === '是' || o.is_split === 'Y' || o.is_split === true).length;
         
         const insuranceRevenue = totalInsurance;
-        const insuranceRate = globalData.length > 0 ? (insuranceOrders / globalData.length * 100) : 0;
+        const insuranceRate = filteredData.length > 0 ? (insuranceOrders / filteredData.length * 100) : 0;
         const compensationRate = totalLogistics > 0 ? (totalInsurance / totalLogistics * 100) : 0;
         const splitOrdersCount = splitOrders;
-        const splitRatio = globalData.length > 0 ? (splitOrders / globalData.length * 100) : 0;
+        const splitRatio = filteredData.length > 0 ? (splitOrders / filteredData.length * 100) : 0;
         
         // 更新 KPI 显示
         document.getElementById('kpi-insurance-revenue').textContent = '$' + insuranceRevenue.toLocaleString(undefined, {maximumFractionDigits: 0});
