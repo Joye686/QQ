@@ -1143,7 +1143,7 @@
                 // 【字段映射】中文字段名映射
                 rawData = data.map(d => ({
                     ...d,
-                    // 保留所有原始中文字段
+                    // 保留所有原始中文字段（包括'运费'、'保价费'等）
                     order_no: d['订单号'],
                     ship_no: d['发货单号'],
                     // 使用发货时间作为筛选依据（方案一）
@@ -1153,6 +1153,7 @@
                     warehouse_code: d['发货地'],
                     logistics_cost: parseFloat(d['物流运费 (实际运费/预估运费)']) || 0,
                     revenue: parseFloat(d['订单收入']) || 0,
+                    freight: parseFloat(d['运费']) || 0,  // 运费字段
                     is_split: d['是否分单'],
                     package_count: parseInt(d['商品数量']) || 1,
                     weight_kg: parseFloat(d['实际/预估重量']) || 0,
@@ -1326,8 +1327,9 @@
         const splitOrders = filteredData.filter(o => o.is_split === '是' || o.is_split === 'Y' || o.is_split === true).length;
         
         const insuranceRate = filteredData.length > 0 ? (insuranceOrders / filteredData.length * 100) : 0;
-        // 运费补偿率 = 运费 / 物流运费
-        const compensationRate = totalLogistics > 0 ? (totalFreight / totalLogistics * 100) : 0;
+        // 运费补偿率 = 运费 / 物流运费 (实际运费/预估运费)
+        const totalFreightCost = filteredData.reduce((sum, o) => sum + (o.freight || 0), 0);
+        const compensationRate = totalLogistics > 0 ? (totalFreightCost / totalLogistics * 100) : 0;
         const splitOrdersCount = splitOrders;
         const splitRatio = filteredData.length > 0 ? (splitOrders / filteredData.length * 100) : 0;
         
