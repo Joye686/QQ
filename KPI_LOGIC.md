@@ -62,15 +62,38 @@
 - **显示：** `XX.X%`（保留 1 位小数）
 
 ### 4. 分单数
-- **公式：** `COUNT(分单订单)`
+- **公式：** `总包裹数 - 去重订单数`
 - **数据源：** `filteredData`
-- **计算：** `filter(o => o.is_split === '是' || o.is_split === 'Y' || o.is_split === true).length`
+- **计算：** 
+  ```javascript
+  const totalPackages = filteredData.length  // 总包裹数（每行一个包裹）
+  const uniqueOrders = new Set(filteredData.map(d => d.order_no)).size  // 去重订单数
+  const splitOrders = totalPackages - uniqueOrders  // 分单数
+  ```
+- **备选逻辑（包裹号判定）：**
+  ```javascript
+  // 包裹号末尾 b1=第一个包裹，b2=第二个包裹...
+  // 如果存在 ship_no 以 b2,b3...结尾的订单，即为分单
+  const splitOrders = filteredData.filter(d => 
+    d.ship_no && /b[2-9]$/.test(d.ship_no)  // 匹配 b2,b3,b4...结尾的包裹号
+  ).length
+  ```
 - **显示：** `XXX,XXX`（千分位）
 
 ### 5. 分单占比
-- **公式：** `(分单订单数 / 总订单数) × 100%`
+- **公式：** `(分单的订单数 / 总订单数) × 100%`
 - **数据源：** `filteredData`
-- **计算：** `splitOrders / filteredData.length × 100`
+- **计算：** 
+  ```javascript
+  // 分单的订单数 = 该订单号下包裹数大于 1 的订单数
+  const orderPackageCount = {}
+  filteredData.forEach(d => {
+    orderPackageCount[d.order_no] = (orderPackageCount[d.order_no] || 0) + 1
+  })
+  const splitOrderCount = Object.values(orderPackageCount).filter(count => count > 1).length
+  const totalOrders = Object.keys(orderPackageCount).length
+  const splitRatio = (splitOrderCount / totalOrders) × 100
+  ```
 - **显示：** `XX.X%`（保留 1 位小数）
 
 ---
