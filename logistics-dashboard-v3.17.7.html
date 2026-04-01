@@ -1311,19 +1311,22 @@
 
         // ============ 计算运费 BI KPI 指标 ============
         const totalLogistics = filteredData.reduce((sum, o) => sum + (o.logistics_cost || 0), 0);
+        // 运保费收入 = 运费 + 保价费
+        const totalFreight = filteredData.reduce((sum, o) => sum + (parseFloat(o['运费']) || 0), 0);
         const totalInsurance = filteredData.reduce((sum, o) => sum + (parseFloat(o['保价费']) || 0), 0);
+        const insuranceRevenue = totalFreight + totalInsurance;  // 运保费收入
         const insuranceOrders = filteredData.filter(o => parseFloat(o['保价费']) > 0).length;
         const totalRevenue = filteredData.reduce((sum, o) => sum + (o.revenue || 0), 0);
         const splitOrders = filteredData.filter(o => o.is_split === '是' || o.is_split === 'Y' || o.is_split === true).length;
         
-        const insuranceRevenue = totalInsurance;
         const insuranceRate = filteredData.length > 0 ? (insuranceOrders / filteredData.length * 100) : 0;
-        const compensationRate = totalLogistics > 0 ? (totalInsurance / totalLogistics * 100) : 0;
+        // 运费补偿率 = 运费 / 物流运费
+        const compensationRate = totalLogistics > 0 ? (totalFreight / totalLogistics * 100) : 0;
         const splitOrdersCount = splitOrders;
         const splitRatio = filteredData.length > 0 ? (splitOrders / filteredData.length * 100) : 0;
         
         // 更新 KPI 显示
-        document.getElementById('kpi-insurance-revenue').textContent = '$' + insuranceRevenue.toLocaleString(undefined, {maximumFractionDigits: 0});
+        document.getElementById('kpi-insurance-revenue').textContent = '$' + (totalFreight + totalInsurance).toLocaleString(undefined, {maximumFractionDigits: 0});  // 运保费收入
         document.getElementById('kpi-insurance-rate').textContent = insuranceRate.toFixed(1) + '%';
         document.getElementById('kpi-compensation-rate').textContent = compensationRate.toFixed(1) + '%';
         document.getElementById('kpi-split-orders').textContent = splitOrdersCount.toLocaleString();
