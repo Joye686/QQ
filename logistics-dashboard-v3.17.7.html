@@ -1224,15 +1224,10 @@
                 if (productL3 !== 'all' && d.product_l3 !== productL3) return false;
                 if (orderType !== 'all' && d.order_type !== orderType) return false;
                 
-                // 使用下单时间进行筛选
-                // order_date 格式：20260212，需要转换为 2026-02-12
-                let orderDateStr = String(d.order_date || '');
-                if (orderDateStr.length === 8) {
-                    orderDateStr = `${orderDateStr.slice(0,4)}-${orderDateStr.slice(4,6)}-${orderDateStr.slice(6,8)}`;
-                }
-                const orderDate = new Date(orderDateStr);
-                if (isNaN(orderDate.getTime())) return false; // 排除无下单日期的数据
-                if (orderDate < currentStartDate || orderDate > currentEndDate) return false;
+                // 使用发货时间进行筛选
+                const shipDate = new Date(d.ship_date);
+                if (isNaN(shipDate.getTime())) return false; // 排除无发货日期的数据
+                if (shipDate < currentStartDate || shipDate > currentEndDate) return false;
                 
                 return true;
             });
