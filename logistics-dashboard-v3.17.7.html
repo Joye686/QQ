@@ -1148,8 +1148,8 @@
                 }));
                 console.log('加载数据:', rawData.length, '条');
                 
-                // 自动设置日期范围
-                const dates = rawData.map(d => new Date(d.ship_date)).filter(d => !isNaN(d));
+                // 自动设置日期范围（使用下单时间）
+                const dates = rawData.map(d => new Date(d.order_date)).filter(d => !isNaN(d));
                 if (dates.length > 0) {
                     currentStartDate = new Date(Math.min(...dates));
                     currentEndDate = new Date(Math.max(...dates));
@@ -1175,7 +1175,7 @@
             }
         }
         
-        // 过滤数据（使用发货时间）
+        // 过滤数据（使用下单时间）
         function filterData() {
             const country = document.getElementById('filter-country').value;
             const warehouse = document.getElementById('filter-warehouse').value;
@@ -1210,10 +1210,10 @@
                 if (productL3 !== 'all' && d.product_l3 !== productL3) return false;
                 if (orderType !== 'all' && d.order_type !== orderType) return false;
                 
-                // 使用发货时间进行筛选
-                const shipDate = new Date(d.ship_date);
-                if (isNaN(shipDate.getTime())) return false; // 排除无发货日期的数据
-                if (shipDate < currentStartDate || shipDate > currentEndDate) return false;
+                // 使用下单时间进行筛选
+                const orderDate = new Date(d.order_date);
+                if (isNaN(orderDate.getTime())) return false; // 排除无下单日期的数据
+                if (orderDate < currentStartDate || orderDate > currentEndDate) return false;
                 
                 return true;
             });
@@ -1961,11 +1961,11 @@
                 }]
             });
             
-            // 2. 分单占比趋势（按日期）
+            // 2. 分单占比趋势（按下单日期）
             const splitTrendChart = echarts.init(document.getElementById('split-trend-chart'));
             const dateMap = {};
             rawData.forEach(d => {
-                const date = d.ship_date || '';
+                const date = d.order_date || '';
                 if (!dateMap[date]) dateMap[date] = { total: 0, split: 0 };
                 dateMap[date].total++;
                 if (d.is_split === '是' || d.is_split === 'Y' || d.is_split === true) dateMap[date].split++;

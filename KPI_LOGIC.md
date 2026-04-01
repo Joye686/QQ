@@ -62,37 +62,23 @@
 - **显示：** `XX.X%`（保留 1 位小数）
 
 ### 4. 分单数
-- **公式：** `总包裹数 - 去重订单数`
-- **数据源：** `filteredData`
+- **公式：** `COUNT(是否分单 = "是")`
+- **数据源：** `filteredData`（按下单时间筛选）
 - **计算：** 
   ```javascript
-  const totalPackages = filteredData.length  // 总包裹数（每行一个包裹）
-  const uniqueOrders = new Set(filteredData.map(d => d.order_no)).size  // 去重订单数
-  const splitOrders = totalPackages - uniqueOrders  // 分单数
-  ```
-- **备选逻辑（包裹号判定）：**
-  ```javascript
-  // 包裹号末尾 b1=第一个包裹，b2=第二个包裹...
-  // 如果存在 ship_no 以 b2,b3...结尾的订单，即为分单
   const splitOrders = filteredData.filter(d => 
-    d.ship_no && /b[2-9]$/.test(d.ship_no)  // 匹配 b2,b3,b4...结尾的包裹号
+    d.is_split === '是' || d.is_split === 'Y' || d.is_split === true
   ).length
   ```
 - **显示：** `XXX,XXX`（千分位）
 
 ### 5. 分单占比
-- **公式：** `(分单的订单数 / 总订单数) × 100%`
-- **数据源：** `filteredData`
+- **公式：** `(分单订单数 / 总订单数) × 100%`
+- **数据源：** `filteredData`（按下单时间筛选）
 - **计算：** 
   ```javascript
-  // 分单的订单数 = 该订单号下包裹数大于 1 的订单数
-  const orderPackageCount = {}
-  filteredData.forEach(d => {
-    orderPackageCount[d.order_no] = (orderPackageCount[d.order_no] || 0) + 1
-  })
-  const splitOrderCount = Object.values(orderPackageCount).filter(count => count > 1).length
-  const totalOrders = Object.keys(orderPackageCount).length
-  const splitRatio = (splitOrderCount / totalOrders) × 100
+  const totalOrders = filteredData.length
+  const splitRatio = (splitOrders / totalOrders) × 100
   ```
 - **显示：** `XX.X%`（保留 1 位小数）
 
@@ -225,7 +211,7 @@ splitData[1] = 已分单数量
 
 **计算逻辑：**
 ```javascript
-// 按发货日期分组
+// 按下单日期分组
 dateMap[date] = { total: 0, split: 0 }
 dateMap[date].total++
 if (isSplit) dateMap[date].split++
@@ -254,7 +240,7 @@ trendData = sortedDates.map(date =>
 4. **产品 L2 筛选** - `d.product_l2`
 5. **产品 L3 筛选** - `d.product_l3`
 6. **订单类型筛选** - `d.order_type`
-7. **发货时间筛选** - `d.ship_date` 在开始和结束日期之间
+7. **下单时间筛选** - `d.order_date` 在开始和结束日期之间 ⚠️ **重要：v3.17.7 改为 order_date**
 
 ### rawData vs filteredData
 - **rawData：** 全量数据，不受筛选器影响（用于各国数据、分单相关图表）
@@ -270,7 +256,8 @@ trendData = sortedDates.map(date =>
 
 ### 2. 分单相关字段
 - `is_split`: 是否分单（'是'/'Y'/true）
-- `split_reason`: 分单原因（目前未使用）
+- **分单订单数：** `COUNT(is_split = "是")`
+- **分单占比：** `分单订单数 / 总订单数 × 100%`
 
 ### 3. 仓库智能识别
 ```javascript
@@ -289,6 +276,11 @@ logistics_cost: d['物流运费 (实际运费/预估运费)'] || d.logistics_cos
 ```
 支持 Excel 列名和 JSON 列名两种格式
 
+### 5. 时间筛选依据
+- **v3.17.7 起：** 使用 `order_date`（下单时间）进行筛选
+- **历史版本：** 使用 `ship_date`（发货时间）
+- **分单趋势图：** 按 `order_date` 统计
+
 ---
 
 ## 📋 数据来源字段清单
@@ -296,6 +288,7 @@ logistics_cost: d['物流运费 (实际运费/预估运费)'] || d.logistics_cos
 ### 基础字段
 - `order_no`: 订单号
 - `ship_no`: 发货单号
+- `order_date`: 下单日期 ⚠️ **筛选依据**
 - `ship_date`: 发货日期
 - `country_code`: 国家代码
 - `warehouse_code`: 仓库代码
@@ -323,3 +316,4 @@ logistics_cost: d['物流运费 (实际运费/预估运费)'] || d.logistics_cos
 
 *文档版本：v3.17.7*
 *最后更新：2026-04-01*
+*更新内容：筛选条件从 ship_date 改为 order_date*
