@@ -1269,7 +1269,7 @@
                     timeData[timeIndex].weight += d.weight_kg || 0;
                     timeData[timeIndex].items += d.item_count || 0;
                     timeData[timeIndex].revenue += d.revenue || 0;
-                    timeData[timeIndex].insurance += d.insurance_fee || 0;
+                    timeData[timeIndex].insurance += parseFloat(d['保价费']) || 0;
                 }
             });
             
@@ -1311,8 +1311,8 @@
 
         // ============ 计算运费 BI KPI 指标 ============
         const totalLogistics = filteredData.reduce((sum, o) => sum + (o.logistics_cost || 0), 0);
-        const totalInsurance = filteredData.reduce((sum, o) => sum + (o.insurance_fee || 0), 0);
-        const insuranceOrders = filteredData.filter(o => o.has_insurance === 'Y' || o.has_insurance === 'y' || o.has_insurance === true).length;
+        const totalInsurance = filteredData.reduce((sum, o) => sum + (parseFloat(o['保价费']) || 0), 0);
+        const insuranceOrders = filteredData.filter(o => parseFloat(o['保价费']) > 0).length;
         const totalRevenue = filteredData.reduce((sum, o) => sum + (o.revenue || 0), 0);
         const splitOrders = filteredData.filter(o => o.is_split === '是' || o.is_split === 'Y' || o.is_split === true).length;
         
@@ -2337,7 +2337,7 @@
                 // 累加成本和收入
                 grouped[key].logisticsFeeActual += parseFloat(d.logistics_cost) || 0;
                 grouped[key].orderRevenue += parseFloat(d.revenue) || 0;
-                grouped[key].insuranceFee += parseFloat(d.insurance_fee) || 0;
+                grouped[key].insuranceFee += parseFloat(d['保价费']) || 0;
                 
                 // 【修复 4】承诺时效 = 承诺最晚发货时间 - 发货时间
                 // 使用 order_date + promise_days 计算承诺最晚发货时间
