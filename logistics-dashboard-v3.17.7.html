@@ -1149,7 +1149,14 @@
                 console.log('加载数据:', rawData.length, '条');
                 
                 // 自动设置日期范围（使用下单时间）
-                const dates = rawData.map(d => new Date(d.order_date)).filter(d => !isNaN(d));
+                // order_date 格式：20260212，需要转换为 2026-02-12
+                const dates = rawData.map(d => {
+                    let orderDateStr = String(d.order_date || '');
+                    if (orderDateStr.length === 8) {
+                        orderDateStr = `${orderDateStr.slice(0,4)}-${orderDateStr.slice(4,6)}-${orderDateStr.slice(6,8)}`;
+                    }
+                    return new Date(orderDateStr);
+                }).filter(d => !isNaN(d));
                 if (dates.length > 0) {
                     currentStartDate = new Date(Math.min(...dates));
                     currentEndDate = new Date(Math.max(...dates));
@@ -1211,7 +1218,12 @@
                 if (orderType !== 'all' && d.order_type !== orderType) return false;
                 
                 // 使用下单时间进行筛选
-                const orderDate = new Date(d.order_date);
+                // order_date 格式：20260212，需要转换为 2026-02-12
+                let orderDateStr = String(d.order_date || '');
+                if (orderDateStr.length === 8) {
+                    orderDateStr = `${orderDateStr.slice(0,4)}-${orderDateStr.slice(4,6)}-${orderDateStr.slice(6,8)}`;
+                }
+                const orderDate = new Date(orderDateStr);
                 if (isNaN(orderDate.getTime())) return false; // 排除无下单日期的数据
                 if (orderDate < currentStartDate || orderDate > currentEndDate) return false;
                 
@@ -1965,7 +1977,11 @@
             const splitTrendChart = echarts.init(document.getElementById('split-trend-chart'));
             const dateMap = {};
             rawData.forEach(d => {
-                const date = d.order_date || '';
+                // order_date 格式：20260212，直接使用或格式化
+                let date = d.order_date || '';
+                if (String(date).length === 8) {
+                    date = `${date.slice(0,4)}-${date.slice(4,6)}-${date.slice(6,8)}`;
+                }
                 if (!dateMap[date]) dateMap[date] = { total: 0, split: 0 };
                 dateMap[date].total++;
                 if (d.is_split === '是' || d.is_split === 'Y' || d.is_split === true) dateMap[date].split++;
