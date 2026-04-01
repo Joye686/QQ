@@ -1403,13 +1403,6 @@
             document.getElementById('stat-total-logistics').textContent = '$' + totalCost.toLocaleString(undefined, {maximumFractionDigits: 2});
         }
 
-        function updateCharts() {
-            updateStats();
-            renderJiaxingTChart();
-            renderOverseasTChart();
-            renderDetailTable();
-        }
-
         function updateTCharts() {
             renderJiaxingTChart();
             renderOverseasTChart();
