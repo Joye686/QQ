@@ -1956,11 +1956,13 @@
 
         // 渲染第二行 4 个图表
         function renderSecondRowCharts() {
+            const chartData = filteredData;  // 使用筛选后的数据
+            
             // 1. 分单次数分布（用 is_split 模拟）
             const splitDistChart = echarts.init(document.getElementById('split-dist-chart'));
             const splitData = [0, 0]; // 否，是
             
-            rawData.forEach(d => {
+            chartData.forEach(d => {
                 const isSplit = d.is_split === '是' || d.is_split === 'Y' || d.is_split === true;
                 if (isSplit) splitData[1]++;
                 else splitData[0]++;
@@ -1979,15 +1981,11 @@
                 }]
             });
             
-            // 2. 分单占比趋势（按下单日期）
+            // 2. 分单占比趋势（按发货日期）
             const splitTrendChart = echarts.init(document.getElementById('split-trend-chart'));
             const dateMap = {};
-            rawData.forEach(d => {
-                // order_date 格式：20260212，直接使用或格式化
-                let date = d.order_date || '';
-                if (String(date).length === 8) {
-                    date = `${date.slice(0,4)}-${date.slice(4,6)}-${date.slice(6,8)}`;
-                }
+            chartData.forEach(d => {
+                let date = d.ship_date || '';
                 if (!dateMap[date]) dateMap[date] = { total: 0, split: 0 };
                 dateMap[date].total++;
                 if (d.is_split === '是' || d.is_split === 'Y' || d.is_split === true) dateMap[date].split++;
@@ -2017,7 +2015,7 @@
             // 3. 各国客单价
             const countryAovChart = echarts.init(document.getElementById('country-aov-chart'));
             const countryData = {};
-            rawData.forEach(d => {
+            chartData.forEach(d => {
                 const country = d.country_code || 'Other';
                 if (!countryData[country]) countryData[country] = { revenue: 0, orders: 0 };
                 countryData[country].revenue += parseFloat(d.revenue) || 0;
