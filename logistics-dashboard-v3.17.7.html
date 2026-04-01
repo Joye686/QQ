@@ -1956,7 +1956,7 @@
 
         // 渲染第二行 4 个图表
         function renderSecondRowCharts() {
-            const chartData = filteredData;  // 使用筛选后的数据
+            const chartData = filterData();  // 使用筛选后的数据
             
             // 1. 分单次数分布（用 is_split 模拟）
             const splitDistChart = echarts.init(document.getElementById('split-dist-chart'));
