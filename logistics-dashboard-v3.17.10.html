@@ -1138,7 +1138,8 @@
         // 加载真实数据
         async function loadData() {
             try {
-                const response = await fetch('demo_data_real.min.json');
+                // 【v3.17.10d】添加版本号防止缓存
+                const response = await fetch('demo_data_real.min.json?v=' + Date.now());
                 const data = await response.json();
                 // 【修复 1】使用正确的列名映射，支持 Excel 列名
                 rawData = data.map(d => ({
