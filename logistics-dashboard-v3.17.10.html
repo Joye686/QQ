@@ -1144,7 +1144,34 @@
                 rawData = data.map(d => ({
                     ...d,
                     logistics_cost: d.logistics_cost || d.logistics_cost || 0,
-                    warehouse_type: getWarehouseType(d.warehouse_code)
+                    warehouse_type: getWarehouseType(d.warehouse_code),
+                    // 【修复 v3.17.10d】将中文国家名映射为英文代码，确保筛选器正常工作
+                    country_code: (function() {
+                        const cnToEn = {
+                            '美国': 'US',
+                            '英国': 'UK',
+                            '加拿大': 'CA',
+                            '澳大利亚': 'AU',
+                            '新西兰': 'OTHER',
+                            '意大利': 'OTHER',
+                            '德国': 'OTHER',
+                            '爱尔兰': 'OTHER',
+                            '墨西哥': 'OTHER',
+                            '西班牙': 'OTHER',
+                            '新加坡': 'OTHER',
+                            '挪威': 'OTHER',
+                            '波多黎各': 'OTHER',
+                            '匈牙利': 'OTHER',
+                            '奥地利': 'OTHER',
+                            '南非': 'OTHER',
+                            '埃及': 'OTHER',
+                            '瑞典': 'OTHER',
+                            '瑞士': 'OTHER',
+                            '波兰': 'OTHER',
+                            '阿联酋': 'OTHER'
+                        };
+                        return cnToEn[d.country_code] || (d.country_code === 'US' || d.country_code === 'UK' || d.country_code === 'CA' || d.country_code === 'AU' || d.country_code === 'OTHER' ? d.country_code : 'OTHER');
+                    })()
                 }));
                 console.log('加载数据:', rawData.length, '条');
                 
@@ -1191,9 +1218,11 @@
                 if (warehouse !== 'all') {
                     const wh = (d.warehouse_code || '').toLowerCase();
                     if (warehouse === 'overseas') {
-                        // 海外仓 = 美国仓 + 加拿大仓 + 英国仓
-                        if (!wh.includes('us') && !wh.includes('ca') && !wh.includes('uk') && 
-                            !wh.includes('america') && !wh.includes('canada') && !wh.includes('britain')) {
+                        // 海外仓 = 美国仓 + 加拿大仓 + 英国仓（支持中英文）
+                        const isOverseas = wh.includes('us') || wh.includes('ca') || wh.includes('uk') || 
+                            wh.includes('america') || wh.includes('canada') || wh.includes('britain') ||
+                            wh.includes('美国') || wh.includes('加拿大') || wh.includes('英国');
+                        if (!isOverseas) {
                             return false;
                         }
                     } else if (warehouse === 'jiaxing') {
