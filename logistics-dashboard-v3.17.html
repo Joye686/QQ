@@ -1,4 +1,4 @@
-<!-- Build: 2026-04-03 v3.17 (运费区间布局优化) -->
+<!-- Build: 2026-04-03 v3.17 (分单次数统计) -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -700,6 +700,12 @@
                     <div class="chart-title" style="font-size: 13px;">🏭 发货仓库占比 - 发货口径</div>
                     <div id="warehouse-ratio-chart" class="chart" style="height: 250px;"></div>
                 </div>
+                
+                <!-- 【v3.17.35 新增】分单次数统计 -->
+                <div class="chart-container" style="grid-column: span 1;">
+                    <div class="chart-title" style="font-size: 13px;">📦 分单次数统计</div>
+                    <div id="split-count-chart" class="chart" style="height: 250px;"></div>
+                </div>
             </div>
 
             <!-- 第二行：运费区间分析 -->
@@ -1209,6 +1215,7 @@
                 renderCountryPieChart(); // 【v3.17.12 新增 4】
                 renderWarehouseRatio();
                 updateCharts();
+                renderSplitCountChart();  // 【v3.17.35 新增】初始化分单次数统计
                 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
@@ -1470,6 +1477,7 @@
             renderOverseasTChart();
             renderDetailTable();
             renderRangeCharts();  // 【v3.17.34 新增】运费区间图表
+            renderSplitCountChart();  // 【v3.17.35 新增】分单次数统计
         }
 
         function updateTCharts() {
@@ -2149,6 +2157,79 @@ function renderWarehouseRatio() {
                 ]
             };
             charts.warehouseRatio.setOption(option);
+        }
+        
+        // 【v3.17.35 新增】分单次数统计饼图
+        function renderSplitCountChart() {
+            charts.splitCount = echarts.init(document.getElementById('split-count-chart'));
+            
+            const filteredData = filterData();
+            
+            // 按订单号分组，统计每个订单的包裹数
+            const orderPackages = {};
+            filteredData.forEach(d => {
+                const orderNo = d.order_no;
+                if (!orderPackages[orderNo]) {
+                    orderPackages[orderNo] = 0;
+                }
+                orderPackages[orderNo]++;
+            });
+            
+            // 统计分单次数分布
+            // 分 0 次 = 包裹数=1, 分 1 次 = 包裹数=2, 分 2 次 = 包裹数=3, 分 3+ 次 = 包裹数≥4
+            const splitStats = {
+                '分 0 次': 0,  // 1 个包裹
+                '分 1 次': 0,  // 2 个包裹
+                '分 2 次': 0,  // 3 个包裹
+                '分 3+ 次': 0  // 4+ 个包裹
+            };
+            
+            Object.values(orderPackages).forEach(pkgCount => {
+                if (pkgCount === 1) {
+                    splitStats['分 0 次']++;
+                } else if (pkgCount === 2) {
+                    splitStats['分 1 次']++;
+                } else if (pkgCount === 3) {
+                    splitStats['分 2 次']++;
+                } else {
+                    splitStats['分 3+ 次']++;
+                }
+            });
+            
+            console.log('=== 分单次数统计 ===');
+            console.log('订单总数:', Object.keys(orderPackages).length);
+            console.log('分单分布:', splitStats);
+            
+            // 渲染饼图
+            const colors = ['#27ae60', '#f39c12', '#e74c3c', '#9b59b6'];
+            charts.splitCount.setOption({
+                tooltip: { 
+                    trigger: 'item', 
+                    formatter: '{b}: {c}单 ({d}%)'
+                },
+                legend: { 
+                    orient: 'horizontal', 
+                    bottom: '0%', 
+                    left: 'center', 
+                    textStyle: { fontSize: 9 } 
+                },
+                series: [{
+                    type: 'pie',
+                    radius: ['35%', '65%'],
+                    center: ['50%', '45%'],
+                    label: { 
+                        show: true, 
+                        position: 'outside', 
+                        formatter: '{b}: {d}%', 
+                        fontSize: 9 
+                    },
+                    data: Object.keys(splitStats).map((name, i) => ({ 
+                        name: name, 
+                        value: splitStats[name],
+                        itemStyle: { color: colors[i] }
+                    }))
+                }]
+            });
         }
 
         // 渲染第二行 4 个图表
