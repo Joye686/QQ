@@ -1072,6 +1072,14 @@
                         }
                     }
                     
+                    // 【v3.17.41 修复】加载后初始化仪表板
+                    initProductFilters();
+                    renderOrderStructure();
+                    renderCountryPieChart();
+                    renderWarehouseRatio();
+                    updateCharts();
+                    renderSplitCountChart();
+                    
                     return true;
                 }
             } catch (error) {
@@ -1566,9 +1574,9 @@
                 renderSplitCountChart();  // 【v3.17.35 新增】初始化分单次数统计
                 
                 // 【v3.17.41 新增】尝试从 LocalStorage 加载已保存的数据
-                if (loadDataFromStorage()) {
+                const loadedFromStorage = loadDataFromStorage();
+                if (loadedFromStorage) {
                     console.log('已从本地加载保存的数据');
-                    updateCharts();
                 }
                 
                 document.getElementById('loading').style.display = 'none';
