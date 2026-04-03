@@ -546,6 +546,19 @@
                     </div>
                 </div>
                 
+                <!-- 汇率文件上传 -->
+                <div class="filter-section" style="background: #fff8f0; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div class="filter-label">💱 上传汇率表（CSV）</div>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <input type="file" id="rateFileInput" accept=".csv" style="flex: 1; min-width: 300px;" onchange="handleRateUpload(event)">
+                        <button class="btn-apply" onclick="document.getElementById('rateFileInput').click()">📂 选择汇率文件</button>
+                        <span id="rateUploadStatus" style="color: #27ae60; font-size: 13px;"></span>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 11px; color: #888;">
+                        💡 CSV 格式：月份，汇率（如：2026-03,7.25）。系统会根据发货日期自动应用对应月份的汇率
+                    </div>
+                </div>
+                
                 <!-- 时间范围选择 -->
                 <div class="filter-section">
                     <div class="filter-label">📅 时间范围</div>
@@ -960,6 +973,7 @@
         let currentStartDate = new Date('2025-12-01');
         let currentEndDate = new Date('2026-02-28');
         let rawData = []; // 存储真实数据
+        let exchangeRates = {}; // 【v3.17.40 新增】存储汇率数据 { '2026-03': 7.25 }
 
         // 同步国家筛选器 - 【v3.17.38 修复】三个筛选器完全同步
         function syncCountryFilter(source, value) {
