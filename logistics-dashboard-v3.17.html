@@ -1,4 +1,4 @@
-<!-- Build: 2026-04-03 v3.17.33 -->
+<!-- Build: 2026-04-03 v3.17.34 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>物流分析仪表板 v3.17.33 (修正运费补偿率和分单计算) (升档降档流向分析)</title>
+    <title>物流分析仪表板 v3.17.34 (运费区间饼图) (升档降档流向分析)</title>
     <script src="echarts.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2381,24 +2381,18 @@ function renderWarehouseRatio() {
             const rangeAovChart = echarts.init(document.getElementById('range-aov-chart'));
             const rangeRatioChart = echarts.init(document.getElementById('range-ratio-chart'));
             
-            // 筛选数据（美/英/加/澳）
-            const targetCountries = ['US', 'GB', 'CA', 'AU'];
-            let targetData = rawData.filter(d => {
-                const country = (d.country_code || '').toUpperCase();
-                return targetCountries.includes(country);
-            });
-            
-            // 按运费区间分组
-            const ranges = ['$0-30', '$30-60', '$60-100', '$100-200', '$200+'];
+            // 【v3.17.34 修改】按建议的 5 个运费区间统计（所有国家）
+            const ranges = ['$0-30', '$30-50', '$50-80', '$80-120', '$120+'];
             const rangeData = [
-                { min: 0, max: 30, count: 0, revenue: 0 },
-                { min: 30, max: 60, count: 0, revenue: 0 },
-                { min: 60, max: 100, count: 0, revenue: 0 },
-                { min: 100, max: 200, count: 0, revenue: 0 },
-                { min: 200, max: 999999, count: 0, revenue: 0 }
+                { name: '轻小件', min: 0, max: 30, count: 0, revenue: 0 },
+                { name: '标准件', min: 30, max: 50, count: 0, revenue: 0 },
+                { name: '中等件', min: 50, max: 80, count: 0, revenue: 0 },
+                { name: '较重件', min: 80, max: 120, count: 0, revenue: 0 },
+                { name: '大件', min: 120, max: 999999, count: 0, revenue: 0 }
             ];
             
-            targetData.forEach(d => {
+            const filteredData = filterData();
+            filteredData.forEach(d => {
                 const cost = parseFloat(d.logistics_cost) || 0;
                 const rev = parseFloat(d.revenue) || 0;
                 
@@ -2415,6 +2409,9 @@ function renderWarehouseRatio() {
                 r.aov = r.count > 0 ? r.revenue / r.count : 0;
             });
             
+            console.log('=== 运费区间调试 ===');
+            console.log('各区间订单数:', rangeData.map(r => `${r.name}: ${r.count}`));
+            
             // 客单价柱状图
             rangeAovChart.setOption({
                 tooltip: { formatter: '${c}' },
@@ -2429,7 +2426,7 @@ function renderWarehouseRatio() {
                 }]
             });
             
-            // 订单占比环形图
+            // 订单占比饼图
             const colors = ['#3498db', '#27ae60', '#f39c12', '#e74c3c', '#9b59b6'];
             rangeRatioChart.setOption({
                 tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
@@ -2438,7 +2435,11 @@ function renderWarehouseRatio() {
                     type: 'pie',
                     radius: ['40%', '70%'],
                     label: { show: true, position: 'outside', formatter: '{b}: {d}%', fontSize: 10 },
-                    data: rangeData.map((r, i) => ({ name: ranges[i], value: r.count, itemStyle: { color: colors[i] } }))
+                    data: rangeData.map((r, i) => ({ 
+                        name: r.name, 
+                        value: r.count, 
+                        itemStyle: { color: colors[i] } 
+                    }))
                 }]
             });
         }
