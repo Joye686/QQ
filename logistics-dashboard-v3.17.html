@@ -1,4 +1,4 @@
-<!-- Build: 2026-04-03 v3.17 -->
+<!-- Build: 2026-04-03 v3.17 (运费区间布局优化) -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -700,24 +700,18 @@
                     <div class="chart-title" style="font-size: 13px;">🏭 发货仓库占比 - 发货口径</div>
                     <div id="warehouse-ratio-chart" class="chart" style="height: 250px;"></div>
                 </div>
-                
-                <!-- 运费区间客单价 -->
-                <div class="chart-container" style="grid-column: span 1;">
-                    <div class="chart-title" style="font-size: 13px;">💰 各运费区间客单价</div>
-                    <div id="range-aov-chart" class="chart" style="height: 250px;"></div>
-                </div>
             </div>
 
-            <!-- 第二行 4 个图表 -->
+            <!-- 第二行：运费区间分析 -->
             <div class="second-charts-row">
-                <!-- 各运费区间订单占比 -->
-                <div class="chart-container" style="grid-column: span 1;">
+                <!-- 各运费区间订单占比（饼图） -->
+                <div class="chart-container" style="grid-column: span 2;">
                     <div class="chart-title" style="font-size: 13px;">📊 各运费区间订单占比</div>
                     <div id="range-ratio-chart" class="chart" style="height: 250px;"></div>
                 </div>
                 
-                <!-- 各运费区间客单价 -->
-                <div class="chart-container" style="grid-column: span 1;">
+                <!-- 各运费区间客单价（柱状图） -->
+                <div class="chart-container" style="grid-column: span 2;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <div class="chart-title" style="font-size: 13px; margin: 0;">💰 各运费区间客单价</div>
                         <div class="currency-filter-small" id="range-currency-filter">
@@ -727,18 +721,6 @@
                         </div>
                     </div>
                     <div id="range-aov-chart" class="chart" style="height: 250px;"></div>
-                </div>
-                
-                <!-- 分单次数分布 -->
-                <div class="chart-container" style="grid-column: span 1;">
-                    <div class="chart-title" style="font-size: 13px;">📦 分单次数分布</div>
-                    <div id="split-dist-chart" class="chart" style="height: 250px;"></div>
-                </div>
-                
-                <!-- 分单占比趋势 -->
-                <div class="chart-container" style="grid-column: span 1;">
-                    <div class="chart-title" style="font-size: 13px;">📈 分单占比趋势</div>
-                    <div id="split-trend-chart" class="chart" style="height: 250px;"></div>
                 </div>
             </div>
 
