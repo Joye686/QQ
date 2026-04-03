@@ -1198,6 +1198,8 @@
                 console.log('加载数据:', rawData.length, '条');
                 console.log('rawData 前 5 条 warehouse_code:', rawData.slice(0, 5).map(d => d.warehouse_code));
                 console.log('rawData 前 5 条 country_code:', rawData.slice(0, 5).map(d => d.country_code));
+                console.log('rawData 前 5 条运费字段:', rawData.slice(0, 5).map(d => ({ freight: d.freight, actual_freight: d.actual_freight })));
+                console.log('rawData 前 5 条分单字段:', rawData.slice(0, 5).map(d => ({ is_split: d.is_split })));
                 
                 // 【v3.17.29 调试】打印所有不同的 country_code
                 const countrySet = new Set(rawData.map(d => d.country_code));
@@ -1457,24 +1459,22 @@
             const insuranceRate = totalOrders > 0 ? (insuredOrders / totalOrders) * 100 : 0;
             document.getElementById('kpi-insurance-rate').textContent = insuranceRate.toFixed(1) + '%';
             
-            // 【v3.17.32 修正】运费补偿率 = 补偿金额 ÷ 实际运费
+            // 【v3.17.32 修正】运费补偿率 = 运费 ÷ 实际运费
             const totalFreight = filteredData.reduce((sum, d) => sum + (d.freight || 0), 0);
-            const totalFreightActual = filteredData.reduce((sum, d) => sum + (d.freight_actual || 0), 0);
+            const totalFreightActual = filteredData.reduce((sum, d) => sum + (d.actual_freight || 0), 0);
             const compensationRate = totalFreightActual > 0 ? (totalFreight / totalFreightActual) * 100 : 0;
-            console.log('运费补偿调试：totalFreight=', totalFreight, 'totalFreightActual=', totalFreightActual);
+            console.log('运费补偿调试：totalFreight=', totalFreight, 'totalFreightActual=', totalFreightActual, 'compensationRate=', compensationRate);
             document.getElementById('kpi-compensation-rate').textContent = compensationRate.toFixed(1) + '%';
             
             // 【v3.17.32 修正】分单订单数 = "是否分单" = "是"的去重订单数
             const splitOrders = new Set(filteredData.filter(d => {
-                const splitFlag = d['是否分单'] || d.split_order || d.split_order_flag || '';
-                return splitFlag === '是' || splitFlag === true || splitFlag === 'true' || splitFlag === 1;
+                const splitFlag = d.is_split || d['是否分单'] || '';
+                return splitFlag === '是' || splitFlag === 'Yes' || splitFlag === 'yes' || splitFlag === true || splitFlag === 'true' || splitFlag === 1;
             }).map(d => d.order_no)).size;
             console.log('分单调试：前 5 条的是否分单字段:', filteredData.slice(0, 5).map(d => ({
                 order_no: d.order_no,
-                '是否分单': d['是否分单'],
-                split_order: d.split_order,
-                split_order_flag: d.split_order_flag
-            })));
+                is_split: d.is_split
+            })), 'splitOrders=', splitOrders);
             document.getElementById('kpi-split-orders').textContent = splitOrders.toLocaleString();
             
             // 分单占比 = 分单订单数 / 总订单数
