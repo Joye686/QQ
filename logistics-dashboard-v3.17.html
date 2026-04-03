@@ -2170,12 +2170,14 @@ function renderWarehouseRatio() {
             if (filteredData.length > 0) {
                 console.log('前 5 条的 order_no:', filteredData.slice(0, 5).map(d => d.order_no));
                 console.log('前 5 条的 ship_no:', filteredData.slice(0, 5).map(d => d.ship_no));
+                console.log('前 5 条的订单号 (中文):', filteredData.slice(0, 5).map(d => d['订单号']));
             }
             
             // 按订单号分组，统计每个订单的包裹数
+            // 【v3.17.35 修复】使用中文字段名"订单号"
             const orderPackages = {};
             filteredData.forEach(d => {
-                const orderNo = d.order_no || d['订单号'] || '';
+                const orderNo = d['订单号'] || d.order_no || '';
                 if (!orderNo) return;
                 
                 if (!orderPackages[orderNo]) {
