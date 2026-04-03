@@ -546,16 +546,37 @@
                     </div>
                 </div>
                 
-                <!-- 汇率文件上传 -->
+                <!-- 汇率录入 -->
                 <div class="filter-section" style="background: #fff8f0; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                    <div class="filter-label">💱 上传汇率表（CSV）</div>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <input type="file" id="rateFileInput" accept=".csv" style="flex: 1; min-width: 300px;" onchange="handleRateUpload(event)">
-                        <button class="btn-apply" onclick="document.getElementById('rateFileInput').click()">📂 选择汇率文件</button>
-                        <span id="rateUploadStatus" style="color: #27ae60; font-size: 13px;"></span>
+                    <div class="filter-label">💱 汇率设置（USD → CNY）</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 10px;">
+                        <div>
+                            <label style="font-size: 11px; color: #666;">2026-01</label>
+                            <input type="number" step="0.01" id="rate-2026-01" placeholder="7.15" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" onchange="updateExchangeRate('2026-01', this.value)">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; color: #666;">2026-02</label>
+                            <input type="number" step="0.01" id="rate-2026-02" placeholder="7.20" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" onchange="updateExchangeRate('2026-02', this.value)">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; color: #666;">2026-03</label>
+                            <input type="number" step="0.01" id="rate-2026-03" placeholder="7.25" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" onchange="updateExchangeRate('2026-03', this.value)">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; color: #666;">2026-04</label>
+                            <input type="number" step="0.01" id="rate-2026-04" placeholder="7.18" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" onchange="updateExchangeRate('2026-04', this.value)">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; color: #666;">2026-05</label>
+                            <input type="number" step="0.01" id="rate-2026-05" placeholder="7.22" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" onchange="updateExchangeRate('2026-05', this.value)">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; color: #666;">2026-06</label>
+                            <input type="number" step="0.01" id="rate-2026-06" placeholder="7.20" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;" onchange="updateExchangeRate('2026-06', this.value)">
+                        </div>
                     </div>
-                    <div style="margin-top: 8px; font-size: 11px; color: #888;">
-                        💡 CSV 格式：月份，汇率（如：2026-03,7.25）。系统会根据发货日期自动应用对应月份的汇率
+                    <div style="font-size: 11px; color: #888;">
+                        💡 输入对应月份的汇率（如 7.25），系统会根据发货日期自动折算成人民币
                     </div>
                 </div>
                 
@@ -974,6 +995,23 @@
         let currentEndDate = new Date('2026-02-28');
         let rawData = []; // 存储真实数据
         let exchangeRates = {}; // 【v3.17.40 新增】存储汇率数据 { '2026-03': 7.25 }
+        
+        // 【v3.17.40 新增】更新汇率
+        function updateExchangeRate(month, value) {
+            const rate = parseFloat(value);
+            if (!isNaN(rate)) {
+                exchangeRates[month] = rate;
+                console.log('汇率更新:', month, '=', rate);
+                
+                // 如果有数据，重新应用汇率
+                if (rawData.length > 0 && window.lastRawData) {
+                    applyExchangeRates(window.lastRawData);
+                    updateCharts();
+                }
+            } else {
+                delete exchangeRates[month];
+            }
+        }
 
         // 同步国家筛选器 - 【v3.17.38 修复】三个筛选器完全同步
         function syncCountryFilter(source, value) {
@@ -3264,3 +3302,79 @@ function renderWarehouseRatio() {
     </script>
 </body>
 </html>
+
+        // 【v3.17.40 新增】获取某日期的汇率
+        function getExchangeRate(dateStr) {
+            if (!dateStr) return 1;
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return 1;
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const monthKey = `${year}-${month}`;
+            
+            return exchangeRates[monthKey] || 1;
+        }
+        
+        // 【v3.17.40 新增】应用汇率到数据
+        function applyExchangeRates(data) {
+            window.lastRawData = data;
+            
+            rawData = data.map((d, index) => {
+                const rate = getExchangeRate(d['发货时间'] || d['ship_date']);
+                
+                return {
+                    order_no: d['订单号'] || '',
+                    ship_no: d['发货单号'] || '',
+                    site_code: d['站点'] || '',
+                    customer_shipping_method: d['客户选择的运送方式'] || '',
+                    product_l1: d['一级产品'] || '',
+                    product_l2: d['二级产品'] || '',
+                    product_l3: d['三级产品'] || '',
+                    actual_shipping_method: d['实际物流方式'] || '',
+                    warehouse_code: d['发货地'] || '',
+                    country_code: d['收货地'] || '',
+                    item_count: parseFloat(d['商品数量'] || 0),
+                    shipping_status: d['订单发货状态'] || '',
+                    ship_date: d['发货时间'] || '',
+                    delivery_date: d['妥投时间'] || '',
+                    actual_days: parseFloat(d['妥投时效'] || 0),
+                    weight_kg: parseFloat(d['实际/预估重量'] || 0),
+                    
+                    // 财务字段（人民币，已折算）
+                    revenue: parseFloat(d['订单收入'] || 0) * rate,
+                    other_revenue: parseFloat(d['其他收入'] || 0) * rate,
+                    freight: parseFloat(d['运费'] || 0) * rate,
+                    insurance_fee: parseFloat(d['保价费'] || 0) * rate,
+                    freight_insurance_revenue: parseFloat(d['运保费收入'] || 0) * rate,
+                    actual_freight: parseFloat(d['实际运费'] || 0) * rate,
+                    
+                    // 物流运费（保持原值）
+                    logistics_cost: (function() {
+                        const keys = ['物流运费 (实际运费/预估运费)', '物流运费', '实际运费', 'logistics_cost'];
+                        for (const key of keys) {
+                            if (d[key]) {
+                                const val = parseFloat(d[key]);
+                                if (!isNaN(val)) return val;
+                            }
+                        }
+                        return 0;
+                    })(),
+                    
+                    is_split: d['是否分单'] || '',
+                    split_reason: d['分单原因'] || '',
+                    is_presale: d['预售订单'] || '',
+                    is_influencer: d['红人订单'] || '',
+                    is_merged: d['发货合单'] || '',
+                    after_sales: d['售后'] || '',
+                    warehouse_type: getWarehouseType(d['发货地']),
+                    order_type: (d['订单发货状态'] || '').includes('已发货') ? 'shipped' : 'partial',
+                    exchange_rate: rate
+                };
+            });
+            
+            console.log('汇率应用完成！数据量:', rawData.length, '条');
+            if (rawData.length > 0) {
+                console.log('汇率示例:', rawData[0].exchange_rate, '收入 (CNY):', rawData[0].revenue);
+            }
+        }
