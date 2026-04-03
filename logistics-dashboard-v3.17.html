@@ -1017,23 +1017,38 @@
         
         // 【v3.17.41 新增】保存数据到 LocalStorage
         function saveData() {
-            if (rawData.length === 0) {
+            if (rawData.length === 0 && (!window.lastRawData || window.lastRawData.length === 0)) {
                 alert('请先上传数据文件！');
                 return;
             }
             
             try {
+                const dataToSave = window.lastRawData || rawData;
+                console.log('准备保存数据量:', dataToSave.length, '条');
+                
                 // 保存数据
-                localStorage.setItem('logistics_rawData', JSON.stringify(window.lastRawData || rawData));
+                localStorage.setItem('logistics_rawData', JSON.stringify(dataToSave));
                 // 保存汇率
                 localStorage.setItem('logistics_exchangeRates', JSON.stringify(exchangeRates));
                 // 保存时间
                 localStorage.setItem('logistics_saveTime', new Date().toLocaleString('zh-CN'));
                 
-                alert('✅ 数据已保存！刷新页面后数据还在。\n保存时间：' + new Date().toLocaleString('zh-CN'));
+                // 验证是否保存成功
+                const saved = localStorage.getItem('logistics_rawData');
+                console.log('保存后验证 - 数据大小:', (saved.length / 1024 / 1024).toFixed(2), 'MB');
+                
+                if (saved) {
+                    alert('✅ 数据已保存！\n保存条数：' + dataToSave.length + '\n数据大小：' + (saved.length / 1024 / 1024).toFixed(2) + ' MB\n\n刷新页面后数据还在。');
+                } else {
+                    alert('⚠️ 保存可能失败，数据大小为 0');
+                }
             } catch (error) {
                 console.error('保存失败:', error);
-                alert('❌ 保存失败：' + error.message);
+                if (error.name === 'QuotaExceededError') {
+                    alert('❌ 保存失败：数据太大，超出浏览器存储限制（5-10 MB）\n\n建议：\n1. 在 Excel 中筛选最近 3-6 个月的数据\n2. 删除无用列\n3. 重新上传并保存');
+                } else {
+                    alert('❌ 保存失败：' + error.message);
+                }
             }
         }
         
@@ -1057,7 +1072,10 @@
                 const savedRates = localStorage.getItem('logistics_exchangeRates');
                 const saveTime = localStorage.getItem('logistics_saveTime');
                 
-                if (savedData) {
+                console.log('尝试从 LocalStorage 加载...');
+                console.log('savedData 长度:', savedData ? savedData.length : 0);
+                
+                if (savedData && savedData.length > 0) {
                     // 先加载汇率
                     if (savedRates) {
                         exchangeRates = JSON.parse(savedRates);
@@ -1071,8 +1089,10 @@
                     
                     // 再加载并应用数据
                     window.lastRawData = JSON.parse(savedData);
+                    console.log('加载数据成功！条数:', window.lastRawData.length);
+                    
                     applyExchangeRates(window.lastRawData);
-                    console.log('从本地加载数据成功！保存时间:', saveTime);
+                    console.log('应用汇率完成，rawData 条数:', rawData.length);
                     
                     // 初始化仪表板
                     initProductFilters();
@@ -1083,9 +1103,12 @@
                     renderSplitCountChart();
                     
                     return true;
+                } else {
+                    console.log('LocalStorage 中没有保存的数据');
                 }
             } catch (error) {
                 console.error('加载失败:', error);
+                alert('加载保存的数据失败：' + error.message);
             }
             return false;
         }
