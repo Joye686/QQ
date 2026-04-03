@@ -2416,14 +2416,24 @@ function renderWarehouseRatio() {
             // 客单价柱状图
             rangeAovChart.setOption({
                 tooltip: { formatter: '${c}' },
-                grid: { left: '15%', right: '5%', bottom: '10%', top: '5%', containLabel: true },
-                xAxis: { type: 'category', data: ranges, axisLabel: { fontSize: 10 } },
-                yAxis: { type: 'value', name: '客单价 ($)', axisLabel: { fontSize: 10 } },
+                grid: { left: '15%', right: '5%', bottom: '15%', top: '10%', containLabel: true },
+                xAxis: { type: 'category', data: ranges, axisLabel: { fontSize: 10, rotate: 0 } },
+                yAxis: { 
+                    type: 'value', 
+                    name: '客单价 ($)', 
+                    axisLabel: { fontSize: 10 },
+                    min: 0,
+                    max: function(value) {
+                        // 动态设置 Y 轴最大值，避免过高
+                        return Math.ceil(value.max / 50) * 50;
+                    }
+                },
                 series: [{
                     type: 'bar',
                     data: rangeData.map(r => r.aov.toFixed(0)),
                     itemStyle: { color: '#27ae60' },
-                    label: { show: true, position: 'top', formatter: '${c}', fontSize: 10 }
+                    label: { show: true, position: 'top', formatter: '${c}', fontSize: 10 },
+                    barWidth: '50%'  // 调整柱子宽度
                 }]
             });
             
@@ -2431,11 +2441,12 @@ function renderWarehouseRatio() {
             const colors = ['#3498db', '#27ae60', '#f39c12', '#e74c3c', '#9b59b6'];
             rangeRatioChart.setOption({
                 tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-                legend: { orient: 'horizontal', bottom: '0%', left: 'center', textStyle: { fontSize: 10 } },
+                legend: { orient: 'horizontal', bottom: '0%', left: 'center', textStyle: { fontSize: 9 } },
                 series: [{
                     type: 'pie',
-                    radius: ['40%', '70%'],
-                    label: { show: true, position: 'outside', formatter: '{b}: {d}%', fontSize: 10 },
+                    radius: ['35%', '65%'],  // 【v3.17.34 调整】减小环形半径
+                    center: ['50%', '45%'],  // 调整位置
+                    label: { show: true, position: 'outside', formatter: '{b}: {d}%', fontSize: 9 },
                     data: rangeData.map((r, i) => ({ 
                         name: ranges[i],  // 【v3.17.34 修改】显示运费范围
                         value: r.count, 
