@@ -1,4 +1,4 @@
-<!-- Build: 2026-04-03 v3.17 (站点筛选 + 国家同步 + 其他仓库分布) -->
+<!-- Build: 2026-04-03 v3.17 (删除币种筛选 +Y 轴下移) -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -745,14 +745,7 @@
                 
                 <!-- 各运费区间客单价（柱状图） -->
                 <div class="chart-container" style="grid-column: span 2;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <div class="chart-title" style="font-size: 13px; margin: 0;">💰 各运费区间客单价</div>
-                        <div class="currency-filter-small" id="range-currency-filter">
-                            <button class="currency-btn-small active" data-currency="local">本国币种</button>
-                            <button class="currency-btn-small" data-currency="USD">美金</button>
-                            <button class="currency-btn-small" data-currency="CNY">人民币</button>
-                        </div>
-                    </div>
+                    <div class="chart-title" style="font-size: 13px; margin-bottom: 8px;">💰 各运费区间客单价</div>
                     <div id="range-aov-chart" class="chart" style="height: 250px;"></div>
                 </div>
             </div>
@@ -2740,7 +2733,7 @@ function renderWarehouseRatio() {
             // 客单价柱状图
             rangeAovChart.setOption({
                 tooltip: { formatter: '${c}' },
-                grid: { left: '12%', right: '3%', bottom: '18%', top: '8%', containLabel: true },
+                grid: { left: '12%', right: '3%', bottom: '25%', top: '8%', containLabel: true },  // 【v3.17.39 修改】底部间距加大
                 xAxis: { 
                     type: 'category', 
                     data: ranges, 
@@ -2785,14 +2778,7 @@ function renderWarehouseRatio() {
             });
         }
         
-        // 币种筛选交互
-        document.querySelectorAll('#range-currency-filter .currency-btn-small').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('#range-currency-filter .currency-btn-small').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                renderRangeCharts();
-            });
-        });
+        // 【v3.17.39 删除】币种筛选器已移除
         
         function renderClaimQuantity() {
             charts.claimQuantity = echarts.init(document.getElementById('claim-quantity-chart'));
