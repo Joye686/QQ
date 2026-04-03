@@ -3462,8 +3462,11 @@ function renderWarehouseRatio() {
                     // 物流运费（保持原值）
                     // 物流运费（保持原值，不折算）
                     logistics_cost: (function() {
-                        // 优先读取"物流运费 (实际运费/预估运费)"
-                        const val = d['物流运费 (实际运费/预估运费)'] || d['物流运费'] || 0;
+                        // 优先读取"物流运费"，其次"物流运费 (实际运费/预估运费)"
+                        let val = d['物流运费'];
+                        if (!val || val === '') {
+                            val = d['物流运费 (实际运费/预估运费)'];
+                        }
                         return parseFloat(val) || 0;
                     })(),
                     
