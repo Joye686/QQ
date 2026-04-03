@@ -1,10 +1,14 @@
+<!-- Build: 2026-04-03 v3.17.33 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>物流分析仪表板 v3.17 (升档降档流向分析)</title>
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>物流分析仪表板 v3.17.33 (修正运费补偿率和分单计算) (升档降档流向分析)</title>
+    <script src="echarts.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -160,13 +164,57 @@
             margin-top: 4px;
             font-size: 11px;
         }
+        .stat-trend {
+            font-size: 10px;
+            margin-top: 4px;
+            color: #27ae60;
+            font-weight: 600;
+        }
+        .stat-trend.down {
+            color: #e74c3c;
+        }
         
-        /* 订单结构和仓库占比图表 */
+        /* 币种筛选按钮（小） */
+        .currency-filter-small {
+            display: flex;
+            gap: 6px;
+        }
+        .currency-btn-small {
+            padding: 4px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 16px;
+            font-size: 11px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.3s;
+        }
+        .currency-btn-small:hover { border-color: #3498db; }
+        .currency-btn-small.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        /* 订单结构和仓库占比图表 - 4 列布局 */
         .top-charts-row {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
             margin-bottom: 15px;
+        }
+        
+        /* 第二行 4 个图表 */
+        .second-charts-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        @media (max-width: 1200px) {
+            .top-charts-row, .second-charts-row { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 1200px) {
+            .top-charts-row { grid-template-columns: repeat(2, 1fr); }
         }
         
         /* T 字型图表区域 */
@@ -403,7 +451,60 @@
             .time-selector { grid-row: 1; grid-column: 2; justify-self: end; }
             .timeline { grid-row: 4; grid-column: 1 / 3; }
         }
-        @media (max-width: 1024px) {
+        
+        /* KPI 卡片样式（v2.3 风格） */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            padding: 0;
+        }
+        @media (max-width: 1600px) {
+            .kpi-row { grid-template-columns: repeat(5, 1fr); }
+        }
+        @media (max-width: 1200px) {
+            .kpi-row { grid-template-columns: repeat(4, 1fr); }
+        }
+        @media (max-width: 900px) {
+            .kpi-row { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .kpi-row { grid-template-columns: repeat(2, 1fr); }
+        }
+        .kpi-card {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .kpi-card h3 {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 6px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .kpi-card .value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 4px;
+        }
+        .kpi-card .trend {
+            font-size: 10px;
+            margin-top: 4px;
+        }
+        .kpi-card .trend.up {
+            color: #27ae60;
+        }
+        .kpi-card .trend.down {
+            color: #e74c3c;
+        }
+
+@media (max-width: 1024px) {
             .charts-grid { grid-template-columns: 1fr; }
             .stats-row { grid-template-columns: repeat(2, 1fr); }
         }
@@ -411,7 +512,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>📦 物流分析仪表板 v3.16 (升档降档流向分析)</h1>
+        <h1>📦 物流分析仪表板 v3.17.10 (升档降档流向分析)</h1>
         
         <div id="loading" class="loading">正在加载数据...</div>
         
@@ -443,11 +544,11 @@
                             <label>🌍 国家:</label>
                             <select id="filter-country" onchange="syncCountryFilter('top', this.value); updateCharts();">
                                 <option value="all">全部</option>
-                                <option value="US">美国</option>
-                                <option value="UK">英国</option>
-                                <option value="AU">澳大利亚</option>
-                                <option value="CA">加拿大</option>
-                                <option value="OTHER">其他</option>
+                                <option value="美国">美国</option>
+                                <option value="英国">英国</option>
+                                <option value="澳大利亚">澳大利亚</option>
+                                <option value="加拿大">加拿大</option>
+                                <option value="其他">其他</option>
                             </select>
                         </div>
                         <div class="filter-item">
@@ -505,54 +606,139 @@
                 </div>
             </div>
 
-            <!-- 指标卡片 -->
-            <div class="stats-row">
+            <!-- 第一行 KPI（8 个） -->
+            <div class="stats-row" style="grid-template-columns: repeat(8, 1fr); gap: 10px; margin-bottom: 10px;">
                 <div class="stat-card">
                     <div class="stat-value" id="stat-price-kg">$0.00</div>
                     <div class="stat-label">单价/KG</div>
+                    <div class="stat-trend" id="stat-price-kg-trend">↑ 0.0% vs 上期</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="stat-price-pkg">$0.00</div>
                     <div class="stat-label">单价/包裹</div>
+                    <div class="stat-trend" id="stat-price-pkg-trend">↑ 0.0% vs 上期</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="stat-packages">0</div>
                     <div class="stat-label">发货包裹数</div>
+                    <div class="stat-trend" id="stat-packages-trend">↑ 0.0% vs 上期</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="stat-orders">0</div>
                     <div class="stat-label">订单数</div>
+                    <div class="stat-trend" id="stat-orders-trend">↑ 0.0% vs 上期</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="stat-items-pkg">0.0</div>
                     <div class="stat-label">包单件</div>
+                    <div class="stat-trend" id="stat-items-pkg-trend">↑ 0.0% vs 上期</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="stat-weight-pkg">0.0 kg</div>
                     <div class="stat-label">每包裹重量</div>
+                    <div class="stat-trend" id="stat-weight-pkg-trend">↑ 0.0% vs 上期</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="stat-logistics-ratio">0%</div>
                     <div class="stat-label">正向物流占收入比</div>
+                    <div class="stat-trend" id="stat-logistics-ratio-trend">↑ 0.0% vs 上期</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="stat-total-logistics">$0</div>
                     <div class="stat-label">累计物流费</div>
+                    <div class="stat-trend" id="stat-total-logistics-trend">↑ 0.0% vs 上期</div>
                 </div>
+            </div>
+            
+            <!-- 第二行 KPI（5 个，对齐第一行前 5 个） -->
+            <div class="stats-row" style="grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 15px;">
+                <div class="stat-card">
+                    <div class="stat-value" id="kpi-insurance-revenue">$0</div>
+                    <div class="stat-label">🛡️ 保价费收入</div>
+                    <div class="stat-trend" id="kpi-insurance-revenue-trend">↑ 0.0% vs 上期</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="kpi-insurance-rate">0.0%</div>
+                    <div class="stat-label">📦 保价订单占比</div>
+                    <div class="stat-trend" id="kpi-insurance-rate-trend">↑ 0.0% vs 上期</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="kpi-compensation-rate">0.0%</div>
+                    <div class="stat-label">🔄 运费补偿率</div>
+                    <div class="stat-trend" id="kpi-compensation-rate-trend">↑ 0.0% vs 上期</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="kpi-split-orders">0</div>
+                    <div class="stat-label">📬 分单订单数</div>
+                    <div class="stat-trend" id="kpi-split-orders-trend">↑ 0.0% vs 上期</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="kpi-split-ratio">0.0%</div>
+                    <div class="stat-label">📊 分单占比</div>
+                    <div class="stat-trend" id="kpi-split-ratio-trend">↓ 0.0% vs 上期</div>
+                </div>
+            </div>
+
             </div>
 
             <!-- 订单结构和仓库占比图表（上移） -->
             <div class="top-charts-row">
                 <!-- 订单结构 -->
-                <div class="chart-container">
-                    <div class="chart-title">📊 订单结构（显示占比，悬浮显示数量）- 订单口径</div>
-                    <div id="order-structure-chart" class="chart"></div>
+                <div class="chart-container" style="grid-column: span 1;">
+                    <div class="chart-title" style="font-size: 13px;">📊 订单结构 - 订单口径</div>
+                    <div id="order-structure-chart" class="chart" style="height: 250px;"></div>
+                </div>
+                
+                <!-- 【v3.17.12 新增 4】国家占比饼图 -->
+                <div class="chart-container" style="grid-column: span 1;">
+                    <div class="chart-title" style="font-size: 13px;">🌍 国家订单占比</div>
+                    <div id="country-pie-chart" class="chart" style="height: 250px;"></div>
                 </div>
                 
                 <!-- 发货仓库占比 -->
-                <div class="chart-container">
-                    <div class="chart-title">🏭 发货仓库占比（显示占比，悬浮显示数量）- 发货口径</div>
-                    <div id="warehouse-ratio-chart" class="chart"></div>
+                <div class="chart-container" style="grid-column: span 1;">
+                    <div class="chart-title" style="font-size: 13px;">🏭 发货仓库占比 - 发货口径</div>
+                    <div id="warehouse-ratio-chart" class="chart" style="height: 250px;"></div>
+                </div>
+                
+                <!-- 运费区间客单价 -->
+                <div class="chart-container" style="grid-column: span 1;">
+                    <div class="chart-title" style="font-size: 13px;">💰 各运费区间客单价</div>
+                    <div id="range-aov-chart" class="chart" style="height: 250px;"></div>
+                </div>
+            </div>
+
+            <!-- 第二行 4 个图表 -->
+            <div class="second-charts-row">
+                <!-- 各运费区间订单占比 -->
+                <div class="chart-container" style="grid-column: span 1;">
+                    <div class="chart-title" style="font-size: 13px;">📊 各运费区间订单占比</div>
+                    <div id="range-ratio-chart" class="chart" style="height: 250px;"></div>
+                </div>
+                
+                <!-- 各运费区间客单价 -->
+                <div class="chart-container" style="grid-column: span 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div class="chart-title" style="font-size: 13px; margin: 0;">💰 各运费区间客单价</div>
+                        <div class="currency-filter-small" id="range-currency-filter">
+                            <button class="currency-btn-small active" data-currency="local">本国币种</button>
+                            <button class="currency-btn-small" data-currency="USD">美金</button>
+                            <button class="currency-btn-small" data-currency="CNY">人民币</button>
+                        </div>
+                    </div>
+                    <div id="range-aov-chart" class="chart" style="height: 250px;"></div>
+                </div>
+                
+                <!-- 分单次数分布 -->
+                <div class="chart-container" style="grid-column: span 1;">
+                    <div class="chart-title" style="font-size: 13px;">📦 分单次数分布</div>
+                    <div id="split-dist-chart" class="chart" style="height: 250px;"></div>
+                </div>
+                
+                <!-- 分单占比趋势 -->
+                <div class="chart-container" style="grid-column: span 1;">
+                    <div class="chart-title" style="font-size: 13px;">📈 分单占比趋势</div>
+                    <div id="split-trend-chart" class="chart" style="height: 250px;"></div>
                 </div>
             </div>
 
@@ -566,6 +752,8 @@
                     <div class="metric-btn" onclick="selectMetric('pricePkg', this)">单价/包裹</div>
                     <div class="metric-btn" onclick="selectMetric('itemsPkg', this)">件数/包裹</div>
                     <div class="metric-btn" onclick="selectMetric('kgPkg', this)">KG/包裹</div>
+                    <div class="metric-btn" onclick="selectMetric('costRatio', this)" style="color: #e74c3c; border-color: #e74c3c;">成本占比</div>
+                    <div class="metric-btn" onclick="selectMetric('compensationRate', this)" style="color: #e74c3c; border-color: #e74c3c;">补偿率</div>
                 </div>
                 
                 <!-- T 字型布局 -->
@@ -617,11 +805,11 @@
                         <label>🌍 国家:</label>
                         <select id="detail-country" onchange="syncCountryFilter('detail', this.value); updateCharts();">
                             <option value="all">全部</option>
-                            <option value="US">美国</option>
-                            <option value="UK">英国</option>
-                            <option value="CA">加拿大</option>
-                            <option value="AU">澳大利亚</option>
-                            <option value="OTHER">其他</option>
+                            <option value="美国">美国</option>
+                            <option value="英国">英国</option>
+                            <option value="加拿大">加拿大</option>
+                            <option value="澳大利亚">澳大利亚</option>
+                            <option value="其他">其他</option>
                         </select>
                     </div>
                 </div>
@@ -646,6 +834,8 @@
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'actual')">实际时效 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'delivery')">妥投率 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'achievement')">时效达成率 ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'costRatio')">成本占比 ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'compensationRate')">补偿率 ⇅</th>
                             </tr>
                         </thead>
                         <tbody id="jiaxing-table-body"></tbody>
@@ -673,6 +863,8 @@
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'actual')">实际时效 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'delivery')">妥投率 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'achievement')">时效达成率 ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('overseas', 'costRatio')">成本占比 ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('overseas', 'compensationRate')">补偿率 ⇅</th>
                             </tr>
                         </thead>
                         <tbody id="overseas-table-body"></tbody>
@@ -943,18 +1135,80 @@
             return warehouseCode;
         }
 
-        // 加载真实数据
+        // 加载真实数据 - v3.17.11 支持中文字段
         async function loadData() {
             try {
-                const response = await fetch('demo_data_real.min.json');
+                // 【v3.17.11】添加版本号防止缓存
+                // 【v3.17.11】使用中文字段数据文件
+                const response = await fetch('demo_data_chinese.min.json?v=' + Date.now());
                 const data = await response.json();
-                // 【修复 1】使用正确的列名映射，支持 Excel 列名
+                // 【v3.17.11】支持中文字段，自动映射英文字段到中文字段
                 rawData = data.map(d => ({
-                    ...d,
-                    logistics_cost: d['物流运费 (实际运费/预估运费)'] || d.logistics_cost || 0,
-                    warehouse_type: getWarehouseType(d.warehouse_code)
+                    // 核心字段（支持中英文）
+                    order_no: d['订单号'] || d['order_no'],
+                    ship_no: d['发货单号'] || d['ship_no'],
+                    site_code: d['站点'] || d['site_code'],
+                    customer_shipping_method: d['客户选择的运送方式'] || d['customer_shipping_method'],
+                    product_l1: d['产品一级'] || d['product_l1'] || '',
+                    product_l2: d['产品二级'] || d['product_l2'] || '',
+                    product_l3: d['产品三级'] || d['物流方式'] || d['product_l3'] || d['实际物流方式'] || '',
+                    actual_shipping_method: d['实际物流方式'] || d['actual_shipping_method'],
+                    warehouse_code: d['发货地'] || d['warehouse_code'],
+                    country_code: d['收货地'] || d['country_code'], // 保持中文：美国、英国等
+                    item_count: parseFloat(d['商品数量'] || d['item_count'] || 0),
+                    shipping_status: d['订单发货状态'] || d['shipping_status'],
+                    ship_date: d['发货时间'] || d['ship_date'],
+                    delivery_date: d['妥投时间'] || d['delivery_date'],
+                    actual_days: parseFloat(d['妥投时效'] || d['actual_days'] || 0),
+                    weight_kg: parseFloat(d['实际/预估重量'] || d['weight_kg'] || 0),
+                    
+                    // 财务字段
+                    revenue: parseFloat(d['订单收入'] || d['revenue'] || 0),
+                    other_revenue: parseFloat(d['其他收入'] || d['other_revenue'] || 0),
+                    freight: parseFloat(d['运费'] || d['freight'] || 0),
+                    insurance_fee: parseFloat(d['保价费'] || d['insurance_fee'] || 0),
+                    freight_insurance_revenue: parseFloat(d['运保费收入'] || d['freight_insurance_revenue'] || 0),
+                    actual_freight: parseFloat(d['实际运费'] || d['actual_freight'] || 0),
+                    logistics_cost: parseFloat(d['物流运费 (实际运费/预估运费)'] || d['logistics_cost'] || d['actual_freight'] || 0),
+                    
+                    // 分单字段
+                    is_split: d['是否分单'] || d['is_split'],
+                    split_reason: d['分单原因'] || d['split_reason'],
+                    manual_split_reason: d['手动分单原因'] || d['manual_split_reason'],
+                    
+                    // 合单字段
+                    is_presale: d['预售订单'] || d['is_presale'],
+                    is_influencer: d['红人订单'] || d['is_influencer'],
+                    is_merged: d['发货合单'] || d['is_merged'],
+                    is_presale_merged: d['预售合单'] || d['is_presale_merged'],
+                    pre_merge_logistics_cost: parseFloat(d['合单前物流运费'] || d['pre_merge_logistics_cost'] || 0),
+                    
+                    // 售后
+                    after_sales: d['售后'] || d['after_sales'],
+                    
+                    // 计算字段
+                    warehouse_type: getWarehouseType(d['发货地'] || d['warehouse_code']),
+                    order_type: (function() {
+                        const status = d['订单发货状态'] || d['shipping_status'] || '';
+                        if (status.includes('已发货') || status === 'shipped') return 'shipped';
+                        if (status.includes('部分') || status === 'partial') return 'partial';
+                        return 'unshipped';
+                    })()
                 }));
                 console.log('加载数据:', rawData.length, '条');
+                console.log('rawData 前 5 条 warehouse_code:', rawData.slice(0, 5).map(d => d.warehouse_code));
+                console.log('rawData 前 5 条 country_code:', rawData.slice(0, 5).map(d => d.country_code));
+                
+                // 【v3.17.29 调试】打印所有不同的 country_code
+                const countrySet = new Set(rawData.map(d => d.country_code));
+                console.log('===== 所有不同的 country_code =====');
+                console.log('数量:', countrySet.size);
+                console.log('列表:', Array.from(countrySet));
+                console.log('JSON:', JSON.stringify(Array.from(countrySet)));
+                countrySet.forEach(c => {
+                    console.log('  "' + c + '" length=' + (c?.length || 0) + ' bytes=' + JSON.stringify(c));
+                });
+                console.log('rawData 前 5 条 ship_date:', rawData.slice(0, 5).map(d => d.ship_date));
                 
                 // 自动设置日期范围
                 const dates = rawData.map(d => new Date(d.ship_date)).filter(d => !isNaN(d));
@@ -968,6 +1222,7 @@
                 // 数据加载完成后再初始化
                 initProductFilters();
                 renderOrderStructure();
+                renderCountryPieChart(); // 【v3.17.12 新增 4】
                 renderWarehouseRatio();
                 updateCharts();
                 
@@ -979,7 +1234,7 @@
                 });
             } catch (error) {
                 console.error('加载数据失败:', error);
-                document.getElementById('loading').textContent = '数据加载失败，请检查 demo_data_real.json 是否存在';
+                document.getElementById('loading').textContent = '数据加载失败，请检查 demo_data_real.min.json 是否存在';
             }
         }
         
@@ -993,15 +1248,25 @@
             const orderType = document.getElementById('filter-order-type').value;
             
             return rawData.filter(d => {
-                if (country !== 'all' && d.country_code !== country) return false;
+                // 【v3.17.11】国家代码保持中文，直接比较
+                // 【v3.17.30 修复】"其他"= 非美英加澳
+                if (country !== 'all') {
+                    if (country === '其他') {
+                        const c = d.country_code || '';
+                        if (c === '美国' || c === '英国' || c === '加拿大' || c === '澳大利亚') return false;
+                    } else if (d.country_code !== country) {
+                        return false;
+                    }
+                }
                 
                 // 【修复 3】智能识别仓库 - 海外仓包含美国仓 + 加拿大仓 + 英国仓
                 if (warehouse !== 'all') {
                     const wh = (d.warehouse_code || '').toLowerCase();
                     if (warehouse === 'overseas') {
-                        // 海外仓 = 美国仓 + 加拿大仓 + 英国仓
-                        if (!wh.includes('us') && !wh.includes('ca') && !wh.includes('uk') && 
-                            !wh.includes('america') && !wh.includes('canada') && !wh.includes('britain')) {
+                        // 【v3.17.11】海外仓 = 美国仓 + 加拿大仓 + 英国仓
+                        const isOverseas = wh.includes('美国') || wh.includes('加拿大') || wh.includes('英国') ||
+                            wh.includes('us') || wh.includes('ca') || wh.includes('uk');
+                        if (!isOverseas) {
                             return false;
                         }
                     } else if (warehouse === 'jiaxing') {
@@ -1029,6 +1294,7 @@
         
         // 计算指标数据（使用发货时间，与顶部 KPI 逻辑一致）
         function calculateMetrics(data, granularity, startDate, endDate) {
+            console.log('calculateMetrics 输入:', data.length, '条数据，granularity:', granularity);
             const timeSeries = generateTimeSeries(granularity, startDate, endDate);
             
             // 按时间分组统计
@@ -1037,7 +1303,9 @@
                 ships: new Set(),
                 cost: 0,
                 weight: 0,
-                items: 0
+                items: 0,
+                revenue: 0,
+                insurance: 0
             }));
             
             data.forEach(d => {
@@ -1062,15 +1330,19 @@
                     timeData[timeIndex].cost += d.logistics_cost || 0;
                     timeData[timeIndex].weight += d.weight_kg || 0;
                     timeData[timeIndex].items += d.item_count || 0;
+                    timeData[timeIndex].revenue += d.revenue || 0;
+                    timeData[timeIndex].insurance += d.insurance_fee || 0;
                 }
             });
             
-            // 计算 4 个指标
+            // 计算 6 个指标（新增成本占比和补偿率）
             const metrics = {
                 priceKg: [],
                 pricePkg: [],
                 itemsPkg: [],
-                kgPkg: []
+                kgPkg: [],
+                costRatio: [],
+                compensationRate: []
             };
             
             timeData.forEach(td => {
@@ -1085,23 +1357,18 @@
                     Math.round(td.items / shipCount * 10) / 10 : 0);
                 metrics.kgPkg.push(shipCount > 0 ? 
                     Math.round(td.weight / shipCount * 100) / 100 : 0);
+                // 成本占比 = 物流运费/订单收入
+                metrics.costRatio.push(td.revenue > 0 ? 
+                    Math.round((td.cost / td.revenue) * 100 * 100) / 100 : 0);
+                // 补偿率 = 运保费收入/物流运费
+                metrics.compensationRate.push(td.cost > 0 ? 
+                    Math.round((td.insurance / td.cost) * 100 * 100) / 100 : 0);
             });
             
             return { timeSeries, data: metrics };
         }
 
-        function updateCharts() {
-            updateStats();
-            renderOrderStructure();
-            renderWarehouseRatio();
-            renderJiaxingTChart();
-            renderOverseasTChart();
-            renderTotalTChart();  // 【修复 2】添加全量数据图表
-            renderDetailTable();
-            renderFlowChart();
-            renderClaimCharts();
-        }
-
+        
         function selectMetric(metric, btn) {
             currentMetric = metric;
             document.querySelectorAll('.metric-btn').forEach(b => b.classList.remove('active'));
@@ -1117,14 +1384,13 @@
             const topFilter = document.getElementById('filter-country');
             const detailCountryFilter = document.getElementById('detail-country');
             
-            if (country === 'all') {
+            // 【v3.17.29 修复】直接用中文国家名
+            if (country === '全部') {
                 topFilter.value = 'all';
                 if (detailCountryFilter) detailCountryFilter.value = 'all';
             } else {
-                const countryMap = { 'US': 'US', 'UK': 'UK', 'CA': 'CA', 'AU': 'AU', 'OTHER': 'OTHER' };
-                const mappedCountry = countryMap[country] || 'all';
-                topFilter.value = mappedCountry;
-                if (detailCountryFilter) detailCountryFilter.value = mappedCountry;
+                topFilter.value = country;
+                if (detailCountryFilter) detailCountryFilter.value = country;
             }
             
             // 联动更新所有图表
@@ -1140,6 +1406,13 @@
 
         function updateStats() {
             const filteredData = filterData();
+            
+            // 【v3.17.31 调试】输出数据样例
+            console.log('=== updateStats 调试 ===');
+            console.log('filteredData:', filteredData.length, '条');
+            if (filteredData.length > 0) {
+                console.log('前 3 条数据:', JSON.stringify(filteredData.slice(0, 3), null, 2));
+            }
             
             // 订单数 = 去重的订单号计数
             const uniqueOrders = new Set(filteredData.map(d => d.order_no));
@@ -1173,6 +1446,40 @@
             document.getElementById('stat-weight-pkg').textContent = weightPkg.toFixed(3) + ' kg'; // 保留 3 位小数
             document.getElementById('stat-logistics-ratio').textContent = logisticsRatio.toFixed(1) + '%';
             document.getElementById('stat-total-logistics').textContent = '$' + totalCost.toLocaleString(undefined, {maximumFractionDigits: 2});
+            
+            // 【v3.17.31 新增】第二行 KPI
+            // 保价费收入
+            const totalInsuranceFee = filteredData.reduce((sum, d) => sum + (d.insurance_fee || 0), 0);
+            document.getElementById('kpi-insurance-revenue').textContent = '$' + totalInsuranceFee.toFixed(2);
+            
+            // 保价订单占比 = 有保价费的订单数 / 总订单数
+            const insuredOrders = new Set(filteredData.filter(d => d.insurance_fee > 0).map(d => d.order_no)).size;
+            const insuranceRate = totalOrders > 0 ? (insuredOrders / totalOrders) * 100 : 0;
+            document.getElementById('kpi-insurance-rate').textContent = insuranceRate.toFixed(1) + '%';
+            
+            // 【v3.17.32 修正】运费补偿率 = 补偿金额 ÷ 实际运费
+            const totalFreight = filteredData.reduce((sum, d) => sum + (d.freight || 0), 0);
+            const totalFreightActual = filteredData.reduce((sum, d) => sum + (d.freight_actual || 0), 0);
+            const compensationRate = totalFreightActual > 0 ? (totalFreight / totalFreightActual) * 100 : 0;
+            console.log('运费补偿调试：totalFreight=', totalFreight, 'totalFreightActual=', totalFreightActual);
+            document.getElementById('kpi-compensation-rate').textContent = compensationRate.toFixed(1) + '%';
+            
+            // 【v3.17.32 修正】分单订单数 = "是否分单" = "是"的去重订单数
+            const splitOrders = new Set(filteredData.filter(d => {
+                const splitFlag = d['是否分单'] || d.split_order || d.split_order_flag || '';
+                return splitFlag === '是' || splitFlag === true || splitFlag === 'true' || splitFlag === 1;
+            }).map(d => d.order_no)).size;
+            console.log('分单调试：前 5 条的是否分单字段:', filteredData.slice(0, 5).map(d => ({
+                order_no: d.order_no,
+                是否分单：d['是否分单'],
+                split_order: d.split_order,
+                split_order_flag: d.split_order_flag
+            })));
+            document.getElementById('kpi-split-orders').textContent = splitOrders.toLocaleString();
+            
+            // 分单占比 = 分单订单数 / 总订单数
+            const splitRatio = totalOrders > 0 ? (splitOrders / totalOrders) * 100 : 0;
+            document.getElementById('kpi-split-ratio').textContent = splitRatio.toFixed(1) + '%';
         }
 
         function updateCharts() {
@@ -1193,7 +1500,9 @@
                 priceKg: '单价/KG',
                 pricePkg: '单价/包裹',
                 itemsPkg: '件数/包裹',
-                kgPkg: 'KG/包裹'
+                kgPkg: 'KG/包裹',
+                costRatio: '成本占比',
+                compensationRate: '补偿率'
             };
             return names[key] || key;
         }
@@ -1203,24 +1512,41 @@
                 priceKg: '#4285f4',
                 pricePkg: '#ea4335',
                 itemsPkg: '#34a853',
-                kgPkg: '#fbbc04'
+                kgPkg: '#fbbc04',
+                costRatio: '#e74c3c',
+                compensationRate: '#e74c3c'
             };
             return colors[key] || '#4285f4';
         }
 
-        function renderJiaxingTChart() {
+        // 【v3.17.29 调试】添加调试日志
+function renderJiaxingTChart() {
             if (charts.jiaxingT) charts.jiaxingT.dispose();
             charts.jiaxingT = echarts.init(document.getElementById('jiaxing-t-chart'));
             
             const country = document.querySelector('.country-btn.active')?.textContent || '全部';
-            const countryMap = { '全部': 'all', '美国': 'US', '英国': 'UK', '加拿大': 'CA', '澳大利亚': 'AU', '其他': 'OTHER' };
+            
+            console.log('===== 嘉兴仓图表调试 =====');
+            console.log('rawData 长度:', rawData.length);
+            console.log('当前国家:', country);
+            console.log('currentStartDate:', currentStartDate);
+            console.log('currentEndDate:', currentEndDate);
+            // 【v3.17.11】国家直接用中文
+            const countryMap = { '全部': '全部', '美国': '美国', '英国': '英国', '加拿大': '加拿大', '澳大利亚': '澳大利亚', '其他': '其他' };
             const selectedCountry = countryMap[country] || 'all';
             
-            // 【修复 3】智能识别嘉兴仓和海外仓
+            // 【v3.17.29 修复】检查 warehouse_code 字段
+            console.log('嘉兴仓筛选 - 检查 warehouse_code 字段:');
+            console.log('  rawData[0].warehouse_code:', rawData[0]?.warehouse_code);
+            console.log('  rawData[0] 所有字段:', Object.keys(rawData[0] || {}));
+            
             let jiaxingData = rawData.filter(d => {
-                const wh = (d.warehouse_code || '').toLowerCase();
-                return wh.includes('jiaxing') || wh.includes('嘉兴');
+                const wh = d.warehouse_code || '';
+                const hasJiaxing = wh.includes('嘉兴') || wh.toLowerCase().includes('jiaxing');
+                console.log('  检查:', wh, '→', hasJiaxing ? '嘉兴仓' : '非嘉兴仓');
+                return hasJiaxing;
             });
+            console.log('嘉兴仓筛选结果:', jiaxingData.length, '条');
             
             // 应用发货时间筛选
             jiaxingData = jiaxingData.filter(d => {
@@ -1228,14 +1554,24 @@
                 return !isNaN(shipDate.getTime()) && shipDate >= currentStartDate && shipDate <= currentEndDate;
             });
             
-            // 如果选择"全部"，按国家分组显示多条曲线
-            if (selectedCountry === 'all') {
+            console.log('嘉兴仓原始数据:', jiaxingData.length, '条');
+            console.log('嘉兴仓样例数据:', jiaxingData.slice(0, 2));
+            
+            // 【v3.17.29 修复】直接判断 country === '全部'
+            if (country === '全部') {
                 renderMultiLineChart(charts.jiaxingT, jiaxingData, '嘉兴仓', true);
                 return;
             }
             
-            // 否则按单个国家筛选
-            jiaxingData = jiaxingData.filter(d => d.country_code === selectedCountry);
+            // 【v3.17.29 修复】"其他"= 非美英加澳
+            if (country === '其他') {
+                jiaxingData = jiaxingData.filter(d => {
+                    const c = d.country_code || '';
+                    return c !== '美国' && c !== '英国' && c !== '加拿大' && c !== '澳大利亚';
+                });
+            } else {
+                jiaxingData = jiaxingData.filter(d => d.country_code === country);
+            }
             const { timeSeries, data } = calculateMetrics(jiaxingData, currentTimeGranularity, currentStartDate, currentEndDate);
             
             const option = {
@@ -1296,15 +1632,44 @@
         }
         
         // 渲染多国家多曲线图表（选择"全部"时）
-        function renderMultiLineChart(chart, data, warehouseName) {
-            const countries = ['US', 'UK', 'CA', 'AU', 'OTHER'];
-            const countryNames = { 'US': '美国', 'UK': '英国', 'CA': '加拿大', 'AU': '澳大利亚', 'OTHER': '其他' };
+        // 【v3.17.29 调试】检查 country_code
+function renderMultiLineChart(chart, data, warehouseName) {
+            console.log('===== renderMultiLineChart 调试 =====');
+            console.log('warehouseName:', warehouseName);
+            console.log('data 长度:', data.length);
+            console.log('data 前 5 条 country_code:', data.slice(0, 5).map(d => d.country_code));
+            
+            // 统计所有不同的 country_code
+            const countrySet = new Set(data.map(d => d.country_code));
+            console.log('所有不同的 country_code:', Array.from(countrySet));
+            console.log('所有不同的 country_code (JSON):', JSON.stringify(Array.from(countrySet)));
+            
+            // 打印每个 country_code 的字节表示（检查隐藏字符）
+            console.log('country_code 详细检查:');
+            countrySet.forEach(c => {
+                console.log('  "' + c + '" length=' + c.length + ' bytes=' + JSON.stringify(c));
+            });
+            
+            const countries = ['美国', '英国', '加拿大', '澳大利亚', '其他'];
+            const countryNames = { '美国': '美国', '英国': '英国', '加拿大': '加拿大', '澳大利亚': '澳大利亚', '其他': '其他' };
             const colors = ['#4285f4', '#ea4335', '#34a853', '#fbbc04', '#9b59b6'];
             
             const { timeSeries } = calculateMetrics(data, currentTimeGranularity, currentStartDate, currentEndDate);
             
+            // 【v3.17.29 修复】"其他"国家特殊处理
             const series = countries.map((country, index) => {
-                const countryData = data.filter(d => d.country_code === country);
+                let countryData;
+                if (country === '其他') {
+                    // "其他"= 非美英加澳
+                    countryData = data.filter(d => {
+                        const c = d.country_code || '';
+                        return c !== '美国' && c !== '英国' && c !== '加拿大' && c !== '澳大利亚';
+                    });
+                    console.log('国家"其他"筛选后:', countryData.length, '条');
+                } else {
+                    countryData = data.filter(d => d.country_code === country);
+                    console.log('国家"' + country + '"筛选后:', countryData.length, '条');
+                }
                 const { data: metrics } = calculateMetrics(countryData, currentTimeGranularity, currentStartDate, currentEndDate);
                 
                 return {
@@ -1387,20 +1752,19 @@
             chart.setOption(option);
         }
 
-        function renderOverseasTChart() {
+        // 【v3.17.29 修复】海外仓图表支持中文仓库名 + 正确的国家筛选
+function renderOverseasTChart() {
             if (charts.overseasT) charts.overseasT.dispose();
             charts.overseasT = echarts.init(document.getElementById('overseas-t-chart'));
             
             const country = document.querySelector('.country-btn.active')?.textContent || '全部';
-            const countryMap = { '全部': 'all', '美国': 'US', '英国': 'UK', '加拿大': 'CA', '澳大利亚': 'AU', '其他': 'OTHER' };
-            const selectedCountry = countryMap[country] || 'all';
+            const selectedCountry = country; // 直接用中文
             
-            // 【修复 3】智能识别海外仓
+            // 【v3.17.30 修复】海外仓 = 所有非嘉兴仓的仓库
             let overseasData = rawData.filter(d => {
                 const wh = (d.warehouse_code || '').toLowerCase();
-                return wh.includes('us') || wh.includes('ca') || wh.includes('uk') || 
-                       wh.includes('america') || wh.includes('canada') || wh.includes('britain') ||
-                       wh.includes('overseas') || wh.includes('海外');
+                const isJiaxing = wh.includes('jiaxing') || wh.includes('嘉兴');
+                return !isJiaxing && wh.trim() !== '';
             });
             
             overseasData = overseasData.filter(d => {
@@ -1408,12 +1772,21 @@
                 return !isNaN(shipDate.getTime()) && shipDate >= currentStartDate && shipDate <= currentEndDate;
             });
             
-            if (selectedCountry === 'all') {
+            if (selectedCountry === '全部') {
                 renderMultiLineChart(charts.overseasT, overseasData, '海外仓', true);
                 return;
             }
             
-            overseasData = overseasData.filter(d => d.country_code === selectedCountry);
+            // 【v3.17.29 修复】"其他"= 非美英加澳
+            if (selectedCountry === '其他') {
+                overseasData = overseasData.filter(d => {
+                    const c = d.country_code || '';
+                    return c !== '美国' && c !== '英国' && c !== '加拿大' && c !== '澳大利亚';
+                });
+            } else {
+                // 【v3.17.29 修复】用 country 筛选
+            overseasData = overseasData.filter(d => d.country_code === country);
+            }
             const { timeSeries, data } = calculateMetrics(overseasData, currentTimeGranularity, currentStartDate, currentEndDate);
             
             const option = {
@@ -1485,7 +1858,7 @@
             
             // 使用真实数据计算
             const filteredData = filterData();
-            const countryMap = { 'US': '美国', 'UK': '英国', 'CA': '加拿大', 'AU': '澳大利亚', 'OTHER': '其他' };
+            // 【v3.17.11】country_code 已经是中文
             const countries = ['美国', '英国', '加拿大', '澳大利亚', '其他'];
             
             // 按国家分组统计
@@ -1495,7 +1868,7 @@
             });
             
             filteredData.forEach(d => {
-                const country = countryMap[d.country_code] || '其他';
+                const country = d.country_code || '其他';
                 if (!stats[country]) return;
                 
                 const orders = stats[country];
@@ -1514,9 +1887,10 @@
                 const s = stats[c];
                 return {
                     country: c,
-                    full: s.total > 0 ? (s.full / s.total * 100) : 0,
-                    partial: s.total > 0 ? (s.partial / s.total * 100) : 0,
-                    unshipped: s.total > 0 ? (s.unshipped / s.total * 100) : 0,
+                    // 【v3.17.12 修复 2】百分比保留 0 位小数
+                    full: s.total > 0 ? Math.round(s.full / s.total * 100) : 0,
+                    partial: s.total > 0 ? Math.round(s.partial / s.total * 100) : 0,
+                    unshipped: s.total > 0 ? Math.round(s.unshipped / s.total * 100) : 0,
                     total: s.total
                 };
             });
@@ -1599,13 +1973,84 @@
             charts.orderStructure.setOption(option);
         }
 
-        function renderWarehouseRatio() {
+        // 【v3.17.12 新增 4】渲染国家占比饼图
+        function renderCountryPieChart() {
+            charts.countryPie = echarts.init(document.getElementById('country-pie-chart'));
+            
+            const filteredData = filterData();
+            const countries = ['美国', '英国', '加拿大', '澳大利亚', '其他'];
+            const colors = ['#4285f4', '#ea4335', '#34a853', '#fbbc04', '#9b59b6'];
+            
+            // 按国家分组统计订单数
+            const stats = {};
+            countries.forEach(c => { stats[c] = 0; });
+            
+            filteredData.forEach(d => {
+                const country = d.country_code || '其他';
+                if (stats[country] !== undefined) {
+                    stats[country]++;
+                } else {
+                    stats['其他']++;
+                }
+            });
+            
+            const data = countries.map((c, i) => ({
+                name: c,
+                value: stats[c],
+                itemStyle: { color: colors[i] }
+            })).filter(d => d.value > 0);
+            
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}: {c}单 ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    right: 5,
+                    top: 'middle',
+                    textStyle: { fontSize: 10 }
+                },
+                series: [
+                    {
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        center: ['35%', '50%'],
+                        avoidLabelOverlap: false,
+                        itemStyle: {
+                            borderRadius: 5,
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        },
+                        label: {
+                            show: true,
+                            position: 'outside',
+                            formatter: '{b}\n{d}%',
+                            fontSize: 9
+                        },
+                        emphasis: {
+                            label: {
+                                show: true,
+                                fontSize: 12,
+                                fontWeight: 'bold'
+                            }
+                        },
+                        data: data
+                    }
+                ]
+            };
+            charts.countryPie.setOption(option);
+        }
+
+        // 【v3.17.14 修复】country_code 已经是中文，不需要映射
+function renderWarehouseRatio() {
             charts.warehouseRatio = echarts.init(document.getElementById('warehouse-ratio-chart'));
             
             // 使用真实数据计算
             const filteredData = filterData();
-            const countryMap = { 'US': '美国', 'UK': '英国', 'CA': '加拿大', 'AU': '澳大利亚', 'OTHER': '其他' };
             const countries = ['美国', '英国', '加拿大', '澳大利亚', '其他'];
+            
+            console.log('发货仓库占比 - 筛选后数据:', filteredData.length, '条');
             
             // 按国家分组统计
             const stats = {};
@@ -1614,19 +2059,32 @@
             });
             
             filteredData.forEach(d => {
-                const country = countryMap[d.country_code] || '其他';
+                // 【v3.17.14 修复】country_code 已经是中文，直接使用
+                const country = d.country_code || '其他';
                 if (!stats[country]) return;
                 
                 const orders = stats[country];
-                const wh = (d.warehouse_code || '').toLowerCase();
+                const wh = d.warehouse_code || '';
                 
-                // 【修复 1】智能识别仓库类型
-                if (wh.includes('jiaxing') || wh.includes('嘉兴')) {
+                console.log('仓库识别:', country, wh);
+                
+                // 【v3.17.15 修复】直接检查中文仓库名
+                const isJiaxing = wh.includes('嘉兴') || wh.toLowerCase().includes('jiaxing');
+                const isOverseas = wh.includes('美国') || wh.includes('英国') || wh.includes('加拿大') ||
+                                   wh.toLowerCase().includes('us') || wh.toLowerCase().includes('uk') || 
+                                   wh.toLowerCase().includes('ca') ||
+                                   wh.toLowerCase().includes('america') || wh.toLowerCase().includes('canada') || 
+                                   wh.toLowerCase().includes('britain') ||
+                                   wh.includes('海外') || wh.toLowerCase().includes('overseas');
+                
+                if (isJiaxing) {
                     orders.jiaxing++;
-                } else if (wh.includes('us') || wh.includes('ca') || wh.includes('uk') || 
-                           wh.includes('america') || wh.includes('canada') || wh.includes('britain') ||
-                           wh.includes('overseas') || wh.includes('海外')) {
+                    console.log('  → 嘉兴仓');
+                } else if (isOverseas) {
                     orders.overseas++;
+                    console.log('  → 海外仓');
+                } else {
+                    console.log('  → 未知仓库');
                 }
                 orders.total++;
             });
@@ -1710,6 +2168,154 @@
             charts.warehouseRatio.setOption(option);
         }
 
+        // 渲染第二行 4 个图表
+        function renderSecondRowCharts() {
+            // 【v3.17.13 修复 3】分单次数分布 = 统计分 0 次、1 次、2 次、3 次、3 次 + 的订单数
+            // 分 0 次=1 个包裹，分 1 次=2 个包裹，分 2 次=3 个包裹...
+            const splitDistChart = echarts.init(document.getElementById('split-dist-chart'));
+            
+            console.log('分单次数分布 - rawData:', rawData.length, '条');
+            
+            // 按订单号统计包裹数
+            const orderPackages = {};
+            rawData.forEach(d => {
+                const orderNo = d.order_no || d['订单号'];
+                if (!orderNo) return;
+                if (!orderPackages[orderNo]) {
+                    orderPackages[orderNo] = 0;
+                }
+                orderPackages[orderNo]++;
+            });
+            
+            console.log('订单号统计:', Object.keys(orderPackages).length, '个订单');
+            
+            // 统计分单次数分布
+            const splitStats = { '0': 0, '1': 0, '2': 0, '3': 0, '3+': 0 };
+            Object.values(orderPackages).forEach(pkgCount => {
+                const splitCount = pkgCount - 1; // 包裹数 -1 = 分单次数
+                if (splitCount === 0) splitStats['0']++;
+                else if (splitCount === 1) splitStats['1']++;
+                else if (splitCount === 2) splitStats['2']++;
+                else if (splitCount === 3) splitStats['3']++;
+                else splitStats['3+']++;
+            });
+            
+            console.log('分单次数统计:', splitStats);
+            
+            splitDistChart.setOption({
+                tooltip: { 
+                    formatter: '{b}: {c}单',
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    borderColor: '#ccc',
+                    borderWidth: 1
+                },
+                grid: { left: '15%', right: '5%', bottom: '20%', top: '5%', containLabel: true },
+                xAxis: { 
+                    type: 'category', 
+                    data: ['分 0 次', '分 1 次', '分 2 次', '分 3 次', '分 3 次+'], 
+                    axisLabel: { fontSize: 10 } 
+                },
+                yAxis: { 
+                    type: 'value', 
+                    axisLabel: { fontSize: 10 },
+                    minInterval: 1
+                },
+                series: [{
+                    type: 'bar',
+                    data: [splitStats['0'], splitStats['1'], splitStats['2'], splitStats['3'], splitStats['3+']],
+                    itemStyle: { 
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#3498db' },
+                            { offset: 1, color: '#2980b9' }
+                        ])
+                    },
+                    label: { 
+                        show: true, 
+                        position: 'top', 
+                        fontSize: 10,
+                        formatter: '{c}'
+                    }
+                }]
+            });
+            
+            // 2. 分单占比趋势（按日期）
+            const splitTrendChart = echarts.init(document.getElementById('split-trend-chart'));
+            const dateMap = {};
+            rawData.forEach(d => {
+                const date = d.ship_date || '';
+                if (!dateMap[date]) dateMap[date] = { total: 0, split: 0 };
+                dateMap[date].total++;
+                if (d.is_split === '是' || d.is_split === 'Y' || d.is_split === true) dateMap[date].split++;
+            });
+            
+            const sortedDates = Object.keys(dateMap).sort().slice(-14); // 最近 14 天
+            const trendData = sortedDates.map(date => {
+                const d = dateMap[date];
+                return d.total > 0 ? (d.split / d.total * 100).toFixed(1) : 0;
+            });
+            
+            splitTrendChart.setOption({
+                tooltip: { formatter: '{b}: {c}%' },
+                grid: { left: '15%', right: '5%', bottom: '15%', top: '5%', containLabel: true },
+                xAxis: { type: 'category', data: sortedDates.map(d => d.slice(5)), axisLabel: { fontSize: 9, rotate: 45 } },
+                yAxis: { type: 'value', name: '分单占比%', axisLabel: { fontSize: 10 } },
+                series: [{
+                    type: 'line',
+                    data: trendData,
+                    smooth: true,
+                    itemStyle: { color: '#e74c3c' },
+                    areaStyle: { opacity: 0.3 },
+                    label: { show: false }
+                }]
+            });
+            
+            // 3. 各国客单价
+            const countryAovChart = echarts.init(document.getElementById('country-aov-chart'));
+            const countryData = {};
+            rawData.forEach(d => {
+                const country = d.country_code || 'Other';
+                if (!countryData[country]) countryData[country] = { revenue: 0, orders: 0 };
+                countryData[country].revenue += parseFloat(d.revenue) || 0;
+                countryData[country].orders++;
+            });
+            
+            const countries = Object.keys(countryData).slice(0, 10); // 前 10 个国家
+            const aovData = countries.map(c => countryData[c].orders > 0 ? (countryData[c].revenue / countryData[c].orders).toFixed(0) : 0);
+            
+            countryAovChart.setOption({
+                tooltip: { formatter: '${c}' },
+                grid: { left: '15%', right: '5%', bottom: '20%', top: '5%', containLabel: true },
+                xAxis: { type: 'category', data: countries, axisLabel: { fontSize: 10, rotate: 45 } },
+                yAxis: { type: 'value', name: '客单价 ($)', axisLabel: { fontSize: 10 } },
+                series: [{
+                    type: 'bar',
+                    data: aovData,
+                    itemStyle: { color: '#27ae60' },
+                    label: { show: true, position: 'top', formatter: '${c}', fontSize: 10 }
+                }]
+            });
+            
+            // 4. 各国订单数及占比（饼图）
+            const countryOrdersChart = echarts.init(document.getElementById('country-orders-chart'));
+            const totalOrders = countries.reduce((sum, c) => sum + countryData[c].orders, 0);
+            const colors = ['#3498db', '#27ae60', '#f39c12', '#e74c3c', '#9b59b6', '#1abc9c', '#34495e', '#16a085', '#2980b9', '#8e44ad'];
+            
+            countryOrdersChart.setOption({
+                tooltip: { trigger: 'item', formatter: '{b}: {c}单 ({d}%)' },
+                legend: { orient: 'horizontal', bottom: '0%', left: 'center', textStyle: { fontSize: 9 } },
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    label: { show: true, position: 'outside', formatter: '{b}: {d}%', fontSize: 9 },
+                    data: countries.map((c, i) => ({
+                        name: c,
+                        value: countryData[c].orders,
+                        itemStyle: { color: colors[i % colors.length] }
+                    }))
+                }]
+            });
+        }
+        
         function renderClaimAmount() {
             charts.claimAmount = echarts.init(document.getElementById('claim-amount-chart'));
             const claimAmount = [
@@ -1770,6 +2376,82 @@
             charts.claimAmount.setOption(option);
         }
 
+        // 渲染运费区间分布图表
+        function renderRangeCharts() {
+            const rangeAovChart = echarts.init(document.getElementById('range-aov-chart'));
+            const rangeRatioChart = echarts.init(document.getElementById('range-ratio-chart'));
+            
+            // 筛选数据（美/英/加/澳）
+            const targetCountries = ['US', 'GB', 'CA', 'AU'];
+            let targetData = rawData.filter(d => {
+                const country = (d.country_code || '').toUpperCase();
+                return targetCountries.includes(country);
+            });
+            
+            // 按运费区间分组
+            const ranges = ['$0-30', '$30-60', '$60-100', '$100-200', '$200+'];
+            const rangeData = [
+                { min: 0, max: 30, count: 0, revenue: 0 },
+                { min: 30, max: 60, count: 0, revenue: 0 },
+                { min: 60, max: 100, count: 0, revenue: 0 },
+                { min: 100, max: 200, count: 0, revenue: 0 },
+                { min: 200, max: 999999, count: 0, revenue: 0 }
+            ];
+            
+            targetData.forEach(d => {
+                const cost = parseFloat(d.logistics_cost) || 0;
+                const rev = parseFloat(d.revenue) || 0;
+                
+                for (let i = 0; i < rangeData.length; i++) {
+                    if (cost >= rangeData[i].min && cost < rangeData[i].max) {
+                        rangeData[i].count++;
+                        rangeData[i].revenue += rev;
+                        break;
+                    }
+                }
+            });
+            
+            rangeData.forEach(r => {
+                r.aov = r.count > 0 ? r.revenue / r.count : 0;
+            });
+            
+            // 客单价柱状图
+            rangeAovChart.setOption({
+                tooltip: { formatter: '${c}' },
+                grid: { left: '15%', right: '5%', bottom: '10%', top: '5%', containLabel: true },
+                xAxis: { type: 'category', data: ranges, axisLabel: { fontSize: 10 } },
+                yAxis: { type: 'value', name: '客单价 ($)', axisLabel: { fontSize: 10 } },
+                series: [{
+                    type: 'bar',
+                    data: rangeData.map(r => r.aov.toFixed(0)),
+                    itemStyle: { color: '#27ae60' },
+                    label: { show: true, position: 'top', formatter: '${c}', fontSize: 10 }
+                }]
+            });
+            
+            // 订单占比环形图
+            const colors = ['#3498db', '#27ae60', '#f39c12', '#e74c3c', '#9b59b6'];
+            rangeRatioChart.setOption({
+                tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+                legend: { orient: 'horizontal', bottom: '0%', left: 'center', textStyle: { fontSize: 10 } },
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    label: { show: true, position: 'outside', formatter: '{b}: {d}%', fontSize: 10 },
+                    data: rangeData.map((r, i) => ({ name: ranges[i], value: r.count, itemStyle: { color: colors[i] } }))
+                }]
+            });
+        }
+        
+        // 币种筛选交互
+        document.querySelectorAll('#range-currency-filter .currency-btn-small').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#range-currency-filter .currency-btn-small').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                renderRangeCharts();
+            });
+        });
+        
         function renderClaimQuantity() {
             charts.claimQuantity = echarts.init(document.getElementById('claim-quantity-chart'));
             const claimQuantity = [
@@ -1859,9 +2541,19 @@
             const overseasBody = document.getElementById('overseas-table-body');
             const overseasFoot = document.getElementById('overseas-table-foot');
             
-            // 应用筛选
-            let detailData = filterData();
-            if (detailCountry !== 'all') {
+            // 【v3.17.30 修复】直接使用 rawData，和图表部分保持一致
+            let detailData = rawData.filter(d => {
+                const shipDate = new Date(d.ship_date);
+                return !isNaN(shipDate.getTime()) && shipDate >= currentStartDate && shipDate <= currentEndDate;
+            });
+            
+            // "其他"= 非美英加澳
+            if (detailCountry === '其他') {
+                detailData = detailData.filter(d => {
+                    const c = d.country_code || '';
+                    return c !== '美国' && c !== '英国' && c !== '加拿大' && c !== '澳大利亚';
+                });
+            } else if (detailCountry !== 'all') {
                 detailData = detailData.filter(d => d.country_code === detailCountry);
             }
             
@@ -1870,12 +2562,24 @@
                 const wh = (d.warehouse_code || '').toLowerCase();
                 return wh.includes('jiaxing') || wh.includes('嘉兴');
             });
+            // 【v3.17.30 修复】海外仓 = 所有非嘉兴仓的仓库
+            // 不再限制具体国家，适应底稿国家范围扩大的情况
             const overseasData = detailData.filter(d => {
                 const wh = (d.warehouse_code || '').toLowerCase();
-                return wh.includes('us') || wh.includes('ca') || wh.includes('uk') || 
-                       wh.includes('america') || wh.includes('canada') || wh.includes('britain') ||
-                       wh.includes('overseas') || wh.includes('海外');
+                const isJiaxing = wh.includes('jiaxing') || wh.includes('嘉兴');
+                return !isJiaxing && wh.trim() !== '';  // 排除嘉兴仓和空仓库
             });
+            
+            // 【v3.17.30 调试】输出仓库代码分布
+            console.log('=== renderDetailTable 调试 ===');
+            console.log('detailData 总数:', detailData.length);
+            console.log('jiaxingData:', jiaxingData.length);
+            console.log('overseasData:', overseasData.length);
+            console.log('未分类数据:', detailData.length - jiaxingData.length - overseasData.length);
+            if (detailData.length > 0) {
+                const warehouseCodes = [...new Set(detailData.map(d => d.warehouse_code))];
+                console.log('所有 warehouse_code:', warehouseCodes);
+            }
             
             // 渲染两个表格
             renderWarehouseTable(jiaxingBody, jiaxingFoot, jiaxingData, 'jiaxing');
@@ -1891,24 +2595,33 @@
                 const customerShipping = d.customer_shipping_method || '';
                 const speed = customerShipping.includes('Expedited') ? '快' : '中';
                 
-                const key = `${speed}|${d.product_l1}|${d.product_l2}|${d.product_l3}`;
+                // 【v3.17.29 修复】处理 null/undefined
+                const key = `${speed}|${d.product_l1 || ''}|${d.product_l2 || ''}|${d.product_l3 || ''}`;
                 if (!grouped[key]) {
                     grouped[key] = {
                         speed: speed,
                         l1: d.product_l1,
                         l2: d.product_l2,
                         l3: d.product_l3,
-                        l1l2l3: `${d.product_l1} | ${d.product_l2} | ${d.product_l3}`,
+                        l1l2l3: `${d.product_l1 || ''} | ${d.product_l2 || ''} | ${d.product_l3 || ''}`,
                         packages: 0,
                         promiseDaysSum: 0,
                         promiseDaysCount: 0,
                         actualDaysSum: 0,
                         actualDaysCount: 0,
                         deliveredCount: 0,
-                        onTimeCount: 0  // 时效达成数量
+                        onTimeCount: 0,  // 时效达成数量
+                        logisticsFeeActual: 0,  // 物流运费 (实际)
+                        orderRevenue: 0,  // 订单收入
+                        insuranceFee: 0  // 保价费
                     };
                 }
                 grouped[key].packages++;
+                
+                // 累加成本和收入
+                grouped[key].logisticsFeeActual += parseFloat(d.logistics_cost) || 0;
+                grouped[key].orderRevenue += parseFloat(d.revenue) || 0;
+                grouped[key].insuranceFee += parseFloat(d.insurance_fee) || 0;
                 
                 // 【修复 4】承诺时效 = 承诺最晚发货时间 - 发货时间
                 // 使用 order_date + promise_days 计算承诺最晚发货时间
@@ -2000,7 +2713,11 @@
                     promise: avgPromise,
                     actual: avgActual,
                     delivery: deliveryRate,
-                    achievement: achievementRate  // 时效达成率
+                    achievement: achievementRate,  // 时效达成率
+                    // 成本占比 = 物流运费 (实际运费/预估运费)/订单收入
+                    costRatio: row.orderRevenue > 0 ? ((row.logisticsFeeActual / row.orderRevenue) * 100) : 0,
+                    // 补偿率 = 运保费收入/物流运费 (实际运费/预估运费)
+                    compensationRate: row.logisticsFeeActual > 0 ? ((row.insuranceFee / row.logisticsFeeActual) * 100) : 0
                 };
             });
             
@@ -2019,6 +2736,8 @@
                     else if (state.column === 'actual') { valA = a.actual; valB = b.actual; }
                     else if (state.column === 'delivery') { valA = a.delivery; valB = b.delivery; }
                     else if (state.column === 'achievement') { valA = a.achievement; valB = b.achievement; }
+                    else if (state.column === 'costRatio') { valA = a.costRatio; valB = b.costRatio; }
+                    else if (state.column === 'compensationRate') { valA = a.compensationRate; valB = b.compensationRate; }
                     
                     if (typeof valA === 'string') {
                         return state.ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
@@ -2044,6 +2763,8 @@
                     <td style="text-align: center;">${row.actual.toFixed(1)}</td>
                     <td style="text-align: center;">${row.delivery.toFixed(1)}%</td>
                     <td style="text-align: center;">${row.achievement.toFixed(1)}%</td>
+                    <td style="text-align: center; color: ${row.costRatio > 100 ? '#ea4335' : '#27ae60'};">${row.costRatio.toFixed(1)}%</td>
+                    <td style="text-align: center; color: ${row.compensationRate > 150 ? '#ea4335' : '#27ae60'};">${row.compensationRate.toFixed(1)}%</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -2052,6 +2773,8 @@
             const avgPromise = totalPackages > 0 ? (totalPromise / totalPackages) : 0;
             const avgActual = totalPackages > 0 ? (totalActual / totalPackages) : 0;
             const deliveryRate = totalPackages > 0 ? (totalDelivered / totalPackages * 100) : 0;
+            const avgCostRatio = rows.length > 0 ? (rows.reduce((sum, r) => sum + r.costRatio, 0) / rows.length) : 0;
+            const avgCompensationRate = rows.length > 0 ? (rows.reduce((sum, r) => sum + r.compensationRate, 0) / rows.length) : 0;
             
             tfoot.innerHTML = `
                 <tr style="background: #e8f4f8; font-weight: bold;">
@@ -2062,6 +2785,8 @@
                     <td style="text-align: center;">${avgActual.toFixed(1)}</td>
                     <td style="text-align: center;">${deliveryRate.toFixed(1)}%</td>
                     <td style="text-align: center;">${totalDelivered > 0 ? (totalOnTime / totalDelivered * 100).toFixed(1) : 0}%</td>
+                    <td style="text-align: center;">${avgCostRatio.toFixed(1)}%</td>
+                    <td style="text-align: center;">${avgCompensationRate.toFixed(1)}%</td>
                 </tr>
             `;
         }
