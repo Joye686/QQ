@@ -1295,13 +1295,27 @@
         
         // 【v3.17.36 新增】初始化仪表板
         function initDashboard() {
+            console.log('初始化仪表板...');
+            
             // 初始化产品筛选器
-            updateProductL1();
+            if (typeof updateProductL1 === 'function') {
+                updateProductL1();
+            } else {
+                console.warn('updateProductL1 函数未定义，跳过产品筛选器初始化');
+            }
+            
             // 更新所有图表
-            updateCharts();
+            if (typeof updateCharts === 'function') {
+                updateCharts();
+            } else {
+                console.warn('updateCharts 函数未定义');
+            }
+            
             // 显示仪表板
             document.getElementById('loading').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
+            
+            console.log('仪表板初始化完成');
         }
 
         // 加载真实数据 - v3.17.11 支持中文字段
