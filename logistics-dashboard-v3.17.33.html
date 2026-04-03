@@ -1,4 +1,4 @@
-<!-- Build: 2026-04-03 v3.17.32 -->
+<!-- Build: 2026-04-03 v3.17.33 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>物流分析仪表板 v3.17.32 (新增第二行 KPI) (升档降档流向分析)</title>
+    <title>物流分析仪表板 v3.17.33 (修正运费补偿率和分单计算) (升档降档流向分析)</title>
     <script src="echarts.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1457,13 +1457,24 @@
             const insuranceRate = totalOrders > 0 ? (insuredOrders / totalOrders) * 100 : 0;
             document.getElementById('kpi-insurance-rate').textContent = insuranceRate.toFixed(1) + '%';
             
-            // 运费补偿率 = 有补偿的订单数 / 总订单数
-            const compensatedOrders = new Set(filteredData.filter(d => d.freight_compensation > 0).map(d => d.order_no)).size;
-            const compensationRate = totalOrders > 0 ? (compensatedOrders / totalOrders) * 100 : 0;
+            // 【v3.17.32 修正】运费补偿率 = 补偿金额 ÷ 实际运费
+            const totalFreight = filteredData.reduce((sum, d) => sum + (d.freight || 0), 0);
+            const totalFreightActual = filteredData.reduce((sum, d) => sum + (d.freight_actual || 0), 0);
+            const compensationRate = totalFreightActual > 0 ? (totalFreight / totalFreightActual) * 100 : 0;
+            console.log('运费补偿调试：totalFreight=', totalFreight, 'totalFreightActual=', totalFreightActual);
             document.getElementById('kpi-compensation-rate').textContent = compensationRate.toFixed(1) + '%';
             
-            // 分单订单数 = split_order_flag = true 的订单数
-            const splitOrders = new Set(filteredData.filter(d => d.split_order_flag === true || d.split_order_flag === 'true' || d.split_order_flag === 1).map(d => d.order_no)).size;
+            // 【v3.17.32 修正】分单订单数 = "是否分单" = "是"的去重订单数
+            const splitOrders = new Set(filteredData.filter(d => {
+                const splitFlag = d['是否分单'] || d.split_order || d.split_order_flag || '';
+                return splitFlag === '是' || splitFlag === true || splitFlag === 'true' || splitFlag === 1;
+            }).map(d => d.order_no)).size;
+            console.log('分单调试：前 5 条的是否分单字段:', filteredData.slice(0, 5).map(d => ({
+                order_no: d.order_no,
+                是否分单：d['是否分单'],
+                split_order: d.split_order,
+                split_order_flag: d.split_order_flag
+            })));
             document.getElementById('kpi-split-orders').textContent = splitOrders.toLocaleString();
             
             // 分单占比 = 分单订单数 / 总订单数
