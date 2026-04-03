@@ -1219,6 +1219,7 @@
                     }
                     
                     console.log('解析成功！数据量:', data.length, '条');
+                    console.log('前 3 条数据样例:', JSON.stringify(data.slice(0, 3), null, 2));
                     
                     // 更新全局数据
                     rawData = data.map(d => ({
@@ -1240,14 +1241,15 @@
                         actual_days: parseFloat(d['妥投时效'] || d['actual_days'] || 0),
                         weight_kg: parseFloat(d['实际/预估重量'] || d['weight_kg'] || 0),
                         
-                        // 财务字段
+                        // 财务字段（支持多种字段名）
                         revenue: parseFloat(d['订单收入'] || d['revenue'] || 0),
                         other_revenue: parseFloat(d['其他收入'] || d['other_revenue'] || 0),
                         freight: parseFloat(d['运费'] || d['freight'] || 0),
                         insurance_fee: parseFloat(d['保价费'] || d['insurance_fee'] || 0),
                         freight_insurance_revenue: parseFloat(d['运保费收入'] || d['freight_insurance_revenue'] || 0),
                         actual_freight: parseFloat(d['实际运费'] || d['actual_freight'] || 0),
-                        logistics_cost: parseFloat(d['物流运费 (实际运费/预估运费)'] || d['logistics_cost'] || d['actual_freight'] || 0),
+                        // 【v3.17.37 修复】物流运费字段名包含括号，需要精确匹配
+                        logistics_cost: parseFloat(d['物流运费 (实际运费/预估运费)'] || d['物流运费'] || d['logistics_cost'] || d['actual_freight'] || 0),
                         
                         // 分单字段
                         is_split: d['是否分单'] || d['is_split'] || '',
@@ -1273,6 +1275,14 @@
                             return 'unshipped';
                         })()
                     }));
+                    
+                    console.log('映射后的数据样例:', JSON.stringify(rawData.slice(0, 2), null, 2));
+                    console.log('物流运费检查:', rawData.slice(0, 5).map(d => ({
+                        order_no: d.order_no,
+                        logistics_cost: d.logistics_cost,
+                        '原始物流运费': d['物流运费 (实际运费/预估运费)'],
+                        '原始实际运费': d['实际运费']
+                    })));
                     
                     console.log('文件上传成功！加载数据:', rawData.length, '条');
                     statusEl.textContent = `✅ 已加载 ${rawData.length} 条数据`;
