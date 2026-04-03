@@ -2437,7 +2437,7 @@ function renderWarehouseRatio() {
                     radius: ['40%', '70%'],
                     label: { show: true, position: 'outside', formatter: '{b}: {d}%', fontSize: 10 },
                     data: rangeData.map((r, i) => ({ 
-                        name: r.name, 
+                        name: ranges[i],  // 【v3.17.34 修改】显示运费范围
                         value: r.count, 
                         itemStyle: { color: colors[i] } 
                     }))
