@@ -1135,7 +1135,6 @@
                     // 核心字段（支持中英文）
                     order_no: d['订单号'] || d['order_no'],
                     ship_no: d['发货单号'] || d['ship_no'],
-                    site_code: d['站点'] || d['site_code'],
                     customer_shipping_method: d['客户选择的运送方式'] || d['customer_shipping_method'],
                     product_l1: d['产品一级'] || d['product_l1'] || '',
                     product_l2: d['产品二级'] || d['product_l2'] || '',
@@ -1409,14 +1408,8 @@
             }
             
             // 【v3.17.35 修复】订单数 = 去重的订单号计数
-            // 数据中没有"订单号"字段，需要用 ship_no 的前缀判断
-            const uniqueOrders = new Set(filteredData.map(d => {
-                // 尝试从 ship_no 提取订单号（去掉后缀）
-                const shipNo = d.ship_no || '';
-                // 假设 ship_no 格式：ORDER123-1, ORDER123-2 → 订单号是 ORDER123
-                const parts = shipNo.split('-');
-                return parts.length > 1 ? parts.slice(0, -1).join('-') : shipNo;
-            }));
+            // 数据中 order_no 字段就是订单号
+            const uniqueOrders = new Set(filteredData.map(d => d.order_no));
             const totalOrders = uniqueOrders.size;
             
             console.log('计算出的订单总数:', totalOrders);
@@ -2185,13 +2178,12 @@ function renderWarehouseRatio() {
             }
             
             // 按订单号分组，统计每个订单的包裹数
-            // 【v3.17.35 修复】从 ship_no 提取订单号
+            // 【v3.17.35 修复】从 ship_no 提取订单号 (格式：ORDER123b1, ORDER123b2 → ORDER123)
             const orderPackages = {};
             filteredData.forEach(d => {
                 const shipNo = d.ship_no || '';
-                // 假设 ship_no 格式：ORDER123-1, ORDER123-2 → 订单号是 ORDER123
-                const parts = shipNo.split('-');
-                const orderNo = parts.length > 1 ? parts.slice(0, -1).join('-') : shipNo;
+                // 去掉末尾的 'b' + 数字，提取订单号
+                const orderNo = shipNo.replace(/b\d+$/, '') || d.order_no;
                 
                 if (!orderNo) return;
                 
