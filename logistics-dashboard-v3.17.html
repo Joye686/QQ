@@ -1,4 +1,4 @@
-<!-- Build: 2026-04-03 v3.17 (分单次数统计) -->
+<!-- Build: 2026-04-03 v3.17 (支持文件上传) -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -77,6 +77,20 @@
         .filter-item select:hover, .filter-item select:focus {
             border-color: #667eea;
             outline: none;
+        }
+        
+        /* 文件上传样式 */
+        #dataFileInput {
+            padding: 8px;
+            border: 2px dashed #667eea;
+            border-radius: 6px;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #dataFileInput:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
         }
         
         /* 日期选择器 */
@@ -519,6 +533,19 @@
         <div id="dashboard" style="display: none;">
             <!-- 筛选器 -->
             <div class="filters">
+                <!-- 数据文件上传 -->
+                <div class="filter-section" style="background: #f8f9ff; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <div class="filter-label">📁 上传数据文件（CSV/Excel）</div>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <input type="file" id="dataFileInput" accept=".csv,.xlsx,.xls" style="flex: 1; min-width: 300px;" onchange="handleFileUpload(event)">
+                        <button class="btn-apply" onclick="document.getElementById('dataFileInput').click()">📂 选择文件</button>
+                        <span id="fileUploadStatus" style="color: #27ae60; font-size: 13px;"></span>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 11px; color: #888;">
+                        💡 支持 CSV 或 Excel 文件，上传后自动解析并刷新仪表板（数据仅在当前浏览器处理，不会上传到服务器）
+                    </div>
+                </div>
+                
                 <!-- 时间范围选择 -->
                 <div class="filter-section">
                     <div class="filter-label">📅 时间范围</div>
@@ -1121,6 +1148,120 @@
                 return 'overseas';
             }
             return warehouseCode;
+        }
+        
+        // 【v3.17.36 新增】处理文件上传
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            const statusEl = document.getElementById('fileUploadStatus');
+            
+            if (!file) {
+                statusEl.textContent = '';
+                return;
+            }
+            
+            statusEl.textContent = '正在解析文件...';
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    // 解析 CSV
+                    const lines = content.split('\n').filter(line => line.trim());
+                    const headers = lines[0].split(',').map(h => h.trim().replace('\ufeff', ''));
+                    
+                    const data = [];
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = lines[i].split(',');
+                        const row = {};
+                        headers.forEach((header, index) => {
+                            row[header] = values[index] ? values[index].trim() : '';
+                        });
+                        data.push(row);
+                    }
+                    
+                    // 更新全局数据
+                    rawData = data.map(d => ({
+                        // 核心字段（支持中英文）
+                        order_no: d['订单号'] || d['order_no'] || '',
+                        ship_no: d['发货单号'] || d['ship_no'] || '',
+                        site_code: d['站点'] || d['site_code'] || '',
+                        customer_shipping_method: d['客户选择的运送方式'] || d['customer_shipping_method'] || '',
+                        product_l1: d['一级产品'] || d['product_l1'] || '',
+                        product_l2: d['二级产品'] || d['product_l2'] || '',
+                        product_l3: d['三级产品'] || d['物流方式'] || d['product_l3'] || d['实际物流方式'] || '',
+                        actual_shipping_method: d['实际物流方式'] || d['actual_shipping_method'] || '',
+                        warehouse_code: d['发货地'] || d['warehouse_code'] || '',
+                        country_code: d['收货地'] || d['country_code'] || '',
+                        item_count: parseFloat(d['商品数量'] || d['item_count'] || 0),
+                        shipping_status: d['订单发货状态'] || d['shipping_status'] || '',
+                        ship_date: d['发货时间'] || d['ship_date'] || '',
+                        delivery_date: d['妥投时间'] || d['delivery_date'] || '',
+                        actual_days: parseFloat(d['妥投时效'] || d['actual_days'] || 0),
+                        weight_kg: parseFloat(d['实际/预估重量'] || d['weight_kg'] || 0),
+                        
+                        // 财务字段
+                        revenue: parseFloat(d['订单收入'] || d['revenue'] || 0),
+                        other_revenue: parseFloat(d['其他收入'] || d['other_revenue'] || 0),
+                        freight: parseFloat(d['运费'] || d['freight'] || 0),
+                        insurance_fee: parseFloat(d['保价费'] || d['insurance_fee'] || 0),
+                        freight_insurance_revenue: parseFloat(d['运保费收入'] || d['freight_insurance_revenue'] || 0),
+                        actual_freight: parseFloat(d['实际运费'] || d['actual_freight'] || 0),
+                        logistics_cost: parseFloat(d['物流运费 (实际运费/预估运费)'] || d['logistics_cost'] || d['actual_freight'] || 0),
+                        
+                        // 分单字段
+                        is_split: d['是否分单'] || d['is_split'] || '',
+                        split_reason: d['分单原因'] || d['split_reason'] || '',
+                        manual_split_reason: d['手动分单原因'] || d['manual_split_reason'] || '',
+                        
+                        // 合单字段
+                        is_presale: d['预售订单'] || d['is_presale'] || '',
+                        is_influencer: d['红人订单'] || d['is_influencer'] || '',
+                        is_merged: d['发货合单'] || d['is_merged'] || '',
+                        is_presale_merged: d['预售合单'] || d['is_presale_merged'] || '',
+                        pre_merge_logistics_cost: parseFloat(d['合单前物流运费'] || d['pre_merge_logistics_cost'] || 0),
+                        
+                        // 售后
+                        after_sales: d['售后'] || d['after_sales'] || '',
+                        
+                        // 计算字段
+                        warehouse_type: getWarehouseType(d['发货地'] || d['warehouse_code']),
+                        order_type: (function() {
+                            const status = d['订单发货状态'] || d['shipping_status'] || '';
+                            if (status.includes('已发货') || status === 'shipped') return 'shipped';
+                            if (status.includes('部分') || status === 'partial') return 'partial';
+                            return 'unshipped';
+                        })()
+                    }));
+                    
+                    console.log('文件上传成功！加载数据:', rawData.length, '条');
+                    statusEl.textContent = `✅ 已加载 ${rawData.length} 条数据`;
+                    
+                    // 重新初始化仪表板
+                    initDashboard();
+                    
+                } catch (error) {
+                    console.error('文件解析失败:', error);
+                    statusEl.textContent = '❌ 解析失败，请检查文件格式';
+                }
+            };
+            
+            reader.onerror = function() {
+                statusEl.textContent = '❌ 读取失败';
+            };
+            
+            reader.readAsText(file, 'utf-8-sig');
+        }
+        
+        // 【v3.17.36 新增】初始化仪表板
+        function initDashboard() {
+            // 初始化产品筛选器
+            updateProductL1();
+            // 更新所有图表
+            updateCharts();
+            // 显示仪表板
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
         }
 
         // 加载真实数据 - v3.17.11 支持中文字段
