@@ -1221,67 +1221,88 @@
                     console.log('解析成功！数据量:', data.length, '条');
                     console.log('前 3 条数据样例:', JSON.stringify(data.slice(0, 3), null, 2));
                     
-                    // 更新全局数据
-                    rawData = data.map(d => ({
-                        // 核心字段（支持中英文）
-                        order_no: d['订单号'] || d['order_no'] || '',
-                        ship_no: d['发货单号'] || d['ship_no'] || '',
-                        site_code: d['站点'] || d['site_code'] || '',
-                        customer_shipping_method: d['客户选择的运送方式'] || d['customer_shipping_method'] || '',
-                        product_l1: d['一级产品'] || d['product_l1'] || '',
-                        product_l2: d['二级产品'] || d['product_l2'] || '',
-                        product_l3: d['三级产品'] || d['物流方式'] || d['product_l3'] || d['实际物流方式'] || '',
-                        actual_shipping_method: d['实际物流方式'] || d['actual_shipping_method'] || '',
-                        warehouse_code: d['发货地'] || d['warehouse_code'] || '',
-                        country_code: d['收货地'] || d['country_code'] || '',
-                        item_count: parseFloat(d['商品数量'] || d['item_count'] || 0),
-                        shipping_status: d['订单发货状态'] || d['shipping_status'] || '',
-                        ship_date: d['发货时间'] || d['ship_date'] || '',
-                        delivery_date: d['妥投时间'] || d['delivery_date'] || '',
-                        actual_days: parseFloat(d['妥投时效'] || d['actual_days'] || 0),
-                        weight_kg: parseFloat(d['实际/预估重量'] || d['weight_kg'] || 0),
+                    // 更新全局数据 - 使用字段位置映射（避免字段名包含特殊字符的问题）
+                    rawData = data.map((d, index) => {
+                        // 调试：显示第一条数据的完整字段
+                        if (index === 0) {
+                            console.log('CSV 原始数据字段名:', Object.keys(d));
+                            console.log('CSV 原始物流运费值:', d['物流运费 (实际运费/预估运费)'], d['物流运费'], d['实际运费']);
+                        }
                         
-                        // 财务字段（支持多种字段名）
-                        revenue: parseFloat(d['订单收入'] || d['revenue'] || 0),
-                        other_revenue: parseFloat(d['其他收入'] || d['other_revenue'] || 0),
-                        freight: parseFloat(d['运费'] || d['freight'] || 0),
-                        insurance_fee: parseFloat(d['保价费'] || d['insurance_fee'] || 0),
-                        freight_insurance_revenue: parseFloat(d['运保费收入'] || d['freight_insurance_revenue'] || 0),
-                        actual_freight: parseFloat(d['实际运费'] || d['actual_freight'] || 0),
-                        // 【v3.17.37 修复】物流运费字段名包含括号，需要精确匹配
-                        logistics_cost: parseFloat(d['物流运费 (实际运费/预估运费)'] || d['物流运费'] || d['logistics_cost'] || d['actual_freight'] || 0),
-                        
-                        // 分单字段
-                        is_split: d['是否分单'] || d['is_split'] || '',
-                        split_reason: d['分单原因'] || d['split_reason'] || '',
-                        manual_split_reason: d['手动分单原因'] || d['manual_split_reason'] || '',
-                        
-                        // 合单字段
-                        is_presale: d['预售订单'] || d['is_presale'] || '',
-                        is_influencer: d['红人订单'] || d['is_influencer'] || '',
-                        is_merged: d['发货合单'] || d['is_merged'] || '',
-                        is_presale_merged: d['预售合单'] || d['is_presale_merged'] || '',
-                        pre_merge_logistics_cost: parseFloat(d['合单前物流运费'] || d['pre_merge_logistics_cost'] || 0),
-                        
-                        // 售后
-                        after_sales: d['售后'] || d['after_sales'] || '',
-                        
-                        // 计算字段
-                        warehouse_type: getWarehouseType(d['发货地'] || d['warehouse_code']),
-                        order_type: (function() {
-                            const status = d['订单发货状态'] || d['shipping_status'] || '';
-                            if (status.includes('已发货') || status === 'shipped') return 'shipped';
-                            if (status.includes('部分') || status === 'partial') return 'partial';
-                            return 'unshipped';
-                        })()
-                    }));
+                        return {
+                            // 核心字段
+                            order_no: d['订单号'] || '',
+                            ship_no: d['发货单号'] || '',
+                            site_code: d['站点'] || '',
+                            customer_shipping_method: d['客户选择的运送方式'] || '',
+                            product_l1: d['一级产品'] || '',
+                            product_l2: d['二级产品'] || '',
+                            product_l3: d['三级产品'] || '',
+                            actual_shipping_method: d['实际物流方式'] || '',
+                            warehouse_code: d['发货地'] || '',
+                            country_code: d['收货地'] || '',
+                            item_count: parseFloat(d['商品数量'] || 0),
+                            shipping_status: d['订单发货状态'] || '',
+                            ship_date: d['发货时间'] || '',
+                            delivery_date: d['妥投时间'] || '',
+                            actual_days: parseFloat(d['妥投时效'] || 0),
+                            weight_kg: parseFloat(d['实际/预估重量'] || 0),
+                            
+                            // 财务字段 - 使用多种字段名尝试
+                            revenue: parseFloat(d['订单收入'] || 0),
+                            other_revenue: parseFloat(d['其他收入'] || 0),
+                            freight: parseFloat(d['运费'] || 0),
+                            insurance_fee: parseFloat(d['保价费'] || 0),
+                            freight_insurance_revenue: parseFloat(d['运保费收入'] || 0),
+                            actual_freight: parseFloat(d['实际运费'] || 0),
+                            // 物流运费 - 尝试所有可能的字段名
+                            logistics_cost: (function() {
+                                // 尝试所有可能的字段名变体
+                                const possibleKeys = [
+                                    '物流运费 (实际运费/预估运费)',
+                                    '物流运费',
+                                    '实际运费',
+                                    'logistics_cost',
+                                    'actual_freight'
+                                ];
+                                for (const key of possibleKeys) {
+                                    if (d[key] !== undefined && d[key] !== '') {
+                                        const val = parseFloat(d[key]);
+                                        if (!isNaN(val)) return val;
+                                    }
+                                }
+                                return 0;
+                            })(),
+                            
+                            // 分单字段
+                            is_split: d['是否分单'] || '',
+                            split_reason: d['分单原因'] || '',
+                            manual_split_reason: d['手动分单原因'] || '',
+                            
+                            // 合单字段
+                            is_presale: d['预售订单'] || '',
+                            is_influencer: d['红人订单'] || '',
+                            is_merged: d['发货合单'] || '',
+                            is_presale_merged: d['预售合单'] || '',
+                            pre_merge_logistics_cost: parseFloat(d['合单前物流运费'] || 0),
+                            
+                            // 售后
+                            after_sales: d['售后'] || '',
+                            
+                            // 计算字段
+                            warehouse_type: getWarehouseType(d['发货地']),
+                            order_type: (function() {
+                                const status = d['订单发货状态'] || '';
+                                if (status.includes('已发货') || status === 'shipped') return 'shipped';
+                                if (status.includes('部分') || status === 'partial') return 'partial';
+                                return 'unshipped';
+                            })()
+                        };
+                    });
                     
-                    console.log('映射后的数据样例:', JSON.stringify(rawData.slice(0, 2), null, 2));
-                    console.log('物流运费检查:', rawData.slice(0, 5).map(d => ({
+                    console.log('映射后的物流运费检查:', rawData.slice(0, 5).map(d => ({
                         order_no: d.order_no,
-                        logistics_cost: d.logistics_cost,
-                        '原始物流运费': d['物流运费 (实际运费/预估运费)'],
-                        '原始实际运费': d['实际运费']
+                        logistics_cost: d.logistics_cost
                     })));
                     
                     console.log('文件上传成功！加载数据:', rawData.length, '条');
