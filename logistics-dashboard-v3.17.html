@@ -1,4 +1,4 @@
-<!-- Build: 2026-04-03 v3.17 (删除币种筛选 +Y 轴下移) -->
+<!-- Build: 2026-04-03 v3.17 (数据持久化保存) -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -539,10 +539,12 @@
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                         <input type="file" id="dataFileInput" accept=".csv,.xlsx,.xls" style="flex: 1; min-width: 300px;" onchange="handleFileUpload(event)">
                         <button class="btn-apply" onclick="document.getElementById('dataFileInput').click()">📂 选择文件</button>
+                        <button class="btn-apply" onclick="saveData()" style="background: #27ae60;">💾 保存数据</button>
+                        <button class="btn-reset" onclick="clearData()">🗑️ 清除</button>
                         <span id="fileUploadStatus" style="color: #27ae60; font-size: 13px;"></span>
                     </div>
                     <div style="margin-top: 8px; font-size: 11px; color: #888;">
-                        💡 支持 CSV 或 Excel 文件，上传后自动解析并刷新仪表板（数据仅在当前浏览器处理，不会上传到服务器）
+                        💡 支持 CSV 或 Excel 文件，上传后点击"保存数据"，刷新页面后数据还在（保存在浏览器本地）
                     </div>
                 </div>
                 
@@ -1011,6 +1013,71 @@
             } else {
                 delete exchangeRates[month];
             }
+        }
+        
+        // 【v3.17.41 新增】保存数据到 LocalStorage
+        function saveData() {
+            if (rawData.length === 0) {
+                alert('请先上传数据文件！');
+                return;
+            }
+            
+            try {
+                // 保存数据
+                localStorage.setItem('logistics_rawData', JSON.stringify(window.lastRawData || rawData));
+                // 保存汇率
+                localStorage.setItem('logistics_exchangeRates', JSON.stringify(exchangeRates));
+                // 保存时间
+                localStorage.setItem('logistics_saveTime', new Date().toLocaleString('zh-CN'));
+                
+                alert('✅ 数据已保存！刷新页面后数据还在。\n保存时间：' + new Date().toLocaleString('zh-CN'));
+            } catch (error) {
+                console.error('保存失败:', error);
+                alert('❌ 保存失败：' + error.message);
+            }
+        }
+        
+        // 【v3.17.41 新增】清除保存的数据
+        function clearData() {
+            if (confirm('确定要清除所有保存的数据吗？清除后需要重新上传。')) {
+                localStorage.removeItem('logistics_rawData');
+                localStorage.removeItem('logistics_exchangeRates');
+                localStorage.removeItem('logistics_saveTime');
+                rawData = [];
+                exchangeRates = {};
+                location.reload();
+            }
+        }
+        
+        // 【v3.17.41 新增】从 LocalStorage 加载数据
+        function loadDataFromStorage() {
+            try {
+                // 加载数据
+                const savedData = localStorage.getItem('logistics_rawData');
+                const savedRates = localStorage.getItem('logistics_exchangeRates');
+                const saveTime = localStorage.getItem('logistics_saveTime');
+                
+                if (savedData) {
+                    window.lastRawData = JSON.parse(savedData);
+                    applyExchangeRates(window.lastRawData);
+                    console.log('从本地加载数据成功！保存时间:', saveTime);
+                    
+                    // 加载汇率
+                    if (savedRates) {
+                        exchangeRates = JSON.parse(savedRates);
+                        // 更新汇率输入框
+                        for (const [month, rate] of Object.entries(exchangeRates)) {
+                            const input = document.getElementById(`rate-${month}`);
+                            if (input) input.value = rate;
+                        }
+                    }
+                    
+                    return true;
+                }
+            } catch (error) {
+                console.error('加载失败:', error);
+            }
+            return false;
         }
 
         // 同步国家筛选器 - 【v3.17.38 修复】三个筛选器完全同步
@@ -1497,6 +1564,12 @@
                 renderWarehouseRatio();
                 updateCharts();
                 renderSplitCountChart();  // 【v3.17.35 新增】初始化分单次数统计
+                
+                // 【v3.17.41 新增】尝试从 LocalStorage 加载已保存的数据
+                if (loadDataFromStorage()) {
+                    console.log('已从本地加载保存的数据');
+                    updateCharts();
+                }
                 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
