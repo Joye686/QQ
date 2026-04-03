@@ -1398,19 +1398,21 @@
         function updateStats() {
             const filteredData = filterData();
             
-            // 【v3.17.31 调试】输出数据样例
             console.log('=== updateStats 调试 ===');
             console.log('filteredData:', filteredData.length, '条');
             if (filteredData.length > 0) {
-                console.log('前 3 条数据:', JSON.stringify(filteredData.slice(0, 3), null, 2));
+                console.log('前 5 条的 order_no:', filteredData.slice(0, 5).map(d => d.order_no));
+                console.log('前 5 条的订单号 (中文):', filteredData.slice(0, 5).map(d => d['订单号']));
             }
             
-            // 订单数 = 去重的订单号计数
-            const uniqueOrders = new Set(filteredData.map(d => d.order_no));
+            // 【v3.17.35 修复】订单数 = 去重的订单号计数（使用中文字段名）
+            const uniqueOrders = new Set(filteredData.map(d => d['订单号'] || d.order_no));
             const totalOrders = uniqueOrders.size;
             
+            console.log('计算出的订单总数:', totalOrders);
+            
             // 发货包裹数 = 去重的发货单号计数
-            const uniqueShips = new Set(filteredData.map(d => d.ship_no));
+            const uniqueShips = new Set(filteredData.map(d => d.ship_no || d['发货单号']));
             const totalPackages = uniqueShips.size;
             
             // 累计物流费 = 物流运费合计
@@ -1444,7 +1446,7 @@
             document.getElementById('kpi-insurance-revenue').textContent = '$' + totalInsuranceFee.toFixed(2);
             
             // 保价订单占比 = 有保价费的订单数 / 总订单数
-            const insuredOrders = new Set(filteredData.filter(d => d.insurance_fee > 0).map(d => d.order_no)).size;
+            const insuredOrders = new Set(filteredData.filter(d => d.insurance_fee > 0).map(d => d['订单号'] || d.order_no)).size;
             const insuranceRate = totalOrders > 0 ? (insuredOrders / totalOrders) * 100 : 0;
             document.getElementById('kpi-insurance-rate').textContent = insuranceRate.toFixed(1) + '%';
             
@@ -1459,9 +1461,10 @@
             const splitOrders = new Set(filteredData.filter(d => {
                 const splitFlag = d.is_split || d['是否分单'] || '';
                 return splitFlag === '是' || splitFlag === 'Yes' || splitFlag === 'yes' || splitFlag === true || splitFlag === 'true' || splitFlag === 1;
-            }).map(d => d.order_no)).size;
+            }).map(d => d['订单号'] || d.order_no)).size;
             console.log('分单调试：前 5 条的是否分单字段:', filteredData.slice(0, 5).map(d => ({
                 order_no: d.order_no,
+                '订单号': d['订单号'],
                 is_split: d.is_split
             })), 'splitOrders=', splitOrders);
             document.getElementById('kpi-split-orders').textContent = splitOrders.toLocaleString();
