@@ -1,4 +1,4 @@
-<!-- Build: 2026-04-03 v3.17.30 -->
+<!-- Build: 2026-04-03 v3.17.31 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>物流分析仪表板 v3.17.30 (修复其他国家的仓库筛选) (升档降档流向分析)</title>
+    <title>物流分析仪表板 v3.17.31 (修复其他国家表格数据) (升档降档流向分析)</title>
     <script src="echarts.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1249,7 +1249,15 @@
             
             return rawData.filter(d => {
                 // 【v3.17.11】国家代码保持中文，直接比较
-                if (country !== 'all' && d.country_code !== country) return false;
+                // 【v3.17.30 修复】"其他"= 非美英加澳
+                if (country !== 'all') {
+                    if (country === '其他') {
+                        const c = d.country_code || '';
+                        if (c === '美国' || c === '英国' || c === '加拿大' || c === '澳大利亚') return false;
+                    } else if (d.country_code !== country) {
+                        return false;
+                    }
+                }
                 
                 // 【修复 3】智能识别仓库 - 海外仓包含美国仓 + 加拿大仓 + 英国仓
                 if (warehouse !== 'all') {
@@ -2492,8 +2500,11 @@ function renderWarehouseRatio() {
             const overseasBody = document.getElementById('overseas-table-body');
             const overseasFoot = document.getElementById('overseas-table-foot');
             
-            // 【v3.17.29 修复】应用国家筛选
-            let detailData = filterData();
+            // 【v3.17.30 修复】直接使用 rawData，和图表部分保持一致
+            let detailData = rawData.filter(d => {
+                const shipDate = new Date(d.ship_date);
+                return !isNaN(shipDate.getTime()) && shipDate >= currentStartDate && shipDate <= currentEndDate;
+            });
             
             // "其他"= 非美英加澳
             if (detailCountry === '其他') {
