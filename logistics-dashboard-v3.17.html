@@ -2165,15 +2165,27 @@ function renderWarehouseRatio() {
             
             const filteredData = filterData();
             
+            console.log('=== 分单次数统计调试 ===');
+            console.log('filteredData:', filteredData.length, '条');
+            if (filteredData.length > 0) {
+                console.log('前 5 条的 order_no:', filteredData.slice(0, 5).map(d => d.order_no));
+                console.log('前 5 条的 ship_no:', filteredData.slice(0, 5).map(d => d.ship_no));
+            }
+            
             // 按订单号分组，统计每个订单的包裹数
             const orderPackages = {};
             filteredData.forEach(d => {
-                const orderNo = d.order_no;
+                const orderNo = d.order_no || d['订单号'] || '';
+                if (!orderNo) return;
+                
                 if (!orderPackages[orderNo]) {
                     orderPackages[orderNo] = 0;
                 }
                 orderPackages[orderNo]++;
             });
+            
+            console.log('订单总数:', Object.keys(orderPackages).length);
+            console.log('订单包裹数分布样例:', Object.entries(orderPackages).slice(0, 10));
             
             // 统计分单次数分布
             // 分 0 次 = 包裹数=1, 分 1 次 = 包裹数=2, 分 2 次 = 包裹数=3, 分 3+ 次 = 包裹数≥4
@@ -2196,8 +2208,6 @@ function renderWarehouseRatio() {
                 }
             });
             
-            console.log('=== 分单次数统计 ===');
-            console.log('订单总数:', Object.keys(orderPackages).length);
             console.log('分单分布:', splitStats);
             
             // 渲染饼图
