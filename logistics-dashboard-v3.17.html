@@ -1816,13 +1816,17 @@
             // 其他指标
             const totalItems = filteredData.reduce((sum, d) => sum + (d.item_count || 0), 0);
             const totalWeight = filteredData.reduce((sum, d) => sum + (d.weight_kg || 0), 0);
-            const totalRevenue = filteredData.reduce((sum, d) => sum + (d.revenue || 0), 0);
+            const totalRevenue = filteredData.reduce((sum, d) => sum + ((d.revenue || 0) + (d.other_revenue || 0)), 0);
+            
+            console.log('KPI 调试：totalCost=', totalCost, 'totalRevenue=', totalRevenue, '汇率=', filteredData[0]?.exchange_rate);
             
             // 计算派生指标
             const priceKg = totalWeight > 0 ? totalCost / totalWeight : 0;
             const pricePkg = totalPackages > 0 ? totalCost / totalPackages : 0;
             const itemsPkg = totalPackages > 0 ? totalItems / totalPackages : 0;
             const weightPkg = totalPackages > 0 ? totalWeight / totalPackages : 0;
+            // 【v3.17.42 修复】正向物流占收入比 = 物流运费 / ((订单收入 + 其他收入) × 汇率)
+            // 由于 revenue 和 other_revenue 已经是折算后的人民币，直接相除即可
             const logisticsRatio = totalRevenue > 0 ? (totalCost / totalRevenue) * 100 : 0;
             
             // 更新 KPI 卡片
@@ -3456,15 +3460,11 @@ function renderWarehouseRatio() {
                     actual_freight: parseFloat(d['实际运费'] || 0) * rate,
                     
                     // 物流运费（保持原值）
+                    // 物流运费（保持原值，不折算）
                     logistics_cost: (function() {
-                        const keys = ['物流运费 (实际运费/预估运费)', '物流运费', '实际运费', 'logistics_cost'];
-                        for (const key of keys) {
-                            if (d[key]) {
-                                const val = parseFloat(d[key]);
-                                if (!isNaN(val)) return val;
-                            }
-                        }
-                        return 0;
+                        // 优先读取"物流运费 (实际运费/预估运费)"
+                        const val = d['物流运费 (实际运费/预估运费)'] || d['物流运费'] || 0;
+                        return parseFloat(val) || 0;
                     })(),
                     
                     is_split: d['是否分单'] || '',
