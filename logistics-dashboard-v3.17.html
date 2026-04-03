@@ -1,4 +1,4 @@
-<!-- Build: 2026-04-03 v3.17 (支持文件上传) -->
+<!-- Build: 2026-04-03 v3.17 (站点筛选 + 国家同步 + 其他仓库分布) -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -968,37 +968,48 @@
         let currentEndDate = new Date('2026-02-28');
         let rawData = []; // 存储真实数据
 
-        // 同步国家筛选器
+        // 同步国家筛选器 - 【v3.17.38 修复】三个筛选器完全同步
         function syncCountryFilter(source, value) {
             const topFilter = document.getElementById('filter-country');
             const detailFilter = document.getElementById('detail-country');
             const countryBtns = document.querySelectorAll('.country-btn');
             
-            if (source === 'top' || source === 'detail') {
-                // 更新另一个筛选器
-                if (source === 'top' && detailFilter) detailFilter.value = value;
-                if (source === 'detail' && topFilter) topFilter.value = value;
-                
-                // 更新左侧按钮
-                const countryMap = { 'all': '全部', 'US': '美国', 'UK': '英国', 'CA': '加拿大', 'AU': '澳大利亚', 'OTHER': '其他' };
-                countryBtns.forEach(btn => {
-                    const btnText = btn.textContent;
-                    const btnValue = btnText === '全部' ? 'all' : 
-                                    btnText === '美国' ? 'US' :
-                                    btnText === '英国' ? 'UK' :
-                                    btnText === '加拿大' ? 'CA' :
-                                    btnText === '澳大利亚' ? 'AU' : 'OTHER';
-                    if (btnValue === value) {
+            // 更新所有筛选器
+            if (topFilter) topFilter.value = value;
+            if (detailFilter) detailFilter.value = value;
+            
+            // 更新左侧按钮
+            const countryMap = { 'all': '全部', '美国': 'US', '英国': 'UK', '加拿大': 'CA', '澳大利亚': 'AU', '其他': 'OTHER' };
+            const reverseMap = { 'US': '美国', 'UK': '英国', 'CA': '加拿大', 'AU': '澳大利亚', 'OTHER': '其他' };
+            
+            // 统一值格式（中文）
+            let chineseValue = value;
+            if (reverseMap[value]) chineseValue = reverseMap[value];
+            if (value === 'all') chineseValue = '全部';
+            
+            countryBtns.forEach(btn => {
+                const btnText = btn.textContent;
+                if (btnText === chineseValue || btnText === '全部') {
+                    if (btnText === chineseValue || (chineseValue === '全部' && btnText === '全部')) {
                         btn.classList.add('active');
-                        // 移除其他按钮的 active
-                        countryBtns.forEach(b => {
-                            if (b !== btn) b.classList.remove('active');
-                        });
-                    } else if (btnText !== '全部' && btnText !== value) {
+                    } else {
                         btn.classList.remove('active');
                     }
-                });
-            }
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // 高亮对应按钮
+            countryBtns.forEach(btn => {
+                if (btn.textContent === chineseValue) {
+                    btn.classList.add('active');
+                } else if (btn.textContent !== '全部') {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            console.log('国家筛选器同步:', source, '→', value, '(中文:', chineseValue, ')');
         }
 
         // 初始化产品筛选器
@@ -1462,8 +1473,12 @@
             const productL2 = document.getElementById('filter-product-l2').value;
             const productL3 = document.getElementById('filter-product-l3').value;
             const orderType = document.getElementById('filter-order-type').value;
+            const site = document.getElementById('filter-site').value;  // 【v3.17.38 新增】站点筛选
             
             return rawData.filter(d => {
+                // 【v3.17.38 新增】站点筛选
+                if (site !== 'all' && d.site_code !== site) return false;
+                
                 // 【v3.17.11】国家代码保持中文，直接比较
                 // 【v3.17.30 修复】"其他"= 非美英加澳
                 if (country !== 'all') {
@@ -2283,8 +2298,13 @@ function renderWarehouseRatio() {
             
             filteredData.forEach(d => {
                 // 【v3.17.14 修复】country_code 已经是中文，直接使用
-                const country = d.country_code || '其他';
-                if (!stats[country]) return;
+                // 【v3.17.38 修复】"其他"国家也要统计
+                let country = d.country_code || '其他';
+                
+                // 如果国家不在统计列表中，归入"其他"
+                if (!stats[country]) {
+                    country = '其他';
+                }
                 
                 const orders = stats[country];
                 const wh = d.warehouse_code || '';
@@ -2293,12 +2313,8 @@ function renderWarehouseRatio() {
                 
                 // 【v3.17.15 修复】直接检查中文仓库名
                 const isJiaxing = wh.includes('嘉兴') || wh.toLowerCase().includes('jiaxing');
-                const isOverseas = wh.includes('美国') || wh.includes('英国') || wh.includes('加拿大') ||
-                                   wh.toLowerCase().includes('us') || wh.toLowerCase().includes('uk') || 
-                                   wh.toLowerCase().includes('ca') ||
-                                   wh.toLowerCase().includes('america') || wh.toLowerCase().includes('canada') || 
-                                   wh.toLowerCase().includes('britain') ||
-                                   wh.includes('海外') || wh.toLowerCase().includes('overseas');
+                // 【v3.17.38 修复】海外仓 = 所有非嘉兴仓的仓库
+                const isOverseas = !isJiaxing && wh.trim() !== '';
                 
                 if (isJiaxing) {
                     orders.jiaxing++;
