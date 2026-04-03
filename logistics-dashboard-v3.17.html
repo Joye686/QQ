@@ -1,4 +1,4 @@
-<!-- Build: 2026-04-03 v3.17.34 -->
+<!-- Build: 2026-04-03 v3.17 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>物流分析仪表板 v3.17.34 (运费区间饼图) (升档降档流向分析)</title>
+    <title>物流分析仪表板 v3.17</title>
     <script src="echarts.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2416,8 +2416,13 @@ function renderWarehouseRatio() {
             // 客单价柱状图
             rangeAovChart.setOption({
                 tooltip: { formatter: '${c}' },
-                grid: { left: '15%', right: '5%', bottom: '15%', top: '10%', containLabel: true },
-                xAxis: { type: 'category', data: ranges, axisLabel: { fontSize: 10, rotate: 0 } },
+                grid: { left: '12%', right: '3%', bottom: '18%', top: '8%', containLabel: true },
+                xAxis: { 
+                    type: 'category', 
+                    data: ranges, 
+                    axisLabel: { fontSize: 10, rotate: 0 },
+                    axisTick: { alignWithLabel: true }
+                },
                 yAxis: { 
                     type: 'value', 
                     name: '客单价 ($)', 
@@ -2433,7 +2438,7 @@ function renderWarehouseRatio() {
                     data: rangeData.map(r => r.aov.toFixed(0)),
                     itemStyle: { color: '#27ae60' },
                     label: { show: true, position: 'top', formatter: '${c}', fontSize: 10 },
-                    barWidth: '50%'  // 调整柱子宽度
+                    barWidth: '60%'  // 调整柱子宽度
                 }]
             });
             
