@@ -1058,13 +1058,10 @@
                 const saveTime = localStorage.getItem('logistics_saveTime');
                 
                 if (savedData) {
-                    window.lastRawData = JSON.parse(savedData);
-                    applyExchangeRates(window.lastRawData);
-                    console.log('从本地加载数据成功！保存时间:', saveTime);
-                    
-                    // 加载汇率
+                    // 先加载汇率
                     if (savedRates) {
                         exchangeRates = JSON.parse(savedRates);
+                        console.log('加载汇率成功:', exchangeRates);
                         // 更新汇率输入框
                         for (const [month, rate] of Object.entries(exchangeRates)) {
                             const input = document.getElementById(`rate-${month}`);
@@ -1072,7 +1069,12 @@
                         }
                     }
                     
-                    // 【v3.17.41 修复】加载后初始化仪表板
+                    // 再加载并应用数据
+                    window.lastRawData = JSON.parse(savedData);
+                    applyExchangeRates(window.lastRawData);
+                    console.log('从本地加载数据成功！保存时间:', saveTime);
+                    
+                    // 初始化仪表板
                     initProductFilters();
                     renderOrderStructure();
                     renderCountryPieChart();
