@@ -1023,8 +1023,10 @@
             }
             
             try {
+                // 保存原始 CSV 数据（不是映射后的数据）
                 const dataToSave = window.lastRawData || rawData;
                 console.log('准备保存数据量:', dataToSave.length, '条');
+                console.log('保存的数据字段:', Object.keys(dataToSave[0] || {}));
                 
                 // 保存数据
                 localStorage.setItem('logistics_rawData', JSON.stringify(dataToSave));
@@ -1084,7 +1086,13 @@
             rawData = data.map((d, index) => {
                 const rate = getExchangeRate(d['发货时间'] || d['ship_date']);
                 
+                if (index === 0) {
+                    console.log('应用汇率 - 原始数据字段:', Object.keys(d));
+                    console.log('应用汇率 - 发货时间:', d['发货时间'], '汇率:', rate);
+                }
+                
                 return {
+                    // 核心字段
                     order_no: d['订单号'] || '',
                     ship_no: d['发货单号'] || '',
                     site_code: d['站点'] || '',
@@ -1137,7 +1145,8 @@
             
             console.log('汇率应用完成！数据量:', rawData.length, '条');
             if (rawData.length > 0) {
-                console.log('汇率示例:', rawData[0].exchange_rate, '收入 (CNY):', rawData[0].revenue);
+                console.log('汇率示例:', rawData[0].exchange_rate, '收入 (CNY):', rawData[0].revenue, '物流运费:', rawData[0].logistics_cost);
+                console.log('warehouse_code:', rawData[0].warehouse_code, 'country_code:', rawData[0].country_code);
             }
         }
         
@@ -1540,6 +1549,9 @@
                     
                     console.log('文件上传成功！加载数据:', rawData.length, '条');
                     statusEl.textContent = `✅ 已加载 ${rawData.length} 条数据`;
+                    
+                    // 保存原始 CSV 数据（用于 LocalStorage）
+                    window.lastRawData = data;  // 保存原始数据，不是映射后的数据
                     
                     // 重新初始化仪表板
                     initDashboard();
