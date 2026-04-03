@@ -1,4 +1,4 @@
-<!-- Build: 2026-04-03 v3.17.31 -->
+<!-- Build: 2026-04-03 v3.17.32 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>物流分析仪表板 v3.17.31 (修复其他国家表格数据) (升档降档流向分析)</title>
+    <title>物流分析仪表板 v3.17.32 (新增第二行 KPI) (升档降档流向分析)</title>
     <script src="echarts.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1407,6 +1407,13 @@
         function updateStats() {
             const filteredData = filterData();
             
+            // 【v3.17.31 调试】输出数据样例
+            console.log('=== updateStats 调试 ===');
+            console.log('filteredData:', filteredData.length, '条');
+            if (filteredData.length > 0) {
+                console.log('前 3 条数据:', JSON.stringify(filteredData.slice(0, 3), null, 2));
+            }
+            
             // 订单数 = 去重的订单号计数
             const uniqueOrders = new Set(filteredData.map(d => d.order_no));
             const totalOrders = uniqueOrders.size;
@@ -1439,6 +1446,29 @@
             document.getElementById('stat-weight-pkg').textContent = weightPkg.toFixed(3) + ' kg'; // 保留 3 位小数
             document.getElementById('stat-logistics-ratio').textContent = logisticsRatio.toFixed(1) + '%';
             document.getElementById('stat-total-logistics').textContent = '$' + totalCost.toLocaleString(undefined, {maximumFractionDigits: 2});
+            
+            // 【v3.17.31 新增】第二行 KPI
+            // 保价费收入
+            const totalInsuranceFee = filteredData.reduce((sum, d) => sum + (d.insurance_fee || 0), 0);
+            document.getElementById('kpi-insurance-revenue').textContent = '$' + totalInsuranceFee.toFixed(2);
+            
+            // 保价订单占比 = 有保价费的订单数 / 总订单数
+            const insuredOrders = new Set(filteredData.filter(d => d.insurance_fee > 0).map(d => d.order_no)).size;
+            const insuranceRate = totalOrders > 0 ? (insuredOrders / totalOrders) * 100 : 0;
+            document.getElementById('kpi-insurance-rate').textContent = insuranceRate.toFixed(1) + '%';
+            
+            // 运费补偿率 = 有补偿的订单数 / 总订单数
+            const compensatedOrders = new Set(filteredData.filter(d => d.freight_compensation > 0).map(d => d.order_no)).size;
+            const compensationRate = totalOrders > 0 ? (compensatedOrders / totalOrders) * 100 : 0;
+            document.getElementById('kpi-compensation-rate').textContent = compensationRate.toFixed(1) + '%';
+            
+            // 分单订单数 = split_order_flag = true 的订单数
+            const splitOrders = new Set(filteredData.filter(d => d.split_order_flag === true || d.split_order_flag === 'true' || d.split_order_flag === 1).map(d => d.order_no)).size;
+            document.getElementById('kpi-split-orders').textContent = splitOrders.toLocaleString();
+            
+            // 分单占比 = 分单订单数 / 总订单数
+            const splitRatio = totalOrders > 0 ? (splitOrders / totalOrders) * 100 : 0;
+            document.getElementById('kpi-split-ratio').textContent = splitRatio.toFixed(1) + '%';
         }
 
         function updateCharts() {
