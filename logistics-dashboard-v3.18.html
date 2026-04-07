@@ -1404,69 +1404,66 @@ const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
         // 【v3.18 内嵌数据】从内嵌数据或 LocalStorage 加载
         async function loadData() {
             try {
-                // 优先使用 LocalStorage（如果有更新的数据）
-                const savedData = localStorage.getItem('logistics_rawData');
-                const savedRates = localStorage.getItem('logistics_exchangeRates');
-                
-                if (savedData && savedData.length > 0) {
-                    // 从 LocalStorage 加载
-                    console.log('从 LocalStorage 加载数据...');
+                // 优先使用内嵌数据（避免 LocalStorage 中的旧格式数据）
+                if (typeof EMBEDDED_DATA !== 'undefined' && EMBEDDED_DATA.length > 0) {
+                    console.log('使用内嵌数据...');
+                    
+                    // 应用汇率
+                    const rates = typeof EMBEDDED_RATES !== 'undefined' ? EMBEDDED_RATES : {};
+                    exchangeRates = rates;
+                    
+                    // 更新汇率输入框
+                    for (const [month, rate] of Object.entries(rates)) {
+                        const input = document.getElementById(`rate-${month}`);
+                        if (input) input.value = rate;
+                    }
+                    
+                    // 应用汇率到数据
+                    rawData = EMBEDDED_DATA.map(d => {
+                        const rate = getExchangeRate(d.ship_date);
+                        return {
+                            ...d,
+                            revenue: (d.revenue || 0) * rate,
+                            other_revenue: (d.other_revenue || 0) * rate,
+                            freight: (d.freight || 0) * rate,
+                            insurance_fee: (d.insurance_fee || 0) * rate,
+                            freight_insurance_revenue: (d.freight_insurance_revenue || 0) * rate,
+                            actual_freight: (d.actual_freight || 0) * rate,
+                            logistics_cost: (d.logistics_cost || 0) * rate,
+                            exchange_rate: rate
+                        };
+                    });
+                    
+                    console.log(`✅ 内嵌数据加载成功！${rawData.length} 条`);
+                    
+                    // 覆盖 LocalStorage 中的旧数据
+                    localStorage.setItem('logistics_rawData', JSON.stringify(rawData));
+                    localStorage.setItem('logistics_exchangeRates', JSON.stringify(rates));
+                    
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    
+                    // 初始化仪表板
+                    initProductFilters();
+                    renderOrderStructure();
+                    renderCountryPieChart();
+                    renderWarehouseRatio();
+                    updateCharts();
+                    renderSplitCountChart();
+                    
+                    window.addEventListener('resize', () => {
+                        Object.values(charts).forEach(chart => chart.resize());
+                    });
+                } else {
+                    // 没有内嵌数据时，尝试从 LocalStorage 加载
                     const loadedFromStorage = loadDataFromStorage();
                     if (loadedFromStorage) {
                         console.log('已从本地加载保存的数据');
                     }
-                } else {
-                    // 使用内嵌数据
-                    console.log('使用内嵌数据...');
-                    if (typeof EMBEDDED_DATA !== 'undefined' && EMBEDDED_DATA.length > 0) {
-                        // 应用汇率
-                        const rates = typeof EMBEDDED_RATES !== 'undefined' ? EMBEDDED_RATES : {};
-                        exchangeRates = rates;
-                        
-                        // 更新汇率输入框
-                        for (const [month, rate] of Object.entries(rates)) {
-                            const input = document.getElementById(`rate-${month}`);
-                            if (input) input.value = rate;
-                        }
-                        
-                        // 应用汇率到数据
-                        rawData = EMBEDDED_DATA.map(d => {
-                            const rate = getExchangeRate(d.ship_date);
-                            return {
-                                ...d,
-                                revenue: (d.revenue || 0) * rate,
-                                other_revenue: (d.other_revenue || 0) * rate,
-                                freight: (d.freight || 0) * rate,
-                                insurance_fee: (d.insurance_fee || 0) * rate,
-                                freight_insurance_revenue: (d.freight_insurance_revenue || 0) * rate,
-                                actual_freight: (d.actual_freight || 0) * rate,
-                                logistics_cost: (d.logistics_cost || 0) * rate,
-                                exchange_rate: rate
-                            };
-                        });
-                        
-                        console.log(`✅ 内嵌数据加载成功！${rawData.length} 条`);
-                        
-                        // 保存到 LocalStorage
-                        localStorage.setItem('logistics_rawData', JSON.stringify(EMBEDDED_DATA));
-                        localStorage.setItem('logistics_exchangeRates', JSON.stringify(rates));
-                    }
+                    
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
                 }
-                
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'block';
-                
-                // 初始化仪表板
-                initProductFilters();
-                renderOrderStructure();
-                renderCountryPieChart();
-                renderWarehouseRatio();
-                updateCharts();
-                renderSplitCountChart();
-                
-                window.addEventListener('resize', () => {
-                    Object.values(charts).forEach(chart => chart.resize());
-                });
             } catch (error) {
                 console.error('加载数据失败:', error);
                 document.getElementById('loading').textContent = '数据加载失败：' + error.message;
