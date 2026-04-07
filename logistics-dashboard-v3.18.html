@@ -3015,17 +3015,17 @@ function renderWarehouseRatio() {
                         actualDaysCount: 0,
                         deliveredCount: 0,
                         onTimeCount: 0,  // 时效达成数量
-                        logisticsFeeActual: 0,  // 物流运费 (实际)
-                        orderRevenue: 0,  // 订单收入
-                        insuranceFee: 0  // 保价费
+                        logisticsFeeActual: 0,  // 物流运费 (实际) - CNY
+                        orderRevenue: 0,  // 订单收入 - CNY
+                        freight: 0  // 运费 - CNY
                     };
                 }
                 grouped[key].packages++;
                 
                 // 累加成本和收入
-                grouped[key].logisticsFeeActual += parseFloat(d.logistics_cost) || 0;
-                grouped[key].orderRevenue += parseFloat(d.revenue) || 0;
-                grouped[key].insuranceFee += parseFloat(d.insurance_fee) || 0;
+                grouped[key].logisticsFeeActual += parseFloat(d.logistics_cost) || 0;  // CNY，不乘汇率
+                grouped[key].orderRevenue += parseFloat(d.revenue) || 0;                // CNY，已乘汇率
+                grouped[key].freight += parseFloat(d.freight) || 0;                     // CNY，已乘汇率
                 
                 // 【修复 4】承诺时效 = 承诺最晚发货时间 - 发货时间
                 // 使用 order_date + promise_days 计算承诺最晚发货时间
@@ -3122,6 +3122,7 @@ function renderWarehouseRatio() {
                     costRatio: row.orderRevenue > 0 ? ((row.logisticsFeeActual / row.orderRevenue) * 100) : 0,
                     // 补偿率 = 运费/物流运费 (实际运费/预估运费)
                     compensationRate: row.logisticsFeeActual > 0 ? ((row.freight / row.logisticsFeeActual) * 100) : 0
+                    
                 };
             });
             
