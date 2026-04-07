@@ -1423,13 +1423,15 @@ const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
                         const rate = getExchangeRate(d.ship_date);
                         return {
                             ...d,
+                            // 需要乘汇率的字段
                             revenue: (d.revenue || 0) * rate,
                             other_revenue: (d.other_revenue || 0) * rate,
                             freight: (d.freight || 0) * rate,
                             insurance_fee: (d.insurance_fee || 0) * rate,
                             freight_insurance_revenue: (d.freight_insurance_revenue || 0) * rate,
                             actual_freight: (d.actual_freight || 0) * rate,
-                            logistics_cost: (d.logistics_cost || 0) * rate,
+                            // 物流运费保持原始值（不乘汇率）
+                            logistics_cost: (d.logistics_cost || 0),
                             exchange_rate: rate
                         };
                     });
