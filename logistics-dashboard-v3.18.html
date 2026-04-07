@@ -1735,6 +1735,12 @@ const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
             // 【v3.17.42 修复】正向物流占收入比 = 物流运费 / ((订单收入 + 其他收入) × 汇率)
             // 由于 revenue 和 other_revenue 已经是折算后的人民币，直接相除即可
             const logisticsRatio = totalRevenue > 0 ? (totalCost / totalRevenue) * 100 : 0;
+            console.log('=== 正向物流占收入比调试 ===');
+            console.log('物流运费 (CNY):', totalCost);
+            console.log('订单收入 (USD):', filteredData.reduce((sum, d) => sum + ((d.revenue || 0) + (d.other_revenue || 0)), 0) / (filteredData[0]?.exchange_rate || 1));
+            console.log('订单收入 (CNY):', totalRevenue);
+            console.log('汇率:', filteredData[0]?.exchange_rate);
+            console.log('正向物流占收入比:', logisticsRatio.toFixed(2) + '%');
             
             // 更新 KPI 卡片
             document.getElementById('stat-price-kg').textContent = '$' + priceKg.toFixed(2);
@@ -3114,8 +3120,8 @@ function renderWarehouseRatio() {
                     achievement: achievementRate,  // 时效达成率
                     // 成本占比 = 物流运费 (实际运费/预估运费)/订单收入
                     costRatio: row.orderRevenue > 0 ? ((row.logisticsFeeActual / row.orderRevenue) * 100) : 0,
-                    // 补偿率 = 运保费收入/物流运费 (实际运费/预估运费)
-                    compensationRate: row.logisticsFeeActual > 0 ? ((row.insuranceFee / row.logisticsFeeActual) * 100) : 0
+                    // 补偿率 = 运费/物流运费 (实际运费/预估运费)
+                    compensationRate: row.logisticsFeeActual > 0 ? ((row.freight / row.logisticsFeeActual) * 100) : 0
                 };
             });
             
