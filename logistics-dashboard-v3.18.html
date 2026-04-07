@@ -3075,8 +3075,8 @@ function renderWarehouseRatio() {
                 grouped[key].freight += parseFloat(d.freight) || 0;                     // CNY，已乘汇率
                 
                 // 【修复 4】承诺时效 = 承诺最晚收货时间 - 发货时间
-                if (d.promise_delivery_date && d.ship_date) {
-                    const promiseDeliveryDate = new Date(d.promise_delivery_date);
+                if (d['承诺最晚收货时间'] && d.ship_date) {
+                    const promiseDeliveryDate = new Date(d['承诺最晚收货时间']);
                     const shipDate = new Date(d.ship_date);
                     if (!isNaN(promiseDeliveryDate.getTime()) && !isNaN(shipDate.getTime())) {
                         const days = (promiseDeliveryDate - shipDate) / (1000 * 60 * 60 * 24);
@@ -3102,9 +3102,9 @@ function renderWarehouseRatio() {
                 }
                 
                 // 【修复 2】时效达成率 = (妥投时间 - 承诺最晚收货时间) ≤ 0 的包裹数 / 总包裹数
-                if (d.delivery_date && d.promise_delivery_date) {
-                    const deliveryDate = new Date(d.delivery_date);
-                    const promiseDeliveryDate = new Date(d.promise_delivery_date);
+                if (d['妥投时间'] && d['承诺最晚收货时间']) {
+                    const deliveryDate = new Date(d['妥投时间']);
+                    const promiseDeliveryDate = new Date(d['承诺最晚收货时间']);
                     if (!isNaN(deliveryDate.getTime()) && !isNaN(promiseDeliveryDate.getTime())) {
                         // 妥投时间 <= 承诺最晚收货时间 = 按时达成
                         if (deliveryDate <= promiseDeliveryDate) {
