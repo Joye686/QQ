@@ -3053,7 +3053,7 @@ function renderWarehouseRatio() {
             data.forEach(d => {
                 // 【修复 1】客户选择运送方式 = customer_shipping_method（快/中）
                 const customerShipping = d.customer_shipping_method || '';
-                const speed = customerShipping.includes('Expedited') ? '快' : '中';
+                const speed = customerShipping.includes('快') ? '快' : '中';
                 
                 // 【v3.17.29 修复】处理 null/undefined
                 const key = `${speed}|${d.product_l1 || ''}|${d.product_l2 || ''}|${d.product_l3 || ''}`;
@@ -3248,13 +3248,13 @@ function renderWarehouseRatio() {
             }
             
             // 【修复 2】统计流向数据 - 按新逻辑计算
-            // 客户选择：customer_shipping_method（Expedited Shipping = 快，Standard Shipping = 中）
+            // 客户选择：customer_shipping_method（快/中）
             // 产品等级：product_l1（Expedited = 快线，Standard = 慢线）
             let fast2fast = 0, fast2slow = 0, slow2fast = 0, slow2slow = 0;
             
             flowData.forEach(d => {
                 const customerShipping = d.customer_shipping_method || '';
-                const isFastChoice = customerShipping.includes('Expedited'); // 客户选"快"
+                const isFastChoice = customerShipping.includes('快'); // 客户选"快"
                 const isFastShip = d.product_l1 === 'Expedited'; // 实际发"快线产品"
                 
                 if (isFastChoice && isFastShip) fast2fast++;      // 快→快（保持）
