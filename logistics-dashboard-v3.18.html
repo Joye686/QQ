@@ -1,4 +1,4 @@
-<!-- Build: 2026-04-03 v3.17 (数据持久化保存) -->
+<!-- Build: 2026-04-07 v3.18 (LocalStorage 自动加载) -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>物流分析仪表板 v3.17</title>
+    <title>物流分析仪表板 v3.18</title>
     <script src="echarts.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -526,28 +526,13 @@
 </head>
 <body>
     <div class="container">
-        <h1>📦 物流分析仪表板 v3.17.10 (升档降档流向分析)</h1>
+        <h1>📦 物流分析仪表板 v3.18</h1>
         
         <div id="loading" class="loading">正在加载数据...</div>
         
         <div id="dashboard" style="display: none;">
             <!-- 筛选器 -->
             <div class="filters">
-                <!-- 数据文件上传 -->
-                <div class="filter-section" style="background: #f8f9ff; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                    <div class="filter-label">📁 上传数据文件（CSV/Excel）</div>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <input type="file" id="dataFileInput" accept=".csv,.xlsx,.xls" style="flex: 1; min-width: 300px;" onchange="handleFileUpload(event)">
-                        <button class="btn-apply" onclick="document.getElementById('dataFileInput').click()">📂 选择文件</button>
-                        <button class="btn-apply" onclick="saveData()" style="background: #27ae60;">💾 保存数据</button>
-                        <button class="btn-reset" onclick="clearData()">🗑️ 清除</button>
-                        <span id="fileUploadStatus" style="color: #27ae60; font-size: 13px;"></span>
-                    </div>
-                    <div style="margin-top: 8px; font-size: 11px; color: #888;">
-                        💡 支持 CSV 或 Excel 文件，上传后点击"保存数据"，刷新页面后数据还在（保存在浏览器本地）
-                    </div>
-                </div>
-                
                 <!-- 汇率录入 -->
                 <div class="filter-section" style="background: #fff8f0; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                     <div class="filter-label">💱 汇率设置（USD → CNY）</div>
@@ -1015,57 +1000,6 @@
             }
         }
         
-        // 【v3.17.41 新增】保存数据到 LocalStorage
-        function saveData() {
-            if (rawData.length === 0 && (!window.lastRawData || window.lastRawData.length === 0)) {
-                alert('请先上传数据文件！');
-                return;
-            }
-            
-            try {
-                // 保存原始 CSV 数据（不是映射后的数据）
-                const dataToSave = window.lastRawData || rawData;
-                console.log('准备保存数据量:', dataToSave.length, '条');
-                console.log('保存的数据字段:', Object.keys(dataToSave[0] || {}));
-                
-                // 保存数据
-                localStorage.setItem('logistics_rawData', JSON.stringify(dataToSave));
-                // 保存汇率
-                localStorage.setItem('logistics_exchangeRates', JSON.stringify(exchangeRates));
-                // 保存时间
-                localStorage.setItem('logistics_saveTime', new Date().toLocaleString('zh-CN'));
-                
-                // 验证是否保存成功
-                const saved = localStorage.getItem('logistics_rawData');
-                console.log('保存后验证 - 数据大小:', (saved.length / 1024 / 1024).toFixed(2), 'MB');
-                
-                if (saved) {
-                    alert('✅ 数据已保存！\n保存条数：' + dataToSave.length + '\n数据大小：' + (saved.length / 1024 / 1024).toFixed(2) + ' MB\n\n刷新页面后数据还在。');
-                } else {
-                    alert('⚠️ 保存可能失败，数据大小为 0');
-                }
-            } catch (error) {
-                console.error('保存失败:', error);
-                if (error.name === 'QuotaExceededError') {
-                    alert('❌ 保存失败：数据太大，超出浏览器存储限制（5-10 MB）\n\n建议：\n1. 在 Excel 中筛选最近 3-6 个月的数据\n2. 删除无用列\n3. 重新上传并保存');
-                } else {
-                    alert('❌ 保存失败：' + error.message);
-                }
-            }
-        }
-        
-        // 【v3.17.41 新增】清除保存的数据
-        function clearData() {
-            if (confirm('确定要清除所有保存的数据吗？清除后需要重新上传。')) {
-                localStorage.removeItem('logistics_rawData');
-                localStorage.removeItem('logistics_exchangeRates');
-                localStorage.removeItem('logistics_saveTime');
-                rawData = [];
-                exchangeRates = {};
-                location.reload();
-            }
-        }
-        
         // 【v3.17.40 新增】获取某日期的汇率
         function getExchangeRate(dateStr) {
             if (!dateStr) return 1;
@@ -1089,11 +1023,14 @@
                 if (index === 0) {
                     console.log('应用汇率 - 原始数据字段:', Object.keys(d));
                     console.log('应用汇率 - 发货时间:', d['发货时间'], '汇率:', rate);
-                    console.log('物流运费字段检查:', {
-                        '物流运费 (实际运费/预估运费)': d['物流运费 (实际运费/预估运费)'],
-                        '物流运费 (实际运费/预估运费)': d['物流运费 (实际运费/预估运费)'],
-                        '物流运费': d['物流运费']
-                    });
+                    console.log('物流运费字段检查:');
+                    console.log('  - 半角括号:', d['物流运费 (实际运费/预估运费)']);
+                    console.log('  - 全角括号:', d['物流运费（实际运费/预估运费）']);
+                    console.log('  - 简单字段:', d['物流运费']);
+                    // 查找所有含"物流"的字段
+                    const logisticsKeys = Object.keys(d).filter(k => k.includes('物流'));
+                    console.log('  - 所有含"物流"的字段:', logisticsKeys);
+                    logisticsKeys.forEach(k => console.log(`    "${k}": "${d[k]}"`));
                 }
                 
                 return {
@@ -1125,18 +1062,32 @@
                     
                     // 物流运费（保持原值）
                     logistics_cost: (function() {
-                        // CSV 字段名：物流运费 (实际运费/预估运费)（无空格）
-                        let val = d['物流运费 (实际运费/预估运费)'];
-                        if (!val && val !== 0) {
-                            val = d['物流运费 (实际运费/预估运费)'];  // 有空格
+                        // 尝试所有可能的字段名变体（注意括号有半角/全角两种可能）
+                        const possibleKeys = [
+                            '物流运费 (实际运费/预估运费)',  // 半角括号
+                            '物流运费（实际运费/预估运费）',  // 全角括号
+                            '物流运费',
+                            '实际运费',
+                            'logistics_cost',
+                            'actual_freight'
+                        ];
+                        for (const key of possibleKeys) {
+                            if (d[key] !== undefined && d[key] !== '') {
+                                const val = parseFloat(d[key]);
+                                if (!isNaN(val)) return val;
+                            }
                         }
-                        if (!val && val !== 0) {
-                            val = d['物流运费'];
+                        // 模糊匹配：查找包含"物流运费"的字段
+                        for (const key of Object.keys(d)) {
+                            if (key.includes('物流运费') && d[key] !== '') {
+                                const val = parseFloat(d[key]);
+                                if (!isNaN(val)) {
+                                    console.log(`[applyExchangeRates 模糊匹配] 找到物流运费字段："${key}" = ${val}`);
+                                    return val;
+                                }
+                            }
                         }
-                        if (!val && val !== 0) {
-                            val = 0;
-                        }
-                        return parseFloat(val) || 0;
+                        return 0;
                     })(),
                     
                     is_split: d['是否分单'] || '',
@@ -1158,34 +1109,55 @@
             }
         }
         
-        // 【v3.17.41 新增】从 LocalStorage 加载数据
+        // 【v3.18 简化】从 LocalStorage 加载数据
         function loadDataFromStorage() {
             try {
-                // 加载数据
                 const savedData = localStorage.getItem('logistics_rawData');
                 const savedRates = localStorage.getItem('logistics_exchangeRates');
-                const saveTime = localStorage.getItem('logistics_saveTime');
                 
                 console.log('尝试从 LocalStorage 加载...');
-                console.log('savedData 长度:', savedData ? savedData.length : 0);
                 
                 if (savedData && savedData.length > 0) {
-                    // 先加载汇率
+                    // 加载汇率
                     if (savedRates) {
                         exchangeRates = JSON.parse(savedRates);
                         console.log('加载汇率成功:', exchangeRates);
-                        // 更新汇率输入框
                         for (const [month, rate] of Object.entries(exchangeRates)) {
                             const input = document.getElementById(`rate-${month}`);
                             if (input) input.value = rate;
                         }
                     }
                     
-                    // 再加载并应用数据
-                    window.lastRawData = JSON.parse(savedData);
-                    console.log('加载数据成功！条数:', window.lastRawData.length);
+                    // 加载已映射的数据（v3.18 起直接保存映射后的数据）
+                    const parsedData = JSON.parse(savedData);
+                    console.log('加载数据成功！条数:', parsedData.length);
                     
-                    applyExchangeRates(window.lastRawData);
+                    // 检查是否是旧格式（原始 CSV 数据）还是新格式（已映射数据）
+                    if (parsedData[0] && parsedData[0].order_no) {
+                        // 新格式：已映射的数据，直接应用汇率
+                        console.log('检测到新格式数据（已映射）');
+                        window.lastRawData = parsedData.map(d => {
+                            const rate = getExchangeRate(d.ship_date);
+                            return {
+                                ...d,
+                                revenue: (d.revenue || 0) * rate,
+                                other_revenue: (d.other_revenue || 0) * rate,
+                                freight: (d.freight || 0) * rate,
+                                insurance_fee: (d.insurance_fee || 0) * rate,
+                                freight_insurance_revenue: (d.freight_insurance_revenue || 0) * rate,
+                                actual_freight: (d.actual_freight || 0) * rate,
+                                logistics_cost: (d.logistics_cost || 0) * rate,
+                                exchange_rate: rate
+                            };
+                        });
+                        rawData = window.lastRawData;
+                    } else {
+                        // 旧格式：原始 CSV 数据，需要映射
+                        console.log('检测到旧格式数据（CSV 原始数据），需要重新上传');
+                        alert('检测到旧格式数据，请重新上传 CSV 文件以使用新版本。');
+                        return false;
+                    }
+                    
                     console.log('应用汇率完成，rawData 条数:', rawData.length);
                     
                     // 初始化仪表板
@@ -1202,7 +1174,6 @@
                 }
             } catch (error) {
                 console.error('加载失败:', error);
-                alert('加载保存的数据失败：' + error.message);
             }
             return false;
         }
@@ -1400,184 +1371,7 @@
             return warehouseCode;
         }
         
-        // 【v3.17.36 新增】解析 CSV 行（处理引号和逗号）
-        function parseCSVLine(line) {
-            const result = [];
-            let current = '';
-            let inQuotes = false;
-            
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-                
-                if (char === '"') {
-                    inQuotes = !inQuotes;
-                } else if (char === ',' && !inQuotes) {
-                    result.push(current.trim().replace(/^"|"$/g, '').replace('\ufeff', ''));
-                    current = '';
-                } else {
-                    current += char;
-                }
-            }
-            
-            // 添加最后一个字段
-            result.push(current.trim().replace(/^"|"$/g, '').replace('\ufeff', ''));
-            
-            return result;
-        }
-        
-        // 【v3.17.36 新增】处理文件上传
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            const statusEl = document.getElementById('fileUploadStatus');
-            
-            if (!file) {
-                statusEl.textContent = '';
-                return;
-            }
-            
-            statusEl.textContent = '正在解析文件...';
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const content = e.target.result;
-                    console.log('文件内容预览:', content.substring(0, 500));
-                    
-                    // 解析 CSV（处理引号和换行）
-                    const lines = content.split(/\r?\n/).filter(line => line.trim());
-                    if (lines.length < 2) {
-                        throw new Error('CSV 文件内容太少');
-                    }
-                    
-                    // 解析表头
-                    const headers = parseCSVLine(lines[0]);
-                    console.log('表头:', headers);
-                    
-                    // 解析数据行
-                    const data = [];
-                    for (let i = 1; i < lines.length; i++) {
-                        const values = parseCSVLine(lines[i]);
-                        if (values.length !== headers.length) {
-                            console.warn(`第${i+1}行列数不匹配：${values.length} vs ${headers.length}`);
-                            continue;
-                        }
-                        const row = {};
-                        headers.forEach((header, index) => {
-                            row[header] = values[index] || '';
-                        });
-                        data.push(row);
-                    }
-                    
-                    console.log('解析成功！数据量:', data.length, '条');
-                    console.log('前 3 条数据样例:', JSON.stringify(data.slice(0, 3), null, 2));
-                    
-                    // 更新全局数据 - 使用字段位置映射（避免字段名包含特殊字符的问题）
-                    rawData = data.map((d, index) => {
-                        // 调试：显示第一条数据的完整字段
-                        if (index === 0) {
-                            console.log('CSV 原始数据字段名:', Object.keys(d));
-                            console.log('CSV 原始物流运费值:', d['物流运费 (实际运费/预估运费)'], d['物流运费 (实际运费/预估运费)'], d['物流运费']);
-                        }
-                        
-                        return {
-                            // 核心字段
-                            order_no: d['订单号'] || '',
-                            ship_no: d['发货单号'] || '',
-                            site_code: d['站点'] || '',
-                            customer_shipping_method: d['客户选择的运送方式'] || '',
-                            product_l1: d['一级产品'] || '',
-                            product_l2: d['二级产品'] || '',
-                            product_l3: d['三级产品'] || '',
-                            actual_shipping_method: d['实际物流方式'] || '',
-                            warehouse_code: d['发货地'] || '',
-                            country_code: d['收货地'] || '',
-                            item_count: parseFloat(d['商品数量'] || 0),
-                            shipping_status: d['订单发货状态'] || '',
-                            ship_date: d['发货时间'] || '',
-                            delivery_date: d['妥投时间'] || '',
-                            actual_days: parseFloat(d['妥投时效'] || 0),
-                            weight_kg: parseFloat(d['实际/预估重量'] || 0),
-                            
-                            // 财务字段 - 使用多种字段名尝试
-                            revenue: parseFloat(d['订单收入'] || 0),
-                            other_revenue: parseFloat(d['其他收入'] || 0),
-                            freight: parseFloat(d['运费'] || 0),
-                            insurance_fee: parseFloat(d['保价费'] || 0),
-                            freight_insurance_revenue: parseFloat(d['运保费收入'] || 0),
-                            actual_freight: parseFloat(d['实际运费'] || 0),
-                            // 物流运费 - 尝试所有可能的字段名
-                            logistics_cost: (function() {
-                                // 尝试所有可能的字段名变体
-                                const possibleKeys = [
-                                    '物流运费 (实际运费/预估运费)',
-                                    '物流运费',
-                                    '实际运费',
-                                    'logistics_cost',
-                                    'actual_freight'
-                                ];
-                                for (const key of possibleKeys) {
-                                    if (d[key] !== undefined && d[key] !== '') {
-                                        const val = parseFloat(d[key]);
-                                        if (!isNaN(val)) return val;
-                                    }
-                                }
-                                return 0;
-                            })(),
-                            
-                            // 分单字段
-                            is_split: d['是否分单'] || '',
-                            split_reason: d['分单原因'] || '',
-                            manual_split_reason: d['手动分单原因'] || '',
-                            
-                            // 合单字段
-                            is_presale: d['预售订单'] || '',
-                            is_influencer: d['红人订单'] || '',
-                            is_merged: d['发货合单'] || '',
-                            is_presale_merged: d['预售合单'] || '',
-                            pre_merge_logistics_cost: parseFloat(d['合单前物流运费'] || 0),
-                            
-                            // 售后
-                            after_sales: d['售后'] || '',
-                            
-                            // 计算字段
-                            warehouse_type: getWarehouseType(d['发货地']),
-                            order_type: (function() {
-                                const status = d['订单发货状态'] || '';
-                                if (status.includes('已发货') || status === 'shipped') return 'shipped';
-                                if (status.includes('部分') || status === 'partial') return 'partial';
-                                return 'unshipped';
-                            })()
-                        };
-                    });
-                    
-                    console.log('映射后的物流运费检查:', rawData.slice(0, 5).map(d => ({
-                        order_no: d.order_no,
-                        logistics_cost: d.logistics_cost
-                    })));
-                    
-                    console.log('文件上传成功！加载数据:', rawData.length, '条');
-                    statusEl.textContent = `✅ 已加载 ${rawData.length} 条数据`;
-                    
-                    // 保存原始 CSV 数据（用于 LocalStorage）
-                    window.lastRawData = data;  // 保存原始数据，不是映射后的数据
-                    
-                    // 重新初始化仪表板
-                    initDashboard();
-                    
-                } catch (error) {
-                    console.error('文件解析失败:', error);
-                    statusEl.textContent = '❌ 解析失败，请检查文件格式';
-                }
-            };
-            
-            reader.onerror = function() {
-                statusEl.textContent = '❌ 读取失败';
-            };
-            
-            reader.readAsText(file, 'utf-8-sig');
-        }
-        
-        // 【v3.17.36 新增】初始化仪表板
+        // 【v3.18 简化】初始化仪表板
         function initDashboard() {
             console.log('初始化仪表板...');
             
@@ -1602,103 +1396,15 @@
             console.log('仪表板初始化完成');
         }
 
-        // 加载真实数据 - v3.17.11 支持中文字段
+        // 【v3.18 简化】从 LocalStorage 加载数据
         async function loadData() {
             try {
-                // 【v3.17.11】添加版本号防止缓存
-                // 【v3.17.11】使用中文字段数据文件
-                const response = await fetch('demo_data_chinese.min.json?v=' + Date.now());
-                const data = await response.json();
-                // 【v3.17.11】支持中文字段，自动映射英文字段到中文字段
-                rawData = data.map(d => ({
-                    // 核心字段（支持中英文）
-                    order_no: d['订单号'] || d['order_no'],
-                    ship_no: d['发货单号'] || d['ship_no'],
-                    customer_shipping_method: d['客户选择的运送方式'] || d['customer_shipping_method'],
-                    product_l1: d['产品一级'] || d['product_l1'] || '',
-                    product_l2: d['产品二级'] || d['product_l2'] || '',
-                    product_l3: d['产品三级'] || d['物流方式'] || d['product_l3'] || d['实际物流方式'] || '',
-                    actual_shipping_method: d['实际物流方式'] || d['actual_shipping_method'],
-                    warehouse_code: d['发货地'] || d['warehouse_code'],
-                    country_code: d['收货地'] || d['country_code'], // 保持中文：美国、英国等
-                    item_count: parseFloat(d['商品数量'] || d['item_count'] || 0),
-                    shipping_status: d['订单发货状态'] || d['shipping_status'],
-                    ship_date: d['发货时间'] || d['ship_date'],
-                    delivery_date: d['妥投时间'] || d['delivery_date'],
-                    actual_days: parseFloat(d['妥投时效'] || d['actual_days'] || 0),
-                    weight_kg: parseFloat(d['实际/预估重量'] || d['weight_kg'] || 0),
-                    
-                    // 财务字段
-                    revenue: parseFloat(d['订单收入'] || d['revenue'] || 0),
-                    other_revenue: parseFloat(d['其他收入'] || d['other_revenue'] || 0),
-                    freight: parseFloat(d['运费'] || d['freight'] || 0),
-                    insurance_fee: parseFloat(d['保价费'] || d['insurance_fee'] || 0),
-                    freight_insurance_revenue: parseFloat(d['运保费收入'] || d['freight_insurance_revenue'] || 0),
-                    actual_freight: parseFloat(d['实际运费'] || d['actual_freight'] || 0),
-                    logistics_cost: parseFloat(d['物流运费 (实际运费/预估运费)'] || d['logistics_cost'] || d['actual_freight'] || 0),
-                    
-                    // 分单字段
-                    is_split: d['是否分单'] || d['is_split'],
-                    split_reason: d['分单原因'] || d['split_reason'],
-                    manual_split_reason: d['手动分单原因'] || d['manual_split_reason'],
-                    
-                    // 合单字段
-                    is_presale: d['预售订单'] || d['is_presale'],
-                    is_influencer: d['红人订单'] || d['is_influencer'],
-                    is_merged: d['发货合单'] || d['is_merged'],
-                    is_presale_merged: d['预售合单'] || d['is_presale_merged'],
-                    pre_merge_logistics_cost: parseFloat(d['合单前物流运费'] || d['pre_merge_logistics_cost'] || 0),
-                    
-                    // 售后
-                    after_sales: d['售后'] || d['after_sales'],
-                    
-                    // 计算字段
-                    warehouse_type: getWarehouseType(d['发货地'] || d['warehouse_code']),
-                    order_type: (function() {
-                        const status = d['订单发货状态'] || d['shipping_status'] || '';
-                        if (status.includes('已发货') || status === 'shipped') return 'shipped';
-                        if (status.includes('部分') || status === 'partial') return 'partial';
-                        return 'unshipped';
-                    })()
-                }));
-                console.log('加载数据:', rawData.length, '条');
-                console.log('rawData 前 5 条 warehouse_code:', rawData.slice(0, 5).map(d => d.warehouse_code));
-                console.log('rawData 前 5 条 country_code:', rawData.slice(0, 5).map(d => d.country_code));
-                console.log('rawData 前 5 条运费字段:', rawData.slice(0, 5).map(d => ({ freight: d.freight, actual_freight: d.actual_freight })));
-                console.log('rawData 前 5 条分单字段:', rawData.slice(0, 5).map(d => ({ is_split: d.is_split })));
-                
-                // 【v3.17.29 调试】打印所有不同的 country_code
-                const countrySet = new Set(rawData.map(d => d.country_code));
-                console.log('===== 所有不同的 country_code =====');
-                console.log('数量:', countrySet.size);
-                console.log('列表:', Array.from(countrySet));
-                console.log('JSON:', JSON.stringify(Array.from(countrySet)));
-                countrySet.forEach(c => {
-                    console.log('  "' + c + '" length=' + (c?.length || 0) + ' bytes=' + JSON.stringify(c));
-                });
-                console.log('rawData 前 5 条 ship_date:', rawData.slice(0, 5).map(d => d.ship_date));
-                
-                // 自动设置日期范围
-                const dates = rawData.map(d => new Date(d.ship_date)).filter(d => !isNaN(d));
-                if (dates.length > 0) {
-                    currentStartDate = new Date(Math.min(...dates));
-                    currentEndDate = new Date(Math.max(...dates));
-                    document.getElementById('startDate').value = currentStartDate.toISOString().split('T')[0];
-                    document.getElementById('endDate').value = currentEndDate.toISOString().split('T')[0];
-                }
-                
-                // 数据加载完成后再初始化
-                initProductFilters();
-                renderOrderStructure();
-                renderCountryPieChart(); // 【v3.17.12 新增 4】
-                renderWarehouseRatio();
-                updateCharts();
-                renderSplitCountChart();  // 【v3.17.35 新增】初始化分单次数统计
-                
-                // 【v3.17.41 新增】尝试从 LocalStorage 加载已保存的数据
+                // 尝试从 LocalStorage 加载已保存的数据
                 const loadedFromStorage = loadDataFromStorage();
                 if (loadedFromStorage) {
                     console.log('已从本地加载保存的数据');
+                } else {
+                    console.log('LocalStorage 中没有数据，请等待数据导入');
                 }
                 
                 document.getElementById('loading').style.display = 'none';
@@ -1709,7 +1415,7 @@
                 });
             } catch (error) {
                 console.error('加载数据失败:', error);
-                document.getElementById('loading').textContent = '数据加载失败，请检查 demo_data_real.min.json 是否存在';
+                document.getElementById('loading').textContent = '数据加载失败';
             }
         }
         
@@ -1893,6 +1599,7 @@
                 console.log('前 5 条的 order_no:', filteredData.slice(0, 5).map(d => d.order_no));
                 console.log('前 5 条的 ship_no:', filteredData.slice(0, 5).map(d => d.ship_no));
                 console.log('前 5 条的订单号 (中文):', filteredData.slice(0, 5).map(d => d['订单号']));
+                console.log('前 5 条的 logistics_cost:', filteredData.slice(0, 5).map(d => ({ order_no: d.order_no, logistics_cost: d.logistics_cost })));
                 console.log('前 5 条完整数据:', JSON.stringify(filteredData.slice(0, 2), null, 2));
             }
             
@@ -1946,11 +1653,12 @@
             const insuranceRate = totalOrders > 0 ? (insuredOrders / totalOrders) * 100 : 0;
             document.getElementById('kpi-insurance-rate').textContent = insuranceRate.toFixed(1) + '%';
             
-            // 【v3.17.32 修正】运费补偿率 = 运费 ÷ 实际运费
-            const totalFreight = filteredData.reduce((sum, d) => sum + (d.freight || 0), 0);
-            const totalFreightActual = filteredData.reduce((sum, d) => sum + (d.actual_freight || 0), 0);
+            // 【v3.17.32 修正】运费补偿率 = 向客户收取的运费 ÷ 实际物流成本
+            // 注意：CSV 中没有"实际运费"字段，使用 logistics_cost（物流运费 (实际运费/预估运费)）作为实际成本
+            const totalFreight = filteredData.reduce((sum, d) => sum + (d.freight || 0), 0);  // 向客户收取的运费
+            const totalFreightActual = filteredData.reduce((sum, d) => sum + (d.logistics_cost || 0), 0);  // 实际物流成本
             const compensationRate = totalFreightActual > 0 ? (totalFreight / totalFreightActual) * 100 : 0;
-            console.log('运费补偿调试：totalFreight=', totalFreight, 'totalFreightActual=', totalFreightActual, 'compensationRate=', compensationRate);
+            console.log('运费补偿调试：收取运费=', totalFreight, '实际物流成本=', totalFreightActual, '补偿率=', compensationRate.toFixed(2) + '%');
             document.getElementById('kpi-compensation-rate').textContent = compensationRate.toFixed(1) + '%';
             
             // 【v3.17.32 修正】分单订单数 = "是否分单" = "是"的去重订单数
