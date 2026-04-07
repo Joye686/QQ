@@ -1717,45 +1717,54 @@ const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
             const uniqueShips = new Set(filteredData.map(d => d.ship_no || d['发货单号']));
             const totalPackages = uniqueShips.size;
             
-            // 累计物流费 = 物流运费合计
-            const totalCost = filteredData.reduce((sum, d) => sum + (d.logistics_cost || 0), 0);
+            // 获取货币筛选器值
+            const currency = document.getElementById('filter-currency')?.value || 'CNY';
+            const avgRate = filteredData[0]?.exchange_rate || 1;
+            
+            // 累计物流费 = 物流运费合计（根据货币筛选器决定是否折算）
+            let totalCost = filteredData.reduce((sum, d) => sum + (d.logistics_cost || 0), 0);
+            if (currency === 'USD') {
+                totalCost = totalCost / avgRate;  // CNY → USD
+            }
             
             // 其他指标
             const totalItems = filteredData.reduce((sum, d) => sum + (d.item_count || 0), 0);
             const totalWeight = filteredData.reduce((sum, d) => sum + (d.weight_kg || 0), 0);
-            const totalRevenue = filteredData.reduce((sum, d) => sum + ((d.revenue || 0) + (d.other_revenue || 0)), 0);
+            let totalRevenue = filteredData.reduce((sum, d) => sum + ((d.revenue || 0) + (d.other_revenue || 0)), 0);
+            if (currency === 'USD') {
+                totalRevenue = totalRevenue / avgRate;  // CNY → USD
+            }
             
-            console.log('KPI 调试：totalCost=', totalCost, 'totalRevenue=', totalRevenue, '汇率=', filteredData[0]?.exchange_rate);
+            console.log('KPI 调试：货币=', currency, '汇率=', avgRate, 'totalCost=', totalCost, 'totalRevenue=', totalRevenue);
             
             // 计算派生指标
             const priceKg = totalWeight > 0 ? totalCost / totalWeight : 0;
             const pricePkg = totalPackages > 0 ? totalCost / totalPackages : 0;
             const itemsPkg = totalPackages > 0 ? totalItems / totalPackages : 0;
             const weightPkg = totalPackages > 0 ? totalWeight / totalPackages : 0;
-            // 【v3.17.42 修复】正向物流占收入比 = 物流运费 / ((订单收入 + 其他收入) × 汇率)
-            // 由于 revenue 和 other_revenue 已经是折算后的人民币，直接相除即可
+            // 成本占比 = 物流运费 / 订单收入（比率不受货币影响）
             const logisticsRatio = totalRevenue > 0 ? (totalCost / totalRevenue) * 100 : 0;
-            console.log('=== 正向物流占收入比调试 ===');
-            console.log('物流运费 (CNY):', totalCost);
-            console.log('订单收入 (USD):', filteredData.reduce((sum, d) => sum + ((d.revenue || 0) + (d.other_revenue || 0)), 0) / (filteredData[0]?.exchange_rate || 1));
-            console.log('订单收入 (CNY):', totalRevenue);
-            console.log('汇率:', filteredData[0]?.exchange_rate);
-            console.log('正向物流占收入比:', logisticsRatio.toFixed(2) + '%');
+            
+            // 货币符号
+            const currencySymbol = currency === 'USD' ? '$' : '¥';
             
             // 更新 KPI 卡片
-            document.getElementById('stat-price-kg').textContent = '$' + priceKg.toFixed(2);
-            document.getElementById('stat-price-pkg').textContent = '$' + pricePkg.toFixed(2);
+            document.getElementById('stat-price-kg').textContent = currencySymbol + priceKg.toFixed(2);
+            document.getElementById('stat-price-pkg').textContent = currencySymbol + pricePkg.toFixed(2);
             document.getElementById('stat-packages').textContent = totalPackages.toLocaleString();
             document.getElementById('stat-orders').textContent = totalOrders.toLocaleString();
             document.getElementById('stat-items-pkg').textContent = itemsPkg.toFixed(1);
-            document.getElementById('stat-weight-pkg').textContent = weightPkg.toFixed(3) + ' kg'; // 保留 3 位小数
+            document.getElementById('stat-weight-pkg').textContent = weightPkg.toFixed(3) + ' kg';
             document.getElementById('stat-logistics-ratio').textContent = logisticsRatio.toFixed(1) + '%';
-            document.getElementById('stat-total-logistics').textContent = '$' + totalCost.toLocaleString(undefined, {maximumFractionDigits: 2});
+            document.getElementById('stat-total-logistics').textContent = currencySymbol + totalCost.toLocaleString(undefined, {maximumFractionDigits: 2});
             
             // 【v3.17.31 新增】第二行 KPI
             // 保价费收入
-            const totalInsuranceFee = filteredData.reduce((sum, d) => sum + (d.insurance_fee || 0), 0);
-            document.getElementById('kpi-insurance-revenue').textContent = '$' + totalInsuranceFee.toFixed(2);
+            let totalInsuranceFee = filteredData.reduce((sum, d) => sum + (d.insurance_fee || 0), 0);
+            if (currency === 'USD') {
+                totalInsuranceFee = totalInsuranceFee / avgRate;
+            }
+            document.getElementById('kpi-insurance-revenue').textContent = currencySymbol + totalInsuranceFee.toFixed(2);
             
             // 保价订单占比 = 有保价费的订单数 / 总订单数
             const insuredOrders = new Set(filteredData.filter(d => d.insurance_fee > 0).map(d => d['订单号'] || d.order_no)).size;
@@ -1763,11 +1772,14 @@ const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
             document.getElementById('kpi-insurance-rate').textContent = insuranceRate.toFixed(1) + '%';
             
             // 【v3.17.32 修正】运费补偿率 = 向客户收取的运费 ÷ 实际物流成本
-            // 注意：CSV 中没有"实际运费"字段，使用 logistics_cost（物流运费 (实际运费/预估运费)）作为实际成本
-            const totalFreight = filteredData.reduce((sum, d) => sum + (d.freight || 0), 0);  // 向客户收取的运费
-            const totalFreightActual = filteredData.reduce((sum, d) => sum + (d.logistics_cost || 0), 0);  // 实际物流成本
+            // 注意：比率不受货币影响，分子分母同时折算会抵消
+            let totalFreight = filteredData.reduce((sum, d) => sum + (d.freight || 0), 0);
+            const totalFreightActual = filteredData.reduce((sum, d) => sum + (d.logistics_cost || 0), 0);
+            if (currency === 'USD') {
+                totalFreight = totalFreight / avgRate;
+            }
             const compensationRate = totalFreightActual > 0 ? (totalFreight / totalFreightActual) * 100 : 0;
-            console.log('运费补偿调试：收取运费=', totalFreight, '实际物流成本=', totalFreightActual, '补偿率=', compensationRate.toFixed(2) + '%');
+            console.log('运费补偿调试：货币=', currency, '收取运费=', totalFreight, '实际物流成本=', totalFreightActual, '补偿率=', compensationRate.toFixed(2) + '%');
             document.getElementById('kpi-compensation-rate').textContent = compensationRate.toFixed(1) + '%';
             
             // 【v3.17.32 修正】分单订单数 = "是否分单" = "是"的去重订单数
@@ -3068,11 +3080,21 @@ function renderWarehouseRatio() {
                 }
                 grouped[key].packages++;
                 
-                // 累加成本和收入
-                grouped[key].logisticsFeeActual += parseFloat(d.logistics_cost) || 0;  // CNY，不乘汇率
-                grouped[key].orderRevenue += parseFloat(d.revenue) || 0;                // CNY，已乘汇率
-                grouped[key].orderRevenue += parseFloat(d.other_revenue) || 0;          // CNY，已乘汇率（其他收入）
-                grouped[key].freight += parseFloat(d.freight) || 0;                     // CNY，已乘汇率
+                // 累加成本和收入（根据货币筛选器决定是否折算）
+                const currency = document.getElementById('filter-currency')?.value || 'CNY';
+                const rate = d.exchange_rate || 1;
+                
+                if (currency === 'USD') {
+                    // USD 模式：CNY 金额 ÷ 汇率 = USD
+                    grouped[key].logisticsFeeActual += (parseFloat(d.logistics_cost) || 0) / rate;
+                    grouped[key].orderRevenue += ((parseFloat(d.revenue) || 0) + (parseFloat(d.other_revenue) || 0)) / rate;
+                    grouped[key].freight += (parseFloat(d.freight) || 0) / rate;
+                } else {
+                    // CNY 模式：保持原值
+                    grouped[key].logisticsFeeActual += parseFloat(d.logistics_cost) || 0;
+                    grouped[key].orderRevenue += (parseFloat(d.revenue) || 0) + (parseFloat(d.other_revenue) || 0);
+                    grouped[key].freight += parseFloat(d.freight) || 0;
+                }
                 
                 // 【修复 4】承诺时效 = 承诺最晚收货时间 - 发货时间
                 if (d['承诺最晚收货时间'] && d.ship_date) {
