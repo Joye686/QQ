@@ -1436,6 +1436,20 @@ const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
                     
                     console.log(`✅ 内嵌数据加载成功！${rawData.length} 条`);
                     
+                    // 自动设置日期范围（根据数据中的发货日期）
+                    const dates = rawData.map(d => new Date(d.ship_date)).filter(d => !isNaN(d.getTime()));
+                    if (dates.length > 0) {
+                        currentStartDate = new Date(Math.min(...dates));
+                        currentEndDate = new Date(Math.max(...dates));
+                        console.log(`📅 自动设置日期范围：${currentStartDate.toLocaleDateString()} - ${currentEndDate.toLocaleDateString()}`);
+                        
+                        // 更新日期筛选器输入框
+                        const startDateInput = document.getElementById('startDate');
+                        const endDateInput = document.getElementById('endDate');
+                        if (startDateInput) startDateInput.value = currentStartDate.toISOString().split('T')[0];
+                        if (endDateInput) endDateInput.value = currentEndDate.toISOString().split('T')[0];
+                    }
+                    
                     // 覆盖 LocalStorage 中的旧数据
                     localStorage.setItem('logistics_rawData', JSON.stringify(rawData));
                     localStorage.setItem('logistics_exchangeRates', JSON.stringify(rates));
