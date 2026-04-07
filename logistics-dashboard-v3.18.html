@@ -3107,6 +3107,9 @@ function renderWarehouseRatio() {
                 }
                 grouped[key].packages++;
                 
+                // 累加重量（不随货币变化）
+                grouped[key].weightKg += parseFloat(d.weight_kg) || 0;
+                
                 // 累加成本和收入（根据货币筛选器决定是否折算）
                 const currency = document.getElementById('filter-currency')?.value || 'CNY';
                 const rate = d.exchange_rate || 1;
@@ -3122,9 +3125,6 @@ function renderWarehouseRatio() {
                     grouped[key].orderRevenue += (parseFloat(d.revenue) || 0) + (parseFloat(d.other_revenue) || 0);
                     grouped[key].freight += parseFloat(d.freight) || 0;
                 }
-                
-                // 累加重量（不随货币变化）
-                grouped[key].weightKg += parseFloat(d.weight_kg) || 0;
                 
                 // 【修复 4】承诺时效 = 承诺最晚收货时间 - 发货时间
                 if (d['承诺最晚收货时间'] && d.ship_date) {
@@ -3191,9 +3191,15 @@ function renderWarehouseRatio() {
                     costRatio: row.orderRevenue > 0 ? ((row.logisticsFeeActual / row.orderRevenue) * 100) : 0,
                     // 补偿率 = 运费/物流运费 (实际运费/预估运费)
                     compensationRate: row.logisticsFeeActual > 0 ? ((row.freight / row.logisticsFeeActual) * 100) : 0,
-                    // 单价/kg = 物流运费 / 总重量
+                    // 单价/kg = 物流运费 / 总重量（已根据货币筛选器折算）
                     priceKg: row.weightKg > 0 ? (row.logisticsFeeActual / row.weightKg) : 0
                 };
+            });
+            
+            // 计算汇总行的总重量和总物流运费（用于计算单价/kg）
+            const totalWeight = rows.reduce((sum, r) => sum + r.weightKg, 0);
+            const totalLogisticsCost = rows.reduce((sum, r) => sum + r.logisticsFeeActual, 0);
+            const avgPriceKg = totalWeight > 0 ? (totalLogisticsCost / totalWeight) : 0;
             });
             
             // 应用排序
@@ -3253,9 +3259,15 @@ function renderWarehouseRatio() {
             const avgCostRatio = rows.length > 0 ? (rows.reduce((sum, r) => sum + r.costRatio, 0) / rows.length) : 0;
             const avgCompensationRate = rows.length > 0 ? (rows.reduce((sum, r) => sum + r.compensationRate, 0) / rows.length) : 0;
             
+            // 计算汇总行的总重量和总物流运费（用于计算单价/kg）
+            const totalWeight = rows.reduce((sum, r) => sum + r.weightKg, 0);
+            const totalLogisticsCost = rows.reduce((sum, r) => sum + r.logisticsFeeActual, 0);
+            const avgPriceKg = totalWeight > 0 ? (totalLogisticsCost / totalWeight) : 0;
+            
             tfoot.innerHTML = `
                 <tr style="background: #e8f4f8; font-weight: bold;">
-                    <td colspan="5" style="text-align: left;">汇总</td>
+                    <td colspan="4" style="text-align: left;">汇总</td>
+                    <td style="text-align: right;">${avgPriceKg.toFixed(2)}</td>
                     <td style="text-align: right;">${totalPackages.toLocaleString()}</td>
                     <td style="text-align: right;">100.0%</td>
                     <td style="text-align: center;">${avgPromise.toFixed(1)}</td>
@@ -3264,6 +3276,14 @@ function renderWarehouseRatio() {
                     <td style="text-align: center;">${totalDelivered > 0 ? (totalOnTime / totalDelivered * 100).toFixed(1) : 0}%</td>
                     <td style="text-align: center;">${avgCostRatio.toFixed(1)}%</td>
                     <td style="text-align: center;">${avgCompensationRate.toFixed(1)}%</td>
+                </tr>
+                
+                <!-- 隐藏行：用于存储总重量和总物流成本，方便调试 -->
+                <tr style="display: none;">
+                    <td>总重量：</td>
+                    <td colspan="3">${totalWeight.toFixed(3)} kg</td>
+                    <td>总物流运费：</td>
+                    <td colspan="7">${totalLogisticsCost.toFixed(2)}</td>
                 </tr>
             `;
         }
