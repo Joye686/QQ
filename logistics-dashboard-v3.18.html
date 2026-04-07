@@ -1153,7 +1153,7 @@ const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
                                 insurance_fee: (d.insurance_fee || 0) * rate,
                                 freight_insurance_revenue: (d.freight_insurance_revenue || 0) * rate,
                                 actual_freight: (d.actual_freight || 0) * rate,
-                                logistics_cost: (d.logistics_cost || 0) * rate,
+                                logistics_cost: (d.logistics_cost || 0),  // CNY，不乘汇率
                                 exchange_rate: rate
                             };
                         });
@@ -1774,12 +1774,12 @@ const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
             document.getElementById('kpi-insurance-rate').textContent = insuranceRate.toFixed(1) + '%';
             
             // 【v3.17.32 修正】运费补偿率 = 向客户收取的运费 ÷ 实际物流成本
-            // 注意：这是百分比指标，分子分母同时折算会抵消，所以不受货币影响
-            const totalFreight = filteredData.reduce((sum, d) => sum + (d.freight || 0), 0);  // USD 原始值
-            const totalFreightActual = filteredData.reduce((sum, d) => sum + (d.logistics_cost || 0), 0);  // CNY 原始值
-            // 补偿率 = (运费 USD × 汇率) ÷ 物流运费 CNY × 100%
-            const compensationRate = totalFreightActual > 0 ? ((totalFreight * avgRate) / totalFreightActual) * 100 : 0;
-            console.log('运费补偿调试：收取运费 (USD)=', totalFreight, '汇率=', avgRate, '物流运费 (CNY)=', totalFreightActual, '补偿率=', compensationRate.toFixed(2) + '%');
+            // 注意：这是百分比指标，不受货币影响（分子分母都是 CNY）
+            const totalFreight = filteredData.reduce((sum, d) => sum + (d.freight || 0), 0);  // CNY（已在 applyExchangeRates 中折算）
+            const totalFreightActual = filteredData.reduce((sum, d) => sum + (d.logistics_cost || 0), 0);  // CNY（原始值）
+            // 补偿率 = 运费 CNY ÷ 物流运费 CNY × 100%
+            const compensationRate = totalFreightActual > 0 ? (totalFreight / totalFreightActual) * 100 : 0;
+            console.log('运费补偿调试：收取运费 (CNY)=', totalFreight, '物流运费 (CNY)=', totalFreightActual, '补偿率=', compensationRate.toFixed(2) + '%');
             document.getElementById('kpi-compensation-rate').textContent = compensationRate.toFixed(1) + '%';
             
             // 【v3.17.32 修正】分单订单数 = "是否分单" = "是"的去重订单数
@@ -3190,6 +3190,7 @@ function renderWarehouseRatio() {
                     // 成本占比 = 物流运费 (实际运费/预估运费)/订单收入
                     costRatio: row.orderRevenue > 0 ? ((row.logisticsFeeActual / row.orderRevenue) * 100) : 0,
                     // 补偿率 = 运费/物流运费 (实际运费/预估运费)
+                    // 注意：这两个字段都已经根据货币筛选器折算，比率不受货币影响
                     compensationRate: row.logisticsFeeActual > 0 ? ((row.freight / row.logisticsFeeActual) * 100) : 0,
                     // 单价/kg = 物流运费 / 总重量（已根据货币筛选器折算）
                     priceKg: row.weightKg > 0 ? (row.logisticsFeeActual / row.weightKg) : 0
