@@ -862,6 +862,7 @@ const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'l1')">一级</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'l2')">二级</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'l3')">三级</th>
+                                <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'priceKg')">单价/kg ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'packages')">包裹数 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'ratio')">占比 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'promise')">承诺时效 ⇅</th>
@@ -891,6 +892,7 @@ const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'l1')">一级</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'l2')">二级</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'l3')">三级</th>
+                                <th style="cursor: pointer;" onclick="sortTable('overseas', 'priceKg')">单价/kg ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'packages')">包裹数 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'ratio')">占比 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'promise')">承诺时效 ⇅</th>
@@ -2862,32 +2864,58 @@ function renderWarehouseRatio() {
             console.log('=== 运费区间调试 ===');
             console.log('各区间订单数:', rangeData.map(r => `${r.name}: ${r.count}`));
             
-            // 客单价柱状图
+            // 客单价散点图
             rangeAovChart.setOption({
-                tooltip: { formatter: '${c}' },
-                grid: { left: '12%', right: '3%', bottom: '25%', top: '8%', containLabel: true },  // 【v3.17.39 修改】底部间距加大
+                tooltip: { 
+                    formatter: function(params) {
+                        return `${params.name}<br/>客单价：$${params.value[1]}<br/>订单数：${params.data.orderCount}`;
+                    }
+                },
+                grid: { left: '12%', right: '8%', bottom: '25%', top: '8%', containLabel: true },
                 xAxis: { 
                     type: 'category', 
                     data: ranges, 
                     axisLabel: { fontSize: 10, rotate: 0 },
-                    axisTick: { alignWithLabel: true }
+                    axisTick: { alignWithLabel: true },
+                    name: '运费区间',
+                    nameLocation: 'middle',
+                    nameGap: 20
                 },
                 yAxis: { 
                     type: 'value', 
                     name: '客单价 ($)', 
                     axisLabel: { fontSize: 10 },
-                    min: 0,
-                    max: function(value) {
-                        // 动态设置 Y 轴最大值，避免过高
-                        return Math.ceil(value.max / 50) * 50;
-                    }
+                    min: 0
                 },
                 series: [{
-                    type: 'bar',
-                    data: rangeData.map(r => r.aov.toFixed(0)),
-                    itemStyle: { color: '#27ae60' },
-                    label: { show: true, position: 'top', formatter: '${c}', fontSize: 10 },
-                    barWidth: '60%'  // 调整柱子宽度
+                    type: 'scatter',
+                    data: rangeData.map((r, i) => ({
+                        value: [i, parseFloat(r.aov.toFixed(2))],
+                        orderCount: r.count,
+                        name: ranges[i]
+                    })),
+                    symbolSize: function(data) {
+                        // 根据订单数动态调整点的大小
+                        const maxCount = Math.max(...rangeData.map(r => r.count));
+                        return 10 + (data.orderCount / maxCount) * 20;
+                    },
+                    itemStyle: {
+                        color: function(params) {
+                            const colors = ['#3498db', '#27ae60', '#f39c12', '#e74c3c', '#9b59b6'];
+                            return colors[params.dataIndex];
+                        },
+                        shadowBlur: 10,
+                        shadowColor: 'rgba(0,0,0,0.3)'
+                    },
+                    label: {
+                        show: true,
+                        formatter: function(params) {
+                            return `$${params.value[1]}`;
+                        },
+                        position: 'top',
+                        fontSize: 9,
+                        fontWeight: 'bold'
+                    }
                 }]
             });
             
@@ -3065,6 +3093,7 @@ function renderWarehouseRatio() {
                         l3: d.product_l3,
                         l1l2l3: `${d.product_l1 || ''} | ${d.product_l2 || ''} | ${d.product_l3 || ''}`,
                         packages: 0,
+                        weightKg: 0,  // 总重量 KG
                         promiseDaysSum: 0,
                         promiseDaysCount: 0,
                         actualDaysSum: 0,
@@ -3093,6 +3122,9 @@ function renderWarehouseRatio() {
                     grouped[key].orderRevenue += (parseFloat(d.revenue) || 0) + (parseFloat(d.other_revenue) || 0);
                     grouped[key].freight += parseFloat(d.freight) || 0;
                 }
+                
+                // 累加重量（不随货币变化）
+                grouped[key].weightKg += parseFloat(d.weight_kg) || 0;
                 
                 // 【修复 4】承诺时效 = 承诺最晚收货时间 - 发货时间
                 if (d['承诺最晚收货时间'] && d.ship_date) {
@@ -3158,8 +3190,9 @@ function renderWarehouseRatio() {
                     // 成本占比 = 物流运费 (实际运费/预估运费)/订单收入
                     costRatio: row.orderRevenue > 0 ? ((row.logisticsFeeActual / row.orderRevenue) * 100) : 0,
                     // 补偿率 = 运费/物流运费 (实际运费/预估运费)
-                    compensationRate: row.logisticsFeeActual > 0 ? ((row.freight / row.logisticsFeeActual) * 100) : 0
-                    
+                    compensationRate: row.logisticsFeeActual > 0 ? ((row.freight / row.logisticsFeeActual) * 100) : 0,
+                    // 单价/kg = 物流运费 / 总重量
+                    priceKg: row.weightKg > 0 ? (row.logisticsFeeActual / row.weightKg) : 0
                 };
             });
             
@@ -3172,6 +3205,7 @@ function renderWarehouseRatio() {
                     else if (state.column === 'l1') { valA = a.l1; valB = b.l1; }
                     else if (state.column === 'l2') { valA = a.l2; valB = b.l2; }
                     else if (state.column === 'l3') { valA = a.l3; valB = b.l3; }
+                    else if (state.column === 'priceKg') { valA = a.priceKg; valB = b.priceKg; }
                     else if (state.column === 'packages') { valA = a.packages; valB = b.packages; }
                     else if (state.column === 'ratio') { valA = a.ratio; valB = b.ratio; }
                     else if (state.column === 'promise') { valA = a.promise; valB = b.promise; }
@@ -3199,6 +3233,7 @@ function renderWarehouseRatio() {
                     <td style="text-align: left;">${row.l1}</td>
                     <td style="text-align: left;">${row.l2}</td>
                     <td style="text-align: left;">${row.l3}</td>
+                    <td style="text-align: right;">${row.priceKg.toFixed(2)}</td>
                     <td style="text-align: right;">${row.packages.toLocaleString()}</td>
                     <td style="text-align: right;">${row.ratio.toFixed(1)}%</td>
                     <td style="text-align: center;">${row.promise.toFixed(1)}</td>
