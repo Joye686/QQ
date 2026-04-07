@@ -1990,7 +1990,13 @@ function renderMultiLineChart(chart, data, warehouseName) {
                     label: {
                         show: true,  // 【修改】显示数据标签
                         position: 'top',
-                        formatter: '{c}',
+                        formatter: function(params) {
+                            // 百分比指标格式化
+                            if (currentMetric === 'costRatio' || currentMetric === 'compensationRate') {
+                                return params.value.toFixed(2) + '%';
+                            }
+                            return params.value.toFixed(2);
+                        },
                         fontSize: 9,
                         fontWeight: 'bold'
                     },
@@ -2014,7 +2020,13 @@ function renderMultiLineChart(chart, data, warehouseName) {
                 label: {
                     show: true,  // 显示数据标签
                     position: 'top',
-                    formatter: '{c}',
+                    formatter: function(params) {
+                        // 百分比指标格式化
+                        if (currentMetric === 'costRatio' || currentMetric === 'compensationRate') {
+                            return params.value.toFixed(2) + '%';
+                        }
+                        return params.value.toFixed(2);
+                    },
                     fontSize: 10,
                     fontWeight: 'bold'
                 },
@@ -2030,7 +2042,15 @@ function renderMultiLineChart(chart, data, warehouseName) {
                     formatter: function(params) {
                         let result = params[0].name + '<br/>';
                         params.forEach(p => {
-                            result += `${p.seriesName}: ${getMetricName(currentMetric)} = ${p.value}<br/>`;
+                            const metricName = getMetricName(currentMetric);
+                            // 百分比指标格式化
+                            let valueDisplay = p.value;
+                            if (currentMetric === 'costRatio' || currentMetric === 'compensationRate') {
+                                valueDisplay = p.value.toFixed(2) + '%';
+                            } else {
+                                valueDisplay = p.value.toFixed(2);
+                            }
+                            result += `${p.seriesName}: ${metricName} = ${valueDisplay}<br/>`;
                         });
                         return result;
                     }
