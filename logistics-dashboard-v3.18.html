@@ -1403,12 +1403,14 @@
                 const loadedFromStorage = loadDataFromStorage();
                 if (loadedFromStorage) {
                     console.log('已从本地加载保存的数据');
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
                 } else {
-                    console.log('LocalStorage 中没有数据，请等待数据导入');
+                    // 没有数据时显示导入提示
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    showImportHint();
                 }
-                
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'block';
                 
                 window.addEventListener('resize', () => {
                     Object.values(charts).forEach(chart => chart.resize());
@@ -1417,6 +1419,42 @@
                 console.error('加载数据失败:', error);
                 document.getElementById('loading').textContent = '数据加载失败';
             }
+        }
+        
+        // 【v3.18 新增】显示数据导入提示
+        function showImportHint() {
+            const html = `
+                <div style="max-width: 800px; margin: 40px auto; background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h2 style="color: #667eea; margin-bottom: 20px;">📦 欢迎使用物流分析仪表板 v3.18</h2>
+                    <p style="color: #666; margin-bottom: 20px;">当前没有数据，请导入数据后使用。</p>
+                    
+                    <h3 style="margin: 20px 0 10px;">🚀 快速导入（推荐）</h3>
+                    <div style="background: #f8f9ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <p style="margin-bottom: 10px;">在浏览器 Console 中执行以下代码：</p>
+                        <pre style="background: #2d3748; color: #48bb78; padding: 15px; border-radius: 6px; overflow-x: auto; font-size: 12px;">fetch('https://raw.githubusercontent.com/Joye686/QQ/main/v318-data.json')
+  .then(r => r.json())
+  .then(d => {
+    localStorage.setItem('logistics_rawData', JSON.stringify(d.data));
+    localStorage.setItem('logistics_exchangeRates', JSON.stringify(d.exchange_rates));
+    location.reload();
+  });</pre>
+                        <p style="margin-top: 10px; font-size: 12px; color: #888;">💡 按 F12 打开开发者工具，进入 Console 标签，粘贴代码后回车</p>
+                    </div>
+                    
+                    <h3 style="margin: 20px 0 10px;">📊 示例数据说明</h3>
+                    <ul style="color: #666; line-height: 1.8;">
+                        <li>包含 49 条物流订单数据</li>
+                        <li>涵盖英国仓、美国仓、加拿大仓、嘉兴仓</li>
+                        <li>时间范围：2026 年 1 月 -3 月</li>
+                        <li>已配置汇率：1 月 7.15 / 2 月 7.20 / 3 月 6.9236</li>
+                    </ul>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
+                        <button onclick="location.reload()" style="background: #667eea; color: white; border: none; padding: 12px 30px; border-radius: 6px; font-size: 14px; cursor: pointer;">🔄 刷新页面</button>
+                    </div>
+                </div>
+            `;
+            document.querySelector('.container').innerHTML = html;
         }
         
         // 过滤数据（使用发货时间）
