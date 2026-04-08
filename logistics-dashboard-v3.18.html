@@ -3265,9 +3265,6 @@ function renderWarehouseRatio() {
             `;
         }
 
-        loadData();
-    </script>
-    <script>
         // 渲染升档降档流向图
         function renderFlowChart() {
             const flowChart = echarts.init(document.getElementById('flow-chart'));
@@ -3387,6 +3384,8 @@ function renderWarehouseRatio() {
             flowChart.setOption(option);
             window.addEventListener('resize', () => flowChart.resize());
         }
+
+        loadData();
     </script>
 </body>
 </html>
