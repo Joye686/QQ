@@ -2916,7 +2916,7 @@ function renderWarehouseRatio() {
                     center: ['50%', '45%'],  // 调整位置
                     label: { show: true, position: 'outside', formatter: '{b}: {d}%', fontSize: 9 },
                     data: rangeData.map((r, i) => ({ 
-                        name: ranges[i],  // 【v3.17.34 修改】显示运费范围
+                        name: rangeNames[i],  // 【v3.17.43 修复】使用 rangeNames
                         value: r.count, 
                         itemStyle: { color: colors[i] } 
                     }))
