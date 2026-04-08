@@ -2808,18 +2808,6 @@ function renderWarehouseRatio() {
             const rangeAovChart = echarts.init(document.getElementById('range-aov-chart'));
             const rangeRatioChart = echarts.init(document.getElementById('range-ratio-chart'));
             
-            // 【v3.17.34 修改】按建议的 5 个运费区间统计（所有国家）
-            const ranges = ['$0-30', '$30-50', '$50-80', '$80-120', '$120+'];
-            const rangeData = [
-                { name: '轻小件', min: 0, max: 30, count: 0, revenue: 0 },
-                { name: '标准件', min: 30, max: 50, count: 0, revenue: 0 },
-                { name: '中等件', min: 50, max: 80, count: 0, revenue: 0 },
-                { name: '较重件', min: 80, max: 120, count: 0, revenue: 0 },
-                { name: '大件', min: 120, max: 999999, count: 0, revenue: 0 }
-            ];
-            
-            const filteredData = filterData();
-            
             // 获取货币筛选器值
             const currency = document.getElementById('filter-currency')?.value || 'CNY';
             const avgRate = filteredData[0]?.exchange_rate || 1;
@@ -3398,13 +3386,6 @@ function renderWarehouseRatio() {
             
             flowChart.setOption(option);
             window.addEventListener('resize', () => flowChart.resize());
-        }
-        
-        // 在 renderDetailTable 后调用
-        const originalRenderDetailTable = renderDetailTable;
-        renderDetailTable = function() {
-            originalRenderDetailTable();
-            renderFlowChart();
         }
     </script>
 </body>
