@@ -1153,7 +1153,7 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                                 insurance_fee: (d.insurance_fee || 0) * rate,
                                 freight_insurance_revenue: (d.freight_insurance_revenue || 0) * rate,
                                 actual_freight: (d.actual_freight || 0) * rate,
-                                logistics_cost: (d.logistics_cost || 0) * rate,
+                                logistics_cost: (d.logistics_cost || 0),  // CNY，不乘汇率
                                 exchange_rate: rate
                             };
                         });
@@ -1474,8 +1474,8 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                             console.log(`📅 自动设置日期范围：${startDate.toISOString().split('T')[0]} - ${endDate.toISOString().split('T')[0]}`);
                         }
                         
-                        // 保存到 LocalStorage
-                        localStorage.setItem('logistics_rawData', JSON.stringify(EMBEDDED_DATA));
+                        // 保存到 LocalStorage（保存已应用汇率的数据）
+                        localStorage.setItem('logistics_rawData', JSON.stringify(rawData));
                         localStorage.setItem('logistics_exchangeRates', JSON.stringify(rates));
                     }
                 }
