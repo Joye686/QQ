@@ -2808,6 +2808,8 @@ function renderWarehouseRatio() {
             const rangeAovChart = echarts.init(document.getElementById('range-aov-chart'));
             const rangeRatioChart = echarts.init(document.getElementById('range-ratio-chart'));
             
+            const filteredData = filterData();
+            
             // 获取货币筛选器值
             const currency = document.getElementById('filter-currency')?.value || 'CNY';
             const avgRate = filteredData[0]?.exchange_rate || 1;
