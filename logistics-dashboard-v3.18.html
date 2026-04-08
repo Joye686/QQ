@@ -1669,10 +1669,10 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                     Math.round(td.weight / shipCount * 100) / 100 : 0);
                 // 成本占比 = 物流运费/订单收入（比率不受货币影响）
                 metrics.costRatio.push(td.revenue > 0 ? 
-                    Math.round((td.cost / td.revenue) * 100 * 100) / 100 : 0);
+                    Math.round((td.cost / td.revenue) * 100) / 1 : 0);
                 // 补偿率 = 运保费收入/物流运费（比率不受货币影响）
                 metrics.compensationRate.push(td.cost > 0 ? 
-                    Math.round((td.insurance / td.cost) * 100 * 100) / 100 : 0);
+                    Math.round((td.insurance / td.cost) * 100) / 1 : 0);
             });
             
             return { timeSeries, data: metrics };
@@ -2819,9 +2819,33 @@ function renderWarehouseRatio() {
             ];
             
             const filteredData = filterData();
+            
+            // 获取货币筛选器值
+            const currency = document.getElementById('filter-currency')?.value || 'CNY';
+            const avgRate = filteredData[0]?.exchange_rate || 1;
+            const currencySymbol = currency === 'USD' ? '$' : '¥';
+            
+            // 【v3.17.43 修复】运费区间阈值根据货币筛选器调整
+            const rangeThresholds = currency === 'USD' 
+                ? [0, 30/avgRate, 50/avgRate, 80/avgRate, 120/avgRate, 999999]
+                : [0, 30, 50, 80, 120, 999999];
+            
+            const rangeNames = currency === 'USD'
+                ? [`$0-${(30/avgRate).toFixed(0)}`, `$${(30/avgRate).toFixed(0)}-${(50/avgRate).toFixed(0)}`, `$${(50/avgRate).toFixed(0)}-${(80/avgRate).toFixed(0)}`, `$${(80/avgRate).toFixed(0)}-${(120/avgRate).toFixed(0)}`, `$${(120/avgRate).toFixed(0)}+`]
+                : ['¥0-30', '¥30-50', '¥50-80', '¥80-120', '¥120+'];
+            
+            const rangeData = [
+                { name: '轻小件', min: rangeThresholds[0], max: rangeThresholds[1], count: 0, revenue: 0 },
+                { name: '标准件', min: rangeThresholds[1], max: rangeThresholds[2], count: 0, revenue: 0 },
+                { name: '中等件', min: rangeThresholds[2], max: rangeThresholds[3], count: 0, revenue: 0 },
+                { name: '较重件', min: rangeThresholds[3], max: rangeThresholds[4], count: 0, revenue: 0 },
+                { name: '大件', min: rangeThresholds[4], max: rangeThresholds[5], count: 0, revenue: 0 }
+            ];
+            
             filteredData.forEach(d => {
-                const cost = parseFloat(d.logistics_cost) || 0;
-                const rev = parseFloat(d.revenue) || 0;
+                // 物流运费根据货币筛选器决定是否折算
+                const cost = currency === 'USD' ? ((d.logistics_cost || 0) / avgRate) : (d.logistics_cost || 0);
+                const rev = currency === 'USD' ? ((d.revenue || 0) / avgRate) : (d.revenue || 0);
                 
                 for (let i = 0; i < rangeData.length; i++) {
                     if (cost >= rangeData[i].min && cost < rangeData[i].max) {
@@ -2839,11 +2863,6 @@ function renderWarehouseRatio() {
             console.log('=== 运费区间调试 ===');
             console.log('各区间订单数:', rangeData.map(r => `${r.name}: ${r.count}`));
             
-            // 获取货币筛选器值
-            const currency = document.getElementById('filter-currency')?.value || 'CNY';
-            const avgRate = filteredData[0]?.exchange_rate || 1;
-            const currencySymbol = currency === 'USD' ? '$' : '¥';
-            
             // 【v3.17.43 修改】客单价散点图
             rangeAovChart.setOption({
                 tooltip: { 
@@ -2855,7 +2874,7 @@ function renderWarehouseRatio() {
                 grid: { left: '12%', right: '8%', bottom: '25%', top: '8%', containLabel: true },
                 xAxis: { 
                     type: 'category', 
-                    data: ranges, 
+                    data: rangeNames, 
                     axisLabel: { fontSize: 10, rotate: 0 },
                     axisTick: { alignWithLabel: true },
                     name: '运费区间',
@@ -2871,9 +2890,9 @@ function renderWarehouseRatio() {
                 series: [{
                     type: 'scatter',
                     data: rangeData.map((r, i) => ({
-                        value: [ranges[i], currency === 'USD' ? (r.aov / avgRate) : r.aov],
+                        value: [rangeNames[i], r.aov],
                         orderCount: r.count,
-                        name: ranges[i]
+                        name: rangeNames[i]
                     })),
                     symbolSize: function(data) {
                         // 根据订单数动态调整点的大小
