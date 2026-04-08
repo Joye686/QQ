@@ -1598,15 +1598,19 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
             console.log('calculateMetrics 输入:', data.length, '条数据，granularity:', granularity);
             const timeSeries = generateTimeSeries(granularity, startDate, endDate);
             
+            // 获取货币筛选器值
+            const currency = document.getElementById('filter-currency')?.value || 'CNY';
+            const avgRate = data[0]?.exchange_rate || 1;
+            
             // 按时间分组统计
             const timeData = timeSeries.map(() => ({
                 orders: new Set(),
                 ships: new Set(),
-                cost: 0,
+                cost: 0,  // CNY
                 weight: 0,
                 items: 0,
-                revenue: 0,
-                insurance: 0
+                revenue: 0,  // CNY
+                insurance: 0  // CNY
             }));
             
             data.forEach(d => {
@@ -1628,11 +1632,11 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                 if (timeIndex >= 0 && timeIndex < timeSeries.length) {
                     timeData[timeIndex].orders.add(d.order_no);
                     timeData[timeIndex].ships.add(d.ship_no);
-                    timeData[timeIndex].cost += d.logistics_cost || 0;
+                    timeData[timeIndex].cost += d.logistics_cost || 0;  // CNY，不乘汇率
                     timeData[timeIndex].weight += d.weight_kg || 0;
                     timeData[timeIndex].items += d.item_count || 0;
-                    timeData[timeIndex].revenue += d.revenue || 0;
-                    timeData[timeIndex].insurance += d.insurance_fee || 0;
+                    timeData[timeIndex].revenue += d.revenue || 0;  // CNY（已在 applyExchangeRates 中折算）
+                    timeData[timeIndex].insurance += d.insurance_fee || 0;  // CNY
                 }
             });
             
@@ -1650,18 +1654,21 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                 const orderCount = td.orders.size;
                 const shipCount = td.ships.size;
                 
+                // 价格类指标：根据货币筛选器决定是否折算
+                const costDisplay = currency === 'USD' ? (td.cost / avgRate) : td.cost;
+                
                 metrics.priceKg.push(shipCount > 0 && td.weight > 0 ? 
-                    Math.round(td.cost / td.weight * 100) / 100 : 0);
+                    Math.round(costDisplay / td.weight * 100) / 100 : 0);
                 metrics.pricePkg.push(shipCount > 0 ? 
-                    Math.round(td.cost / shipCount * 100) / 100 : 0);
+                    Math.round(costDisplay / shipCount * 100) / 100 : 0);
                 metrics.itemsPkg.push(shipCount > 0 ? 
                     Math.round(td.items / shipCount * 10) / 10 : 0);
                 metrics.kgPkg.push(shipCount > 0 ? 
                     Math.round(td.weight / shipCount * 100) / 100 : 0);
-                // 成本占比 = 物流运费/订单收入
+                // 成本占比 = 物流运费/订单收入（比率不受货币影响）
                 metrics.costRatio.push(td.revenue > 0 ? 
                     Math.round((td.cost / td.revenue) * 100 * 100) / 100 : 0);
-                // 补偿率 = 运保费收入/物流运费
+                // 补偿率 = 运保费收入/物流运费（比率不受货币影响）
                 metrics.compensationRate.push(td.cost > 0 ? 
                     Math.round((td.insurance / td.cost) * 100 * 100) / 100 : 0);
             });
@@ -2041,13 +2048,17 @@ function renderMultiLineChart(chart, data, warehouseName) {
                 }
             });
             
+            // 判断是否为百分比指标
+            const isPercentMetric = currentMetric === 'costRatio' || currentMetric === 'compensationRate';
+            
             const option = {
                 tooltip: {
                     trigger: 'axis',
                     formatter: function(params) {
                         let result = params[0].name + '<br/>';
                         params.forEach(p => {
-                            result += `${p.seriesName}: ${getMetricName(currentMetric)} = ${p.value}<br/>`;
+                            const value = isPercentMetric ? p.value.toFixed(1) + '%' : p.value.toFixed(2);
+                            result += `${p.seriesName}: ${getMetricName(currentMetric)} = ${value}<br/>`;
                         });
                         return result;
                     }
@@ -2068,7 +2079,10 @@ function renderMultiLineChart(chart, data, warehouseName) {
                 },
                 yAxis: {
                     type: 'value',
-                    axisLabel: { fontSize: 10 }
+                    axisLabel: { 
+                        fontSize: 10,
+                        formatter: isPercentMetric ? '{value}%' : '{value}'
+                    }
                 },
                 series: series
             };
@@ -2823,32 +2837,65 @@ function renderWarehouseRatio() {
             console.log('=== 运费区间调试 ===');
             console.log('各区间订单数:', rangeData.map(r => `${r.name}: ${r.count}`));
             
-            // 客单价柱状图
+            // 获取货币筛选器值
+            const currency = document.getElementById('filter-currency')?.value || 'CNY';
+            const avgRate = filteredData[0]?.exchange_rate || 1;
+            const currencySymbol = currency === 'USD' ? '$' : '¥';
+            
+            // 【v3.17.43 修改】客单价散点图
             rangeAovChart.setOption({
-                tooltip: { formatter: '${c}' },
-                grid: { left: '12%', right: '3%', bottom: '25%', top: '8%', containLabel: true },  // 【v3.17.39 修改】底部间距加大
+                tooltip: { 
+                    formatter: function(params) {
+                        const aov = currencySymbol + params.value[1].toFixed(2);
+                        return `${params.value[0]}<br/>客单价：${aov}<br/>订单数：${rangeData[params.dataIndex].count}`;
+                    }
+                },
+                grid: { left: '12%', right: '8%', bottom: '25%', top: '8%', containLabel: true },
                 xAxis: { 
                     type: 'category', 
                     data: ranges, 
                     axisLabel: { fontSize: 10, rotate: 0 },
-                    axisTick: { alignWithLabel: true }
+                    axisTick: { alignWithLabel: true },
+                    name: '运费区间',
+                    nameLocation: 'middle',
+                    nameGap: 20
                 },
                 yAxis: { 
                     type: 'value', 
-                    name: '客单价 ($)', 
+                    name: `客单价 (${currencySymbol})`,
                     axisLabel: { fontSize: 10 },
-                    min: 0,
-                    max: function(value) {
-                        // 动态设置 Y 轴最大值，避免过高
-                        return Math.ceil(value.max / 50) * 50;
-                    }
+                    min: 0
                 },
                 series: [{
-                    type: 'bar',
-                    data: rangeData.map(r => r.aov.toFixed(0)),
-                    itemStyle: { color: '#27ae60' },
-                    label: { show: true, position: 'top', formatter: '${c}', fontSize: 10 },
-                    barWidth: '60%'  // 调整柱子宽度
+                    type: 'scatter',
+                    data: rangeData.map((r, i) => ({
+                        value: [ranges[i], currency === 'USD' ? (r.aov / avgRate) : r.aov],
+                        orderCount: r.count,
+                        name: ranges[i]
+                    })),
+                    symbolSize: function(data) {
+                        // 根据订单数动态调整点的大小
+                        const maxCount = Math.max(...rangeData.map(r => r.count));
+                        return 10 + (data.orderCount / maxCount) * 20;
+                    },
+                    itemStyle: {
+                        color: function(params) {
+                            const colors = ['#3498db', '#27ae60', '#f39c12', '#e74c3c', '#9b59b6'];
+                            return colors[params.dataIndex];
+                        },
+                        shadowBlur: 10,
+                        shadowColor: 'rgba(0,0,0,0.3)'
+                    },
+                    label: {
+                        show: true,
+                        formatter: function(params) {
+                            const aov = currency === 'USD' ? (params.value[1] / avgRate) : params.value[1];
+                            return currencySymbol + aov.toFixed(0);
+                        },
+                        position: 'top',
+                        fontSize: 9,
+                        fontWeight: 'bold'
+                    }
                 }]
             });
             
@@ -3012,9 +3059,10 @@ function renderWarehouseRatio() {
             // 按仓库/运送方式/产品维度分组聚合
             const grouped = {};
             data.forEach(d => {
-                // 【修复 1】客户选择运送方式 = customer_shipping_method（快/中）
+                // 【v3.17.43 修复】客户选择运送方式 = customer_shipping_method（快/中）
                 const customerShipping = d.customer_shipping_method || '';
-                const speed = customerShipping.includes('Expedited') ? '快' : '中';
+                // 直接判断中/快，而不是检查 Expedited
+                const speed = customerShipping === '快' ? '快' : '中';
                 
                 // 【v3.17.29 修复】处理 null/undefined
                 const key = `${speed}|${d.product_l1 || ''}|${d.product_l2 || ''}|${d.product_l3 || ''}`;
