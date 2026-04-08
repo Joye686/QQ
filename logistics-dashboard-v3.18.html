@@ -856,7 +856,7 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                             <tr>
                                 <th rowspan="2" style="cursor: pointer;" onclick="sortTable('jiaxing', 'speed')">客户选择<br>运送方式</th>
                                 <th colspan="3">产品维度</th>
-                                <th colspan="6">指标（点击可排序）</th>
+                                <th colspan="9">指标（点击可排序）</th>
                             </tr>
                             <tr>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'l1')">一级</th>
@@ -886,7 +886,7 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                             <tr>
                                 <th rowspan="2" style="cursor: pointer;" onclick="sortTable('overseas', 'speed')">客户选择<br>运送方式</th>
                                 <th colspan="3">产品维度</th>
-                                <th colspan="6">指标（点击可排序）</th>
+                                <th colspan="9">指标（点击可排序）</th>
                             </tr>
                             <tr>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'l1')">一级</th>
@@ -1814,6 +1814,7 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
             renderDetailTable();
             renderRangeCharts();  // 【v3.17.34 新增】运费区间图表
             renderSplitCountChart();  // 【v3.17.35 新增】分单次数统计
+            renderFlowChart();  // 【v3.17.43 新增】流向分析图表
         }
 
         function updateTCharts() {
