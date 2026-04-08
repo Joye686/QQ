@@ -3272,9 +3272,18 @@ function renderWarehouseRatio() {
         function renderFlowChart() {
             const flowChart = echarts.init(document.getElementById('flow-chart'));
             
+            console.log('===== renderFlowChart 调试 =====');
+            console.log('currentStartDate:', currentStartDate);
+            console.log('currentEndDate:', currentEndDate);
+            
             // 应用筛选
             const detailCountry = document.getElementById('detail-country').value;
             let flowData = filterData();
+            console.log('flowData:', flowData.length, '条');
+            if (flowData.length > 0) {
+                console.log('前 5 条 customer_shipping_method:', flowData.slice(0, 5).map(d => d.customer_shipping_method));
+            }
+            
             if (detailCountry !== 'all') {
                 flowData = flowData.filter(d => d.country_code === detailCountry);
             }
@@ -3293,6 +3302,8 @@ function renderWarehouseRatio() {
                     slow2slow++;  // 中→中（保持）
                 }
             });
+            
+            console.log('流向统计：fast2slow=', fast2slow, 'slow2slow=', slow2slow, 'total=', fast2slow + slow2slow);
             
             const total = fast2fast + fast2slow + slow2fast + slow2slow;
             if (total === 0) {
