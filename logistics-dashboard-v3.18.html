@@ -1469,6 +1469,8 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                         if (dates.length > 0) {
                             const startDate = new Date(Math.min(...dates));
                             const endDate = new Date(Math.max(...dates));
+                            currentStartDate = startDate;  // ✅ 更新全局变量
+                            currentEndDate = endDate;  // ✅ 更新全局变量
                             localStorage.setItem('logistics_startDate', startDate.toISOString().split('T')[0]);
                             localStorage.setItem('logistics_endDate', endDate.toISOString().split('T')[0]);
                             console.log(`📅 自动设置日期范围：${startDate.toISOString().split('T')[0]} - ${endDate.toISOString().split('T')[0]}`);
