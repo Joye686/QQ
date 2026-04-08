@@ -1163,19 +1163,18 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                         return false;
                     }
                     
-                    // 【新增】加载保存的日期范围
-                    const savedStartDate = localStorage.getItem('logistics_startDate');
-                    const savedEndDate = localStorage.getItem('logistics_endDate');
-                    if (savedStartDate && savedEndDate) {
-                        currentStartDate = new Date(savedStartDate);
-                        currentEndDate = new Date(savedEndDate);
-                        console.log(`📅 从 LocalStorage 加载日期范围：${savedStartDate} - ${savedEndDate}`);
+                    // 【v3.18 新增】自动根据数据设置日期范围（强制覆盖 LocalStorage）
+                    const dates = rawData.map(d => new Date(d.ship_date)).filter(d => !isNaN(d.getTime()));
+                    if (dates.length > 0) {
+                        currentStartDate = new Date(Math.min(...dates));
+                        currentEndDate = new Date(Math.max(...dates));
+                        console.log(`📅 自动设置日期范围：${currentStartDate.toISOString().split('T')[0]} - ${currentEndDate.toISOString().split('T')[0]}`);
                         
                         // 更新日期筛选器输入框
                         const startDateInput = document.getElementById('startDate');
                         const endDateInput = document.getElementById('endDate');
-                        if (startDateInput) startDateInput.value = savedStartDate;
-                        if (endDateInput) endDateInput.value = savedEndDate;
+                        if (startDateInput) startDateInput.value = currentStartDate.toISOString().split('T')[0];
+                        if (endDateInput) endDateInput.value = currentEndDate.toISOString().split('T')[0];
                     }
                     
                     console.log('应用汇率完成，rawData 条数:', rawData.length);
