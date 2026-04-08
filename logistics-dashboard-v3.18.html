@@ -1186,8 +1186,7 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                     renderOrderStructure();
                     renderCountryPieChart();
                     renderWarehouseRatio();
-                    updateCharts();
-                    renderSplitCountChart();
+                    updateCharts();  // 包含 renderRangeCharts 和 renderSplitCountChart
                     
                     return true;
                 } else {
@@ -1489,12 +1488,7 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                 renderOrderStructure();
                 renderCountryPieChart();
                 renderWarehouseRatio();
-                updateCharts();
-                renderSplitCountChart();
-                
-                window.addEventListener('resize', () => {
-                    Object.values(charts).forEach(chart => chart.resize());
-                });
+                updateCharts();  // 包含 renderRangeCharts 和 renderSplitCountChart
             } catch (error) {
                 console.error('加载数据失败:', error);
                 document.getElementById('loading').textContent = '数据加载失败：' + error.message;
