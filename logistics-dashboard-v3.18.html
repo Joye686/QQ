@@ -1187,6 +1187,7 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                     renderCountryPieChart();
                     renderWarehouseRatio();
                     updateCharts();  // 包含 renderRangeCharts 和 renderSplitCountChart
+                    renderFlowChart();  // 【v3.17.43 新增】流向分析图表
                     
                     return true;
                 } else {
@@ -1491,6 +1492,7 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                 renderCountryPieChart();
                 renderWarehouseRatio();
                 updateCharts();  // 包含 renderRangeCharts 和 renderSplitCountChart
+                renderFlowChart();  // 【v3.17.43 新增】流向分析图表
             } catch (error) {
                 console.error('加载数据失败:', error);
                 document.getElementById('loading').textContent = '数据加载失败：' + error.message;
@@ -1816,7 +1818,7 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
             renderDetailTable();
             renderRangeCharts();  // 【v3.17.34 新增】运费区间图表
             renderSplitCountChart();  // 【v3.17.35 新增】分单次数统计
-            renderFlowChart();  // 【v3.17.43 新增】流向分析图表
+            // renderFlowChart();  // 【v3.17.43 新增】流向分析图表 - 移到 loadData 之后调用
         }
 
         function updateTCharts() {
