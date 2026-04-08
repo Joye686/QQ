@@ -1163,6 +1163,21 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                         return false;
                     }
                     
+                    // 【新增】加载保存的日期范围
+                    const savedStartDate = localStorage.getItem('logistics_startDate');
+                    const savedEndDate = localStorage.getItem('logistics_endDate');
+                    if (savedStartDate && savedEndDate) {
+                        currentStartDate = new Date(savedStartDate);
+                        currentEndDate = new Date(savedEndDate);
+                        console.log(`📅 从 LocalStorage 加载日期范围：${savedStartDate} - ${savedEndDate}`);
+                        
+                        // 更新日期筛选器输入框
+                        const startDateInput = document.getElementById('startDate');
+                        const endDateInput = document.getElementById('endDate');
+                        if (startDateInput) startDateInput.value = savedStartDate;
+                        if (endDateInput) endDateInput.value = savedEndDate;
+                    }
+                    
                     console.log('应用汇率完成，rawData 条数:', rawData.length);
                     
                     // 初始化仪表板
@@ -1446,6 +1461,16 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                         });
                         
                         console.log(`✅ 内嵌数据加载成功！${rawData.length} 条`);
+                        
+                        // 自动计算日期范围
+                        const dates = rawData.map(d => new Date(d.ship_date)).filter(d => !isNaN(d.getTime()));
+                        if (dates.length > 0) {
+                            const startDate = new Date(Math.min(...dates));
+                            const endDate = new Date(Math.max(...dates));
+                            localStorage.setItem('logistics_startDate', startDate.toISOString().split('T')[0]);
+                            localStorage.setItem('logistics_endDate', endDate.toISOString().split('T')[0]);
+                            console.log(`📅 自动设置日期范围：${startDate.toISOString().split('T')[0]} - ${endDate.toISOString().split('T')[0]}`);
+                        }
                         
                         // 保存到 LocalStorage
                         localStorage.setItem('logistics_rawData', JSON.stringify(EMBEDDED_DATA));
