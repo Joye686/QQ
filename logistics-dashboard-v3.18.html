@@ -3103,7 +3103,8 @@ function renderWarehouseRatio() {
                         deliveredCount: 0,
                         onTimeCount: 0,  // 时效达成数量
                         logisticsFeeActual: 0,  // 物流运费 (实际)
-                        orderRevenue: 0,  // 订单收入
+                        orderRevenue: 0,  // 订单收入 + 其他收入
+                        otherRevenue: 0,  // 其他收入
                         insuranceFee: 0  // 保价费
                     };
                 }
@@ -3112,31 +3113,16 @@ function renderWarehouseRatio() {
                 // 累加重量、成本和收入
                 grouped[key].weightKg += parseFloat(d.weight_kg) || 0;
                 grouped[key].logisticsFeeActual += parseFloat(d.logistics_cost) || 0;
-                grouped[key].orderRevenue += parseFloat(d.revenue) || 0;
+                grouped[key].orderRevenue += (parseFloat(d.revenue) || 0) + (parseFloat(d.other_revenue) || 0);  // 【v3.17.43 修复】收入 = 订单收入 + 其他收入
+                grouped[key].otherRevenue += parseFloat(d.other_revenue) || 0;
                 grouped[key].insuranceFee += parseFloat(d.insurance_fee) || 0;
                 
-                // 【修复 4】承诺时效 = 承诺最晚发货时间 - 发货时间
-                // 使用 order_date + promise_days 计算承诺最晚发货时间
-                if (d.order_date && d.ship_date) {
-                    // 解析 order_date（格式：20260212）
-                    let orderDate;
-                    const orderDateStr = String(d.order_date);
-                    if (orderDateStr.length === 8) {
-                        orderDate = new Date(`${orderDateStr.slice(0,4)}-${orderDateStr.slice(4,6)}-${orderDateStr.slice(6,8)}`);
-                    } else {
-                        orderDate = new Date(d.order_date);
-                    }
-                    
-                    // 解析 ship_date（格式：2026-02-12）
+                // 【v3.17.43 修复】承诺时效 = 承诺最晚收货时间 - 发货时间
+                if (d['承诺最晚收货时间'] && d.ship_date) {
+                    const promiseDeliveryDate = new Date(d['承诺最晚收货时间']);
                     const shipDate = new Date(d.ship_date);
-                    
-                    // promise_days 可能为负数或 0，需要处理
-                    const promiseDays = parseFloat(d.promise_days) || 0;
-                    
-                    if (!isNaN(orderDate.getTime()) && !isNaN(shipDate.getTime())) {
-                        // 承诺最晚发货时间 = 下单时间 + 承诺时效天数
-                        const promiseShipDate = new Date(orderDate.getTime() + (promiseDays * 24 * 60 * 60 * 1000));
-                        const days = (promiseShipDate - shipDate) / (1000 * 60 * 60 * 24);
+                    if (!isNaN(promiseDeliveryDate.getTime()) && !isNaN(shipDate.getTime())) {
+                        const days = (promiseDeliveryDate - shipDate) / (1000 * 60 * 60 * 24);
                         grouped[key].promiseDaysSum += days;
                         grouped[key].promiseDaysCount++;
                     }
@@ -3158,28 +3144,14 @@ function renderWarehouseRatio() {
                     grouped[key].deliveredCount++;
                 }
                 
-                // 【修复 2】时效达成率 = 妥投订单中实际时效 <= 承诺时效的占比
-                if (d.delivery_date && d.delivery_date.trim() !== '' && d.promise_days !== undefined) {
-                    const deliveryDate = new Date(d.delivery_date);
-                    const shipDate = new Date(d.ship_date);
-                    if (!isNaN(deliveryDate.getTime()) && !isNaN(shipDate.getTime())) {
-                        const actualDays = (deliveryDate - shipDate) / (1000 * 60 * 60 * 24);
-                        const promiseDays = parseFloat(d.promise_days) || 0;
-                        // 承诺最晚发货时间 = order_date + promise_days
-                        let orderDate;
-                        const orderDateStr = String(d.order_date);
-                        if (orderDateStr.length === 8) {
-                            orderDate = new Date(`${orderDateStr.slice(0,4)}-${orderDateStr.slice(4,6)}-${orderDateStr.slice(6,8)}`);
-                        } else {
-                            orderDate = new Date(d.order_date);
-                        }
-                        if (!isNaN(orderDate.getTime())) {
-                            const promiseShipDate = new Date(orderDate.getTime() + (promiseDays * 24 * 60 * 60 * 1000));
-                            const promisedDays = (promiseShipDate - shipDate) / (1000 * 60 * 60 * 24);
-                            // 实际时效 <= 承诺时效
-                            if (actualDays <= promisedDays) {
-                                grouped[key].onTimeCount++;
-                            }
+                // 【v3.17.43 修复】时效达成率 = （妥投时间 - 承诺最晚收货时间）≤0 的包裹数 / 总包裹数
+                if (d['妥投时间'] && d['承诺最晚收货时间']) {
+                    const deliveryDate = new Date(d['妥投时间']);
+                    const promiseDeliveryDate = new Date(d['承诺最晚收货时间']);
+                    if (!isNaN(deliveryDate.getTime()) && !isNaN(promiseDeliveryDate.getTime())) {
+                        // 妥投时间 <= 承诺最晚收货时间 = 按时达成
+                        if (deliveryDate <= promiseDeliveryDate) {
+                            grouped[key].onTimeCount++;
                         }
                     }
                 }
