@@ -9,11 +9,6 @@
     <meta http-equiv="Expires" content="0">
     <title>物流分析仪表板 v3.18</title>
     <script src="echarts.min.js"></script>
-    <script>
-// 【v3.18 内嵌数据】49 条物流订单数据
-const EMBEDDED_DATA = [{"order_no":"MM2602280030525207","ship_no":"MM2602280030525207b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"MP","product_l3":"MPwarehouse-RM","actual_shipping_method":"MPwarehouse-RM","warehouse_code":"英国仓","country_code":"英国","item_count":1.0,"shipping_status":"部分发货","ship_date":"2026/3/3","delivery_date":"2026/3/5","actual_days":1.8,"weight_kg":0.151,"revenue":33.98,"other_revenue":0.0,"freight":0.0,"insurance_fee":1.54,"freight_insurance_revenue":1.54,"actual_freight":0,"logistics_cost":17.58,"is_split":"是","split_reason":"英国仓分包","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"partial"},{"order_no":"MM2603030248073780","ship_no":"MM2603030248073780b1","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"MP","product_l3":"MPwarehouse-RM","actual_shipping_method":"MPwarehouse-RM","warehouse_code":"英国仓","country_code":"英国","item_count":1.0,"shipping_status":"部分发货","ship_date":"2026/3/3","delivery_date":"2026/3/5","actual_days":1.8,"weight_kg":0.321,"revenue":35.98,"other_revenue":0.0,"freight":4.02,"insurance_fee":1.59,"freight_insurance_revenue":5.61,"actual_freight":0,"logistics_cost":17.58,"is_split":"是","split_reason":"英国仓分包","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"partial"},{"order_no":"M2603022200008535","ship_no":"M2603022200008535b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"MP","product_l3":"MPwarehouse-RM","actual_shipping_method":"MPwarehouse-RM","warehouse_code":"英国仓","country_code":"英国","item_count":1.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/5","actual_days":1.7,"weight_kg":0.323,"revenue":42.98,"other_revenue":0.0,"freight":9.03,"insurance_fee":2.7,"freight_insurance_revenue":11.73,"actual_freight":0,"logistics_cost":17.58,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"MM2601220208502370","ship_no":"MM2601220208502370b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"MP","product_l3":"MPwarehouse-RM","actual_shipping_method":"MPwarehouse-RM","warehouse_code":"英国仓","country_code":"英国","item_count":1.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/5","actual_days":1.8,"weight_kg":0.321,"revenue":31.98,"other_revenue":0.0,"freight":8.94,"insurance_fee":2.32,"freight_insurance_revenue":11.26,"actual_freight":0,"logistics_cost":17.58,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"MM2603021936354509","ship_no":"MM2603021936354509b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"MP","product_l3":"MPwarehouse-RM","actual_shipping_method":"MPwarehouse-RM","warehouse_code":"英国仓","country_code":"英国","item_count":1.0,"shipping_status":"部分发货","ship_date":"2026/3/3","delivery_date":"2026/3/5","actual_days":1.7,"weight_kg":0.201,"revenue":21.98,"other_revenue":0.0,"freight":3.43,"insurance_fee":0.0,"freight_insurance_revenue":3.43,"actual_freight":0,"logistics_cost":17.58,"is_split":"是","split_reason":"英国仓分包","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"partial"},{"order_no":"MM2603021935163504","ship_no":"MM2603021935163504b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"MP","product_l3":"MPwarehouse-RM","actual_shipping_method":"MPwarehouse-RM","warehouse_code":"英国仓","country_code":"英国","item_count":1.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/5","actual_days":1.9,"weight_kg":0.278,"revenue":37.98,"other_revenue":0.0,"freight":9.03,"insurance_fee":2.53,"freight_insurance_revenue":11.56,"actual_freight":0,"logistics_cost":17.58,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"M2603011102186672","ship_no":"M2603011102186672b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"LT","product_l3":"LTWarehouse-UNIUNI","actual_shipping_method":"LTWarehouse-UNIUNI","warehouse_code":"加拿大仓","country_code":"加拿大","item_count":1.0,"shipping_status":"部分发货","ship_date":"2026/3/3","delivery_date":"2026/3/7","actual_days":4.3,"weight_kg":0.236,"revenue":33.98,"other_revenue":0.0,"freight":0.0,"insurance_fee":1.82,"freight_insurance_revenue":1.82,"actual_freight":0,"logistics_cost":27.62,"is_split":"是","split_reason":"加拿大仓分包","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"partial"},{"order_no":"M2603020535194861","ship_no":"M2603020535194861b1","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"LT","product_l3":"LTWarehouse-UNIUNI","actual_shipping_method":"LTWarehouse-UNIUNI","warehouse_code":"加拿大仓","country_code":"加拿大","item_count":1.0,"shipping_status":"部分发货","ship_date":"2026/3/3","delivery_date":"2026/3/4","actual_days":1.3,"weight_kg":0.318,"revenue":37.38,"other_revenue":0.0,"freight":1.41,"insurance_fee":1.88,"freight_insurance_revenue":3.29,"actual_freight":0,"logistics_cost":13.71,"is_split":"是","split_reason":"加拿大仓分包","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"partial"},{"order_no":"MM2602282108093604","ship_no":"MM2602282108093604b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"LT","product_l3":"LTWarehouse-CAPOST","actual_shipping_method":"LTWarehouse-CAPOST","warehouse_code":"加拿大仓","country_code":"加拿大","item_count":1.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/9","actual_days":6.3,"weight_kg":0.186,"revenue":32.4,"other_revenue":0.0,"freight":0.0,"insurance_fee":1.68,"freight_insurance_revenue":1.68,"actual_freight":0,"logistics_cost":35.78,"is_split":"是","split_reason":"加拿大仓分包","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"RR2603020617093489","ship_no":"RR2603020617093489b1","site_code":"R","customer_shipping_method":"中","product_l1":"Standard","product_l2":"LT","product_l3":"LTWarehouse-UNIUNI","actual_shipping_method":"LTWarehouse-UNIUNI","warehouse_code":"加拿大仓","country_code":"加拿大","item_count":1.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/4","actual_days":1.2,"weight_kg":0.346,"revenue":43.98,"other_revenue":0.0,"freight":9.03,"insurance_fee":2.74,"freight_insurance_revenue":11.77,"actual_freight":0,"logistics_cost":25.15,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"Mi2603010543408108","ship_no":"Mi2603010543408108b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"LT","product_l3":"LTWarehouse-UNIUNI","actual_shipping_method":"LTWarehouse-UNIUNI","warehouse_code":"加拿大仓","country_code":"加拿大","item_count":1.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/7","actual_days":4.3,"weight_kg":0.372,"revenue":24.98,"other_revenue":7.99,"freight":4.03,"insurance_fee":2.07,"freight_insurance_revenue":6.1,"actual_freight":0,"logistics_cost":14.31,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"MM2602272254018213","ship_no":"MM2602272254018213b1","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"YHB","product_l3":"US-UNI2","actual_shipping_method":"US-UNI2","warehouse_code":"美国仓","country_code":"美国","item_count":2.0,"shipping_status":"部分发货","ship_date":"2026/3/3","delivery_date":"2026/3/7","actual_days":3.6,"weight_kg":0.617,"revenue":53.81,"other_revenue":0.0,"freight":1.5,"insurance_fee":0.0,"freight_insurance_revenue":1.5,"actual_freight":0,"logistics_cost":28.16,"is_split":"是","split_reason":"运输方式","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"partial"},{"order_no":"MM2603022000464233","ship_no":"MM2603022000464233b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"YHB","product_l3":"US-UNI2","actual_shipping_method":"US-UNI2","warehouse_code":"美国仓","country_code":"美国","item_count":2.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/7","actual_days":4.2,"weight_kg":0.507,"revenue":77.96,"other_revenue":0.0,"freight":0.0,"insurance_fee":3.5,"freight_insurance_revenue":3.5,"actual_freight":0,"logistics_cost":27.54,"is_split":"是","split_reason":"美国仓分包","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"MM2603021916058461","ship_no":"MM2603021916058461b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"JC","product_l3":"JC-USPS","actual_shipping_method":"JC-USPS","warehouse_code":"美国仓","country_code":"美国","item_count":1.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/5","actual_days":2.4,"weight_kg":0.331,"revenue":42.98,"other_revenue":0.0,"freight":8.99,"insurance_fee":0.0,"freight_insurance_revenue":8.99,"actual_freight":0,"logistics_cost":33.77,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"M2602280844434171","ship_no":"M2602280844434171b1","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"JC","product_l3":"JC-USPS","actual_shipping_method":"JC-USPS","warehouse_code":"美国仓","country_code":"美国","item_count":1.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/5","actual_days":2.3,"weight_kg":0.365,"revenue":32.25,"other_revenue":0.0,"freight":4.75,"insurance_fee":1.43,"freight_insurance_revenue":6.18,"actual_freight":0,"logistics_cost":31.0,"is_split":"是","split_reason":"运输方式","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"MM2603021558123597","ship_no":"MM2603021558123597b1","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"JC","product_l3":"JC-USPS","actual_shipping_method":"JC-USPS","warehouse_code":"美国仓","country_code":"美国","item_count":2.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/9","actual_days":6.2,"weight_kg":0.956,"revenue":80.04,"other_revenue":0.0,"freight":0.0,"insurance_fee":0.0,"freight_insurance_revenue":0.0,"actual_freight":0,"logistics_cost":62.97,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"MA2602282043218938","ship_no":"MA2602282043218938b1","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"JC","product_l3":"JC-USPS","actual_shipping_method":"JC-USPS","warehouse_code":"美国仓","country_code":"美国","item_count":2.0,"shipping_status":"部分发货","ship_date":"2026/3/3","delivery_date":"2026/3/6","actual_days":3.2,"weight_kg":0.674,"revenue":74.96,"other_revenue":0.0,"freight":3.49,"insurance_fee":2.91,"freight_insurance_revenue":6.4,"actual_freight":0,"logistics_cost":41.17,"is_split":"是","split_reason":"运输方式","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"partial"},{"order_no":"MM2603021959403686","ship_no":"MM2603021959403686b1","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"YHB","product_l3":"US-UNI2","actual_shipping_method":"US-UNI2","warehouse_code":"美国仓","country_code":"美国","item_count":2.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/7","actual_days":4.2,"weight_kg":0.574,"revenue":69.48,"other_revenue":2.96,"freight":3.32,"insurance_fee":0.0,"freight_insurance_revenue":3.32,"actual_freight":0,"logistics_cost":27.54,"is_split":"是","split_reason":"额外加运费","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"MM2602230053593590","ship_no":"MM2602230053593590b1","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"JC","product_l3":"JC-USPS","actual_shipping_method":"JC-USPS","warehouse_code":"美国仓","country_code":"美国","item_count":1.0,"shipping_status":"部分发货","ship_date":"2026/3/1","delivery_date":"2026/3/5","actual_days":4.5,"weight_kg":0.345,"revenue":42.98,"other_revenue":0.0,"freight":2.0,"insurance_fee":0.0,"freight_insurance_revenue":2.0,"actual_freight":0,"logistics_cost":31.0,"is_split":"是","split_reason":"运输方式","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"partial"},{"order_no":"MM2602271519433690","ship_no":"MM2602271519433690b1","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"JC","product_l3":"JC-USPS","actual_shipping_method":"JC-USPS","warehouse_code":"美国仓","country_code":"美国","item_count":2.0,"shipping_status":"已发货","ship_date":"2026/3/1","delivery_date":"2026/3/5","actual_days":4.5,"weight_kg":0.342,"revenue":62.46,"other_revenue":0.0,"freight":3.49,"insurance_fee":0.0,"freight_insurance_revenue":3.49,"actual_freight":0,"logistics_cost":33.22,"is_split":"是","split_reason":"额外加运费","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"MM2602031738025700","ship_no":"MM2602031738025700b1","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"JC","product_l3":"JC-USPS","actual_shipping_method":"JC-USPS","warehouse_code":"美国仓","country_code":"美国","item_count":2.0,"shipping_status":"已发货","ship_date":"2026/3/1","delivery_date":"2026/3/5","actual_days":4.5,"weight_kg":0.717,"revenue":63.96,"other_revenue":0.0,"freight":1.5,"insurance_fee":0.0,"freight_insurance_revenue":1.5,"actual_freight":0,"logistics_cost":41.17,"is_split":"是","split_reason":"运输方式","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"MM2601181001284605","ship_no":"MM2601181001284605b2","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"YHB","product_l3":"US-UNI","actual_shipping_method":"US-UNI","warehouse_code":"美国仓","country_code":"美国","item_count":2.0,"shipping_status":"已发货","ship_date":"2026/3/1","delivery_date":"2026/3/4","actual_days":3.5,"weight_kg":0.633,"revenue":79.96,"other_revenue":0.0,"freight":1.35,"insurance_fee":0.0,"freight_insurance_revenue":1.35,"actual_freight":0,"logistics_cost":25.67,"is_split":"是","split_reason":"手动分包","manual_split_reason":"客服分单","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"MM2601181001284605","ship_no":"MM2601181001284605b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"YHB","product_l3":"US-UNI","actual_shipping_method":"US-UNI","warehouse_code":"美国仓","country_code":"美国","item_count":2.0,"shipping_status":"已发货","ship_date":"2026/3/1","delivery_date":"2026/3/4","actual_days":3.5,"weight_kg":0.633,"revenue":79.96,"other_revenue":0.0,"freight":1.35,"insurance_fee":0.0,"freight_insurance_revenue":1.35,"actual_freight":0,"logistics_cost":25.67,"is_split":"是","split_reason":"手动分包","manual_split_reason":"客服分单","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"MM2602260719201141","ship_no":"MM2602260719201141b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"JC","product_l3":"JC-USPS","actual_shipping_method":"JC-USPS","warehouse_code":"美国仓","country_code":"美国","item_count":3.0,"shipping_status":"已发货","ship_date":"2026/3/1","delivery_date":"2026/3/3","actual_days":1.5,"weight_kg":0.674,"revenue":87.9,"other_revenue":0.0,"freight":0.0,"insurance_fee":4.98,"freight_insurance_revenue":4.98,"actual_freight":0,"logistics_cost":44.63,"is_split":"是","split_reason":"美国仓分包","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"M2602240436544676","ship_no":"M2602240436544676b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"YHB","product_l3":"US-UNI2","actual_shipping_method":"US-UNI2","warehouse_code":"美国仓","country_code":"美国","item_count":2.0,"shipping_status":"已发货","ship_date":"2026/3/1","delivery_date":"2026/3/6","actual_days":5.2,"weight_kg":0.688,"revenue":83.96,"other_revenue":0.0,"freight":0.0,"insurance_fee":0.0,"freight_insurance_revenue":0.0,"actual_freight":0,"logistics_cost":28.16,"is_split":"是","split_reason":"美国仓分包","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"M2602250608086061","ship_no":"M2602250608086061b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"JC","product_l3":"JC-USPS","actual_shipping_method":"JC-USPS","warehouse_code":"美国仓","country_code":"美国","item_count":7.0,"shipping_status":"已发货","ship_date":"2026/3/2","delivery_date":"2026/3/3","actual_days":1.5,"weight_kg":1.347,"revenue":192.21,"other_revenue":0.0,"freight":0.0,"insurance_fee":0.0,"freight_insurance_revenue":0.0,"actual_freight":0,"logistics_cost":62.97,"is_split":"是","split_reason":"美国仓分包","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"MM2601120848501778","ship_no":"MM2601120848501778b2","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"JC","product_l3":"JC-USPS","actual_shipping_method":"JC-USPS","warehouse_code":"美国仓","country_code":"美国","item_count":2.0,"shipping_status":"已发货","ship_date":"2026/3/2","delivery_date":"2026/3/5","actual_days":3.5,"weight_kg":0.446,"revenue":0.0,"other_revenue":0.0,"freight":0.0,"insurance_fee":0.0,"freight_insurance_revenue":0.0,"actual_freight":0,"logistics_cost":31.0,"is_split":"是","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"MM2601120848501778","ship_no":"MM2601120848501778b1","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"JC","product_l3":"JC-USPS","actual_shipping_method":"JC-USPS","warehouse_code":"美国仓","country_code":"美国","item_count":2.0,"shipping_status":"已发货","ship_date":"2026/3/2","delivery_date":"2026/3/5","actual_days":3.5,"weight_kg":0.446,"revenue":0.0,"other_revenue":0.0,"freight":0.0,"insurance_fee":0.0,"freight_insurance_revenue":0.0,"actual_freight":0,"logistics_cost":31.0,"is_split":"是","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"shipped"},{"order_no":"M2602230234021828","ship_no":"M2602230234021828b1","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"JC","product_l3":"JC-USPS","actual_shipping_method":"JC-USPS","warehouse_code":"美国仓","country_code":"美国","item_count":2.0,"shipping_status":"部分发货","ship_date":"2026/3/1","delivery_date":"2026/3/3","actual_days":1.5,"weight_kg":0.674,"revenue":51.91,"other_revenue":0.0,"freight":2.4,"insurance_fee":2.41,"freight_insurance_revenue":4.81,"actual_freight":0,"logistics_cost":44.63,"is_split":"是","split_reason":"运输方式","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"overseas","order_type":"partial"},{"order_no":"MM2602281638558794","ship_no":"MM2602281638558794b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Airmail Registered","actual_shipping_method":"Yanwen Airmail Registered","warehouse_code":"嘉兴仓_IDP","country_code":"冰岛","item_count":3.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/20","actual_days":16.8,"weight_kg":0.571,"revenue":90.04,"other_revenue":0.0,"freight":2.99,"insurance_fee":4.91,"freight_insurance_revenue":7.9,"actual_freight":0,"logistics_cost":122.32,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"MM2602281456395903","ship_no":"MM2602281456395903b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"LM","product_l3":"Liumai L01 USA","actual_shipping_method":"Liumai L01 USA","warehouse_code":"嘉兴仓_IDP","country_code":"美国","item_count":2.0,"shipping_status":"部分发货","ship_date":"2026/3/3","delivery_date":"2026/3/14","actual_days":10.9,"weight_kg":0.007,"revenue":13.96,"other_revenue":1.04,"freight":0.0,"insurance_fee":0.0,"freight_insurance_revenue":0.0,"actual_freight":0,"logistics_cost":24.56,"is_split":"是","split_reason":"预计超期","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"partial"},{"order_no":"M2603031120547440","ship_no":"M2603031120547440b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Fully-tracked","actual_shipping_method":"Yanwen Fully-tracked","warehouse_code":"嘉兴仓_IDP","country_code":"加拿大","item_count":1.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/10","actual_days":7.0,"weight_kg":0.18,"revenue":19.98,"other_revenue":7.99,"freight":4.03,"insurance_fee":1.9,"freight_insurance_revenue":5.93,"actual_freight":0,"logistics_cost":25.7,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"MM2603031045272507","ship_no":"MM2603031045272507b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Fully-tracked","actual_shipping_method":"Yanwen Fully-tracked","warehouse_code":"嘉兴仓_IDP","country_code":"加拿大","item_count":4.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/10","actual_days":6.8,"weight_kg":0.781,"revenue":103.92,"other_revenue":0.0,"freight":0.0,"insurance_fee":0.0,"freight_insurance_revenue":0.0,"actual_freight":0,"logistics_cost":55.7,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"M2603031037579964","ship_no":"M2603031037579964b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"YT","product_l3":"Yuntu registration","actual_shipping_method":"Yuntu registration","warehouse_code":"嘉兴仓_IDP","country_code":"澳大利亚","item_count":2.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/9","actual_days":6.0,"weight_kg":0.456,"revenue":71.96,"other_revenue":0.0,"freight":0.0,"insurance_fee":3.72,"freight_insurance_revenue":3.72,"actual_freight":0,"logistics_cost":60.46,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"MM2603031005344204","ship_no":"MM2603031005344204b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Fully-tracked","actual_shipping_method":"Yanwen Fully-tracked","warehouse_code":"嘉兴仓_IDP","country_code":"墨西哥","item_count":4.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/10","actual_days":6.7,"weight_kg":0.686,"revenue":120.94,"other_revenue":0.0,"freight":0.0,"insurance_fee":0.0,"freight_insurance_revenue":0.0,"actual_freight":0,"logistics_cost":64.36,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"MA2603030912559364","ship_no":"MA2603030912559364b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"JS","product_l3":"JS EXPRESS","actual_shipping_method":"JS EXPRESS","warehouse_code":"嘉兴仓_IDP","country_code":"澳大利亚","item_count":1.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/11","actual_days":8.0,"weight_kg":0.22,"revenue":25.98,"other_revenue":0.0,"freight":9.76,"insurance_fee":2.11,"freight_insurance_revenue":11.87,"actual_freight":0,"logistics_cost":30.28,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"M2603020336482559","ship_no":"M2603020336482559b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Fully-tracked","actual_shipping_method":"Yanwen Fully-tracked","warehouse_code":"嘉兴仓_IDP","country_code":"克罗地亚","item_count":3.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/13","actual_days":10.0,"weight_kg":1.165,"revenue":107.92,"other_revenue":7.99,"freight":0.0,"insurance_fee":5.36,"freight_insurance_revenue":5.36,"actual_freight":0,"logistics_cost":171.78,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"MM2603010153432102","ship_no":"MM2603010153432102b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Fully-tracked","actual_shipping_method":"Yanwen Fully-tracked","warehouse_code":"嘉兴仓_IDP","country_code":"斯洛伐克","item_count":2.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/13","actual_days":9.9,"weight_kg":0.489,"revenue":76.96,"other_revenue":0.0,"freight":0.0,"insurance_fee":3.89,"freight_insurance_revenue":3.89,"actual_freight":0,"logistics_cost":69.4,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"MM2603011856452701","ship_no":"MM2603011856452701b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Fully-tracked","actual_shipping_method":"Yanwen Fully-tracked","warehouse_code":"嘉兴仓_IDP","country_code":"捷克","item_count":3.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"","actual_days":0.0,"weight_kg":0.914,"revenue":123.94,"other_revenue":0.0,"freight":0.0,"insurance_fee":5.54,"freight_insurance_revenue":5.54,"actual_freight":0,"logistics_cost":99.14,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"MM2602100528282292","ship_no":"MM2602100528282292b1","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Airmail Registered","actual_shipping_method":"Yanwen Airmail Registered","warehouse_code":"嘉兴仓_IDP","country_code":"埃及","item_count":8.0,"shipping_status":"已发货","ship_date":"2026/3/2","delivery_date":"2026/3/18","actual_days":15.9,"weight_kg":1.242,"revenue":257.84,"other_revenue":0.0,"freight":20.91,"insurance_fee":10.98,"freight_insurance_revenue":31.89,"actual_freight":0,"logistics_cost":238.3,"is_split":"是","split_reason":"预计超期","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"MM2601281132258037","ship_no":"MM2601281132258037b2","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Fully-tracked","actual_shipping_method":"Yanwen Fully-tracked","warehouse_code":"嘉兴仓_IDP","country_code":"哥伦比亚","item_count":1.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"","actual_days":0.0,"weight_kg":0.373,"revenue":41.98,"other_revenue":0.0,"freight":3.29,"insurance_fee":1.87,"freight_insurance_revenue":5.16,"actual_freight":0,"logistics_cost":77.86,"is_split":"是","split_reason":"已超承诺","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"MM2601281132258037","ship_no":"MM2601281132258037b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Fully-tracked","actual_shipping_method":"Yanwen Fully-tracked","warehouse_code":"嘉兴仓_IDP","country_code":"哥伦比亚","item_count":1.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"","actual_days":0.0,"weight_kg":0.373,"revenue":41.98,"other_revenue":0.0,"freight":3.29,"insurance_fee":1.87,"freight_insurance_revenue":5.16,"actual_freight":0,"logistics_cost":77.86,"is_split":"是","split_reason":"已超承诺","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"MM2601281159465103","ship_no":"MM2601281159465103b2","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Fully-tracked","actual_shipping_method":"Yanwen Fully-tracked","warehouse_code":"嘉兴仓_IDP","country_code":"泰国","item_count":2.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/12","actual_days":9.0,"weight_kg":0.816,"revenue":83.96,"other_revenue":0.0,"freight":0.0,"insurance_fee":3.71,"freight_insurance_revenue":3.71,"actual_freight":0,"logistics_cost":66.86,"is_split":"是","split_reason":"已超承诺","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"MM2601281159465103","ship_no":"MM2601281159465103b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Fully-tracked","actual_shipping_method":"Yanwen Fully-tracked","warehouse_code":"嘉兴仓_IDP","country_code":"泰国","item_count":2.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/12","actual_days":9.0,"weight_kg":0.816,"revenue":83.96,"other_revenue":0.0,"freight":0.0,"insurance_fee":3.71,"freight_insurance_revenue":3.71,"actual_freight":0,"logistics_cost":66.86,"is_split":"是","split_reason":"已超承诺","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"MM2602211112044690","ship_no":"MM2602211112044690b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Airmail Registered","actual_shipping_method":"Yanwen Airmail Registered","warehouse_code":"嘉兴仓_IDP","country_code":"安道尔","item_count":2.0,"shipping_status":"已发货","ship_date":"2026/3/2","delivery_date":"","actual_days":0.0,"weight_kg":0.773,"revenue":85.96,"other_revenue":0.0,"freight":3.99,"insurance_fee":4.21,"freight_insurance_revenue":8.2,"actual_freight":0,"logistics_cost":201.81,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"M2602160736172056","ship_no":"M2602160736172056b1","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Fully-tracked","actual_shipping_method":"Yanwen Fully-tracked","warehouse_code":"嘉兴仓_IDP","country_code":"马来西亚","item_count":5.0,"shipping_status":"已发货","ship_date":"2026/3/2","delivery_date":"2026/3/10","actual_days":8.0,"weight_kg":1.456,"revenue":160.55,"other_revenue":0.0,"freight":4.82,"insurance_fee":7.42,"freight_insurance_revenue":12.24,"actual_freight":0,"logistics_cost":64.13,"is_split":"是","split_reason":"预计超期","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"MM2601260258134541","ship_no":"MM2601260258134541b1","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Airmail Registered","actual_shipping_method":"Yanwen Airmail Registered","warehouse_code":"嘉兴仓_IDP","country_code":"阿尔巴尼亚","item_count":1.0,"shipping_status":"已发货","ship_date":"2026/3/3","delivery_date":"2026/3/20","actual_days":17.2,"weight_kg":0.491,"revenue":37.38,"other_revenue":0.0,"freight":26.99,"insurance_fee":0.0,"freight_insurance_revenue":26.99,"actual_freight":0,"logistics_cost":139.28,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"MM2602162017363136","ship_no":"MM2602162017363136b1","site_code":"M","customer_shipping_method":"快","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Airmail Registered","actual_shipping_method":"Yanwen Airmail Registered","warehouse_code":"嘉兴仓_IDP","country_code":"土耳其","item_count":2.0,"shipping_status":"已发货","ship_date":"2026/3/2","delivery_date":"","actual_days":0.0,"weight_kg":0.7,"revenue":82.81,"other_revenue":7.99,"freight":10.99,"insurance_fee":4.17,"freight_insurance_revenue":15.16,"actual_freight":0,"logistics_cost":144.12,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"},{"order_no":"MM2602172126494873","ship_no":"MM2602172126494873b1","site_code":"M","customer_shipping_method":"中","product_l1":"Standard","product_l2":"Yanwen","product_l3":"Yanwen Fully-tracked","actual_shipping_method":"Yanwen Fully-tracked","warehouse_code":"嘉兴仓_IDP","country_code":"斯洛文尼亚","item_count":1.0,"shipping_status":"已发货","ship_date":"2026/3/2","delivery_date":"2026/3/12","actual_days":10.1,"weight_kg":0.248,"revenue":37.98,"other_revenue":0.0,"freight":8.98,"insurance_fee":2.53,"freight_insurance_revenue":11.51,"actual_freight":0,"logistics_cost":55.1,"is_split":"否","split_reason":"","manual_split_reason":"","is_presale":"","is_influencer":"","is_merged":"","is_presale_merged":"","pre_merge_logistics_cost":0,"after_sales":"","warehouse_type":"jiaxing","order_type":"shipped"}];
-const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
-    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -856,13 +851,12 @@ const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
                             <tr>
                                 <th rowspan="2" style="cursor: pointer;" onclick="sortTable('jiaxing', 'speed')">客户选择<br>运送方式</th>
                                 <th colspan="3">产品维度</th>
-                                <th colspan="9">指标（点击可排序）</th>
+                                <th colspan="5">指标（点击可排序）</th>
                             </tr>
                             <tr>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'l1')">一级</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'l2')">二级</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'l3')">三级</th>
-                                <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'priceKg')">单价/kg ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'packages')">包裹数 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'ratio')">占比 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'promise')">承诺时效 ⇅</th>
@@ -886,13 +880,12 @@ const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
                             <tr>
                                 <th rowspan="2" style="cursor: pointer;" onclick="sortTable('overseas', 'speed')">客户选择<br>运送方式</th>
                                 <th colspan="3">产品维度</th>
-                                <th colspan="9">指标（点击可排序）</th>
+                                <th colspan="5">指标（点击可排序）</th>
                             </tr>
                             <tr>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'l1')">一级</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'l2')">二级</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'l3')">三级</th>
-                                <th style="cursor: pointer;" onclick="sortTable('overseas', 'priceKg')">单价/kg ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'packages')">包裹数 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'ratio')">占比 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'promise')">承诺时效 ⇅</th>
@@ -1153,7 +1146,7 @@ const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
                                 insurance_fee: (d.insurance_fee || 0) * rate,
                                 freight_insurance_revenue: (d.freight_insurance_revenue || 0) * rate,
                                 actual_freight: (d.actual_freight || 0) * rate,
-                                logistics_cost: (d.logistics_cost || 0),  // CNY，不乘汇率
+                                logistics_cost: (d.logistics_cost || 0) * rate,
                                 exchange_rate: rate
                             };
                         });
@@ -1403,125 +1396,27 @@ const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
             console.log('仪表板初始化完成');
         }
 
-        // 【v3.18 内嵌数据】从内嵌数据或 LocalStorage 加载
+        // 【v3.18 简化】从 LocalStorage 加载数据
         async function loadData() {
             try {
-                // 优先使用内嵌数据（避免 LocalStorage 中的旧格式数据）
-                if (typeof EMBEDDED_DATA !== 'undefined' && EMBEDDED_DATA.length > 0) {
-                    console.log('使用内嵌数据...');
-                    
-                    // 应用汇率
-                    const rates = typeof EMBEDDED_RATES !== 'undefined' ? EMBEDDED_RATES : {};
-                    exchangeRates = rates;
-                    
-                    // 更新汇率输入框
-                    for (const [month, rate] of Object.entries(rates)) {
-                        const input = document.getElementById(`rate-${month}`);
-                        if (input) input.value = rate;
-                    }
-                    
-                    // 应用汇率到数据
-                    rawData = EMBEDDED_DATA.map(d => {
-                        const rate = getExchangeRate(d.ship_date);
-                        return {
-                            ...d,
-                            // 需要乘汇率的字段
-                            revenue: (d.revenue || 0) * rate,
-                            other_revenue: (d.other_revenue || 0) * rate,
-                            freight: (d.freight || 0) * rate,
-                            insurance_fee: (d.insurance_fee || 0) * rate,
-                            freight_insurance_revenue: (d.freight_insurance_revenue || 0) * rate,
-                            actual_freight: (d.actual_freight || 0) * rate,
-                            // 物流运费保持原始值（不乘汇率）
-                            logistics_cost: (d.logistics_cost || 0),
-                            exchange_rate: rate
-                        };
-                    });
-                    
-                    console.log(`✅ 内嵌数据加载成功！${rawData.length} 条`);
-                    
-                    // 自动设置日期范围（根据数据中的发货日期）
-                    const dates = rawData.map(d => new Date(d.ship_date)).filter(d => !isNaN(d.getTime()));
-                    if (dates.length > 0) {
-                        currentStartDate = new Date(Math.min(...dates));
-                        currentEndDate = new Date(Math.max(...dates));
-                        console.log(`📅 自动设置日期范围：${currentStartDate.toLocaleDateString()} - ${currentEndDate.toLocaleDateString()}`);
-                        
-                        // 更新日期筛选器输入框
-                        const startDateInput = document.getElementById('startDate');
-                        const endDateInput = document.getElementById('endDate');
-                        if (startDateInput) startDateInput.value = currentStartDate.toISOString().split('T')[0];
-                        if (endDateInput) endDateInput.value = currentEndDate.toISOString().split('T')[0];
-                    }
-                    
-                    // 覆盖 LocalStorage 中的旧数据
-                    localStorage.setItem('logistics_rawData', JSON.stringify(rawData));
-                    localStorage.setItem('logistics_exchangeRates', JSON.stringify(rates));
-                    
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('dashboard').style.display = 'block';
-                    
-                    // 初始化仪表板
-                    initProductFilters();
-                    renderOrderStructure();
-                    renderCountryPieChart();
-                    renderWarehouseRatio();
-                    updateCharts();
-                    renderSplitCountChart();
-                    
-                    window.addEventListener('resize', () => {
-                        Object.values(charts).forEach(chart => chart.resize());
-                    });
+                // 尝试从 LocalStorage 加载已保存的数据
+                const loadedFromStorage = loadDataFromStorage();
+                if (loadedFromStorage) {
+                    console.log('已从本地加载保存的数据');
                 } else {
-                    // 没有内嵌数据时，尝试从 LocalStorage 加载
-                    const loadedFromStorage = loadDataFromStorage();
-                    if (loadedFromStorage) {
-                        console.log('已从本地加载保存的数据');
-                    }
-                    
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('dashboard').style.display = 'block';
+                    console.log('LocalStorage 中没有数据，请等待数据导入');
                 }
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                
+                window.addEventListener('resize', () => {
+                    Object.values(charts).forEach(chart => chart.resize());
+                });
             } catch (error) {
                 console.error('加载数据失败:', error);
-                document.getElementById('loading').textContent = '数据加载失败：' + error.message;
+                document.getElementById('loading').textContent = '数据加载失败';
             }
-        }
-        
-        // 【v3.18 新增】显示数据导入提示
-        function showImportHint() {
-            const html = `
-                <div style="max-width: 800px; margin: 40px auto; background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                    <h2 style="color: #667eea; margin-bottom: 20px;">📦 欢迎使用物流分析仪表板 v3.18</h2>
-                    <p style="color: #666; margin-bottom: 20px;">当前没有数据，请导入数据后使用。</p>
-                    
-                    <h3 style="margin: 20px 0 10px;">🚀 快速导入（推荐）</h3>
-                    <div style="background: #f8f9ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                        <p style="margin-bottom: 10px;">在浏览器 Console 中执行以下代码：</p>
-                        <pre style="background: #2d3748; color: #48bb78; padding: 15px; border-radius: 6px; overflow-x: auto; font-size: 12px;">fetch('https://raw.githubusercontent.com/Joye686/QQ/main/v318-data.json')
-  .then(r => r.json())
-  .then(d => {
-    localStorage.setItem('logistics_rawData', JSON.stringify(d.data));
-    localStorage.setItem('logistics_exchangeRates', JSON.stringify(d.exchange_rates));
-    location.reload();
-  });</pre>
-                        <p style="margin-top: 10px; font-size: 12px; color: #888;">💡 按 F12 打开开发者工具，进入 Console 标签，粘贴代码后回车</p>
-                    </div>
-                    
-                    <h3 style="margin: 20px 0 10px;">📊 示例数据说明</h3>
-                    <ul style="color: #666; line-height: 1.8;">
-                        <li>包含 49 条物流订单数据</li>
-                        <li>涵盖英国仓、美国仓、加拿大仓、嘉兴仓</li>
-                        <li>时间范围：2026 年 1 月 -3 月</li>
-                        <li>已配置汇率：1 月 7.15 / 2 月 7.20 / 3 月 6.9236</li>
-                    </ul>
-                    
-                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
-                        <button onclick="location.reload()" style="background: #667eea; color: white; border: none; padding: 12px 30px; border-radius: 6px; font-size: 14px; cursor: pointer;">🔄 刷新页面</button>
-                    </div>
-                </div>
-            `;
-            document.querySelector('.container').innerHTML = html;
         }
         
         // 过滤数据（使用发货时间）
@@ -1719,54 +1614,39 @@ const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
             const uniqueShips = new Set(filteredData.map(d => d.ship_no || d['发货单号']));
             const totalPackages = uniqueShips.size;
             
-            // 获取货币筛选器值
-            const currency = document.getElementById('filter-currency')?.value || 'CNY';
-            const avgRate = filteredData[0]?.exchange_rate || 1;
-            
-            // 累计物流费 = 物流运费合计（根据货币筛选器决定是否折算）
-            let totalCost = filteredData.reduce((sum, d) => sum + (d.logistics_cost || 0), 0);
-            if (currency === 'USD') {
-                totalCost = totalCost / avgRate;  // CNY → USD
-            }
+            // 累计物流费 = 物流运费合计
+            const totalCost = filteredData.reduce((sum, d) => sum + (d.logistics_cost || 0), 0);
             
             // 其他指标
             const totalItems = filteredData.reduce((sum, d) => sum + (d.item_count || 0), 0);
             const totalWeight = filteredData.reduce((sum, d) => sum + (d.weight_kg || 0), 0);
-            let totalRevenue = filteredData.reduce((sum, d) => sum + ((d.revenue || 0) + (d.other_revenue || 0)), 0);
-            if (currency === 'USD') {
-                totalRevenue = totalRevenue / avgRate;  // CNY → USD
-            }
+            const totalRevenue = filteredData.reduce((sum, d) => sum + ((d.revenue || 0) + (d.other_revenue || 0)), 0);
             
-            console.log('KPI 调试：货币=', currency, '汇率=', avgRate, 'totalCost=', totalCost, 'totalRevenue=', totalRevenue);
+            console.log('KPI 调试：totalCost=', totalCost, 'totalRevenue=', totalRevenue, '汇率=', filteredData[0]?.exchange_rate);
             
             // 计算派生指标
             const priceKg = totalWeight > 0 ? totalCost / totalWeight : 0;
             const pricePkg = totalPackages > 0 ? totalCost / totalPackages : 0;
             const itemsPkg = totalPackages > 0 ? totalItems / totalPackages : 0;
             const weightPkg = totalPackages > 0 ? totalWeight / totalPackages : 0;
-            // 成本占比 = 物流运费 / 订单收入（比率不受货币影响）
+            // 【v3.17.42 修复】正向物流占收入比 = 物流运费 / ((订单收入 + 其他收入) × 汇率)
+            // 由于 revenue 和 other_revenue 已经是折算后的人民币，直接相除即可
             const logisticsRatio = totalRevenue > 0 ? (totalCost / totalRevenue) * 100 : 0;
             
-            // 货币符号
-            const currencySymbol = currency === 'USD' ? '$' : '¥';
-            
             // 更新 KPI 卡片
-            document.getElementById('stat-price-kg').textContent = currencySymbol + priceKg.toFixed(2);
-            document.getElementById('stat-price-pkg').textContent = currencySymbol + pricePkg.toFixed(2);
+            document.getElementById('stat-price-kg').textContent = '$' + priceKg.toFixed(2);
+            document.getElementById('stat-price-pkg').textContent = '$' + pricePkg.toFixed(2);
             document.getElementById('stat-packages').textContent = totalPackages.toLocaleString();
             document.getElementById('stat-orders').textContent = totalOrders.toLocaleString();
             document.getElementById('stat-items-pkg').textContent = itemsPkg.toFixed(1);
-            document.getElementById('stat-weight-pkg').textContent = weightPkg.toFixed(3) + ' kg';
+            document.getElementById('stat-weight-pkg').textContent = weightPkg.toFixed(3) + ' kg'; // 保留 3 位小数
             document.getElementById('stat-logistics-ratio').textContent = logisticsRatio.toFixed(1) + '%';
-            document.getElementById('stat-total-logistics').textContent = currencySymbol + totalCost.toLocaleString(undefined, {maximumFractionDigits: 2});
+            document.getElementById('stat-total-logistics').textContent = '$' + totalCost.toLocaleString(undefined, {maximumFractionDigits: 2});
             
             // 【v3.17.31 新增】第二行 KPI
             // 保价费收入
-            let totalInsuranceFee = filteredData.reduce((sum, d) => sum + (d.insurance_fee || 0), 0);
-            if (currency === 'USD') {
-                totalInsuranceFee = totalInsuranceFee / avgRate;
-            }
-            document.getElementById('kpi-insurance-revenue').textContent = currencySymbol + totalInsuranceFee.toFixed(2);
+            const totalInsuranceFee = filteredData.reduce((sum, d) => sum + (d.insurance_fee || 0), 0);
+            document.getElementById('kpi-insurance-revenue').textContent = '$' + totalInsuranceFee.toFixed(2);
             
             // 保价订单占比 = 有保价费的订单数 / 总订单数
             const insuredOrders = new Set(filteredData.filter(d => d.insurance_fee > 0).map(d => d['订单号'] || d.order_no)).size;
@@ -1774,12 +1654,11 @@ const EMBEDDED_RATES = {"2026-01":7.15,"2026-02":7.2,"2026-03":6.9236};
             document.getElementById('kpi-insurance-rate').textContent = insuranceRate.toFixed(1) + '%';
             
             // 【v3.17.32 修正】运费补偿率 = 向客户收取的运费 ÷ 实际物流成本
-            // 注意：这是百分比指标，不受货币影响（分子分母都是 CNY）
-            const totalFreight = filteredData.reduce((sum, d) => sum + (d.freight || 0), 0);  // CNY（已在 applyExchangeRates 中折算）
-            const totalFreightActual = filteredData.reduce((sum, d) => sum + (d.logistics_cost || 0), 0);  // CNY（原始值）
-            // 补偿率 = 运费 CNY ÷ 物流运费 CNY × 100%
+            // 注意：CSV 中没有"实际运费"字段，使用 logistics_cost（物流运费 (实际运费/预估运费)）作为实际成本
+            const totalFreight = filteredData.reduce((sum, d) => sum + (d.freight || 0), 0);  // 向客户收取的运费
+            const totalFreightActual = filteredData.reduce((sum, d) => sum + (d.logistics_cost || 0), 0);  // 实际物流成本
             const compensationRate = totalFreightActual > 0 ? (totalFreight / totalFreightActual) * 100 : 0;
-            console.log('运费补偿调试：收取运费 (CNY)=', totalFreight, '物流运费 (CNY)=', totalFreightActual, '补偿率=', compensationRate.toFixed(2) + '%');
+            console.log('运费补偿调试：收取运费=', totalFreight, '实际物流成本=', totalFreightActual, '补偿率=', compensationRate.toFixed(2) + '%');
             document.getElementById('kpi-compensation-rate').textContent = compensationRate.toFixed(1) + '%';
             
             // 【v3.17.32 修正】分单订单数 = "是否分单" = "是"的去重订单数
@@ -1898,14 +1777,7 @@ function renderJiaxingTChart() {
                     trigger: 'axis',
                     formatter: function(params) {
                         const point = params[0];
-                        // 百分比指标格式化
-                        let valueDisplay = point.value;
-                        if (currentMetric === 'costRatio' || currentMetric === 'compensationRate') {
-                            valueDisplay = point.value.toFixed(2) + '%';
-                        } else {
-                            valueDisplay = point.value.toFixed(2);
-                        }
-                        return `${point.name}<br/>${getMetricName(currentMetric)}: ${valueDisplay}`;
+                        return `${point.name}<br/>${getMetricName(currentMetric)}: ${point.value}`;
                     }
                 },
                 grid: { left: '3%', right: '4%', bottom: '10%', top: '10%', containLabel: true },
@@ -1941,13 +1813,7 @@ function renderJiaxingTChart() {
                     label: {
                         show: true,
                         position: 'top',
-                        formatter: function(params) {
-                            // 百分比指标格式化
-                            if (currentMetric === 'costRatio' || currentMetric === 'compensationRate') {
-                                return params.value.toFixed(2) + '%';
-                            }
-                            return params.value.toFixed(2);
-                        },
+                        formatter: '{c}',
                         fontSize: 10,
                         color: getMetricColor(currentMetric),
                         fontWeight: 'bold'
@@ -2015,13 +1881,7 @@ function renderMultiLineChart(chart, data, warehouseName) {
                     label: {
                         show: true,  // 【修改】显示数据标签
                         position: 'top',
-                        formatter: function(params) {
-                            // 百分比指标格式化
-                            if (currentMetric === 'costRatio' || currentMetric === 'compensationRate') {
-                                return params.value.toFixed(2) + '%';
-                            }
-                            return params.value.toFixed(2);
-                        },
+                        formatter: '{c}',
                         fontSize: 9,
                         fontWeight: 'bold'
                     },
@@ -2045,13 +1905,7 @@ function renderMultiLineChart(chart, data, warehouseName) {
                 label: {
                     show: true,  // 显示数据标签
                     position: 'top',
-                    formatter: function(params) {
-                        // 百分比指标格式化
-                        if (currentMetric === 'costRatio' || currentMetric === 'compensationRate') {
-                            return params.value.toFixed(2) + '%';
-                        }
-                        return params.value.toFixed(2);
-                    },
+                    formatter: '{c}',
                     fontSize: 10,
                     fontWeight: 'bold'
                 },
@@ -2067,15 +1921,7 @@ function renderMultiLineChart(chart, data, warehouseName) {
                     formatter: function(params) {
                         let result = params[0].name + '<br/>';
                         params.forEach(p => {
-                            const metricName = getMetricName(currentMetric);
-                            // 百分比指标格式化
-                            let valueDisplay = p.value;
-                            if (currentMetric === 'costRatio' || currentMetric === 'compensationRate') {
-                                valueDisplay = p.value.toFixed(2) + '%';
-                            } else {
-                                valueDisplay = p.value.toFixed(2);
-                            }
-                            result += `${p.seriesName}: ${metricName} = ${valueDisplay}<br/>`;
+                            result += `${p.seriesName}: ${getMetricName(currentMetric)} = ${p.value}<br/>`;
                         });
                         return result;
                     }
@@ -2146,14 +1992,7 @@ function renderOverseasTChart() {
                     trigger: 'axis',
                     formatter: function(params) {
                         const point = params[0];
-                        // 百分比指标格式化
-                        let valueDisplay = point.value;
-                        if (currentMetric === 'costRatio' || currentMetric === 'compensationRate') {
-                            valueDisplay = point.value.toFixed(2) + '%';
-                        } else {
-                            valueDisplay = point.value.toFixed(2);
-                        }
-                        return `${point.name}<br/>${getMetricName(currentMetric)}: ${valueDisplay}`;
+                        return `${point.name}<br/>${getMetricName(currentMetric)}: ${point.value}`;
                     }
                 },
                 grid: { left: '3%', right: '4%', bottom: '10%', top: '10%', containLabel: true },
@@ -2189,13 +2028,7 @@ function renderOverseasTChart() {
                     label: {
                         show: true,
                         position: 'top',
-                        formatter: function(params) {
-                            // 百分比指标格式化
-                            if (currentMetric === 'costRatio' || currentMetric === 'compensationRate') {
-                                return params.value.toFixed(2) + '%';
-                            }
-                            return params.value.toFixed(2);
-                        },
+                        formatter: '{c}',
                         fontSize: 10,
                         color: getMetricColor(currentMetric),
                         fontWeight: 'bold'
@@ -2864,58 +2697,32 @@ function renderWarehouseRatio() {
             console.log('=== 运费区间调试 ===');
             console.log('各区间订单数:', rangeData.map(r => `${r.name}: ${r.count}`));
             
-            // 客单价散点图
+            // 客单价柱状图
             rangeAovChart.setOption({
-                tooltip: { 
-                    formatter: function(params) {
-                        return `${params.name}<br/>客单价：$${params.value[1]}<br/>订单数：${params.data.orderCount}`;
-                    }
-                },
-                grid: { left: '12%', right: '8%', bottom: '25%', top: '8%', containLabel: true },
+                tooltip: { formatter: '${c}' },
+                grid: { left: '12%', right: '3%', bottom: '25%', top: '8%', containLabel: true },  // 【v3.17.39 修改】底部间距加大
                 xAxis: { 
                     type: 'category', 
                     data: ranges, 
                     axisLabel: { fontSize: 10, rotate: 0 },
-                    axisTick: { alignWithLabel: true },
-                    name: '运费区间',
-                    nameLocation: 'middle',
-                    nameGap: 20
+                    axisTick: { alignWithLabel: true }
                 },
                 yAxis: { 
                     type: 'value', 
                     name: '客单价 ($)', 
                     axisLabel: { fontSize: 10 },
-                    min: 0
+                    min: 0,
+                    max: function(value) {
+                        // 动态设置 Y 轴最大值，避免过高
+                        return Math.ceil(value.max / 50) * 50;
+                    }
                 },
                 series: [{
-                    type: 'scatter',
-                    data: rangeData.map((r, i) => ({
-                        value: [i, parseFloat(r.aov.toFixed(2))],
-                        orderCount: r.count,
-                        name: ranges[i]
-                    })),
-                    symbolSize: function(data) {
-                        // 根据订单数动态调整点的大小
-                        const maxCount = Math.max(...rangeData.map(r => r.count));
-                        return 10 + (data.orderCount / maxCount) * 20;
-                    },
-                    itemStyle: {
-                        color: function(params) {
-                            const colors = ['#3498db', '#27ae60', '#f39c12', '#e74c3c', '#9b59b6'];
-                            return colors[params.dataIndex];
-                        },
-                        shadowBlur: 10,
-                        shadowColor: 'rgba(0,0,0,0.3)'
-                    },
-                    label: {
-                        show: true,
-                        formatter: function(params) {
-                            return `$${params.value[1]}`;
-                        },
-                        position: 'top',
-                        fontSize: 9,
-                        fontWeight: 'bold'
-                    }
+                    type: 'bar',
+                    data: rangeData.map(r => r.aov.toFixed(0)),
+                    itemStyle: { color: '#27ae60' },
+                    label: { show: true, position: 'top', formatter: '${c}', fontSize: 10 },
+                    barWidth: '60%'  // 调整柱子宽度
                 }]
             });
             
@@ -3081,7 +2888,7 @@ function renderWarehouseRatio() {
             data.forEach(d => {
                 // 【修复 1】客户选择运送方式 = customer_shipping_method（快/中）
                 const customerShipping = d.customer_shipping_method || '';
-                const speed = customerShipping.includes('快') ? '快' : '中';
+                const speed = customerShipping.includes('Expedited') ? '快' : '中';
                 
                 // 【v3.17.29 修复】处理 null/undefined
                 const key = `${speed}|${d.product_l1 || ''}|${d.product_l2 || ''}|${d.product_l3 || ''}`;
@@ -3093,45 +2900,46 @@ function renderWarehouseRatio() {
                         l3: d.product_l3,
                         l1l2l3: `${d.product_l1 || ''} | ${d.product_l2 || ''} | ${d.product_l3 || ''}`,
                         packages: 0,
-                        weightKg: 0,  // 总重量 KG
                         promiseDaysSum: 0,
                         promiseDaysCount: 0,
                         actualDaysSum: 0,
                         actualDaysCount: 0,
                         deliveredCount: 0,
                         onTimeCount: 0,  // 时效达成数量
-                        logisticsFeeActual: 0,  // 物流运费 (实际) - CNY
-                        orderRevenue: 0,  // 订单收入 - CNY
-                        freight: 0  // 运费 - CNY
+                        logisticsFeeActual: 0,  // 物流运费 (实际)
+                        orderRevenue: 0,  // 订单收入
+                        insuranceFee: 0  // 保价费
                     };
                 }
                 grouped[key].packages++;
                 
-                // 累加重量（不随货币变化）
-                grouped[key].weightKg += parseFloat(d.weight_kg) || 0;
+                // 累加成本和收入
+                grouped[key].logisticsFeeActual += parseFloat(d.logistics_cost) || 0;
+                grouped[key].orderRevenue += parseFloat(d.revenue) || 0;
+                grouped[key].insuranceFee += parseFloat(d.insurance_fee) || 0;
                 
-                // 累加成本和收入（根据货币筛选器决定是否折算）
-                const currency = document.getElementById('filter-currency')?.value || 'CNY';
-                const rate = d.exchange_rate || 1;
-                
-                if (currency === 'USD') {
-                    // USD 模式：CNY 金额 ÷ 汇率 = USD
-                    grouped[key].logisticsFeeActual += (parseFloat(d.logistics_cost) || 0) / rate;
-                    grouped[key].orderRevenue += ((parseFloat(d.revenue) || 0) + (parseFloat(d.other_revenue) || 0)) / rate;
-                    grouped[key].freight += (parseFloat(d.freight) || 0) / rate;
-                } else {
-                    // CNY 模式：保持原值
-                    grouped[key].logisticsFeeActual += parseFloat(d.logistics_cost) || 0;
-                    grouped[key].orderRevenue += (parseFloat(d.revenue) || 0) + (parseFloat(d.other_revenue) || 0);
-                    grouped[key].freight += parseFloat(d.freight) || 0;
-                }
-                
-                // 【修复 4】承诺时效 = 承诺最晚收货时间 - 发货时间
-                if (d['承诺最晚收货时间'] && d.ship_date) {
-                    const promiseDeliveryDate = new Date(d['承诺最晚收货时间']);
+                // 【修复 4】承诺时效 = 承诺最晚发货时间 - 发货时间
+                // 使用 order_date + promise_days 计算承诺最晚发货时间
+                if (d.order_date && d.ship_date) {
+                    // 解析 order_date（格式：20260212）
+                    let orderDate;
+                    const orderDateStr = String(d.order_date);
+                    if (orderDateStr.length === 8) {
+                        orderDate = new Date(`${orderDateStr.slice(0,4)}-${orderDateStr.slice(4,6)}-${orderDateStr.slice(6,8)}`);
+                    } else {
+                        orderDate = new Date(d.order_date);
+                    }
+                    
+                    // 解析 ship_date（格式：2026-02-12）
                     const shipDate = new Date(d.ship_date);
-                    if (!isNaN(promiseDeliveryDate.getTime()) && !isNaN(shipDate.getTime())) {
-                        const days = (promiseDeliveryDate - shipDate) / (1000 * 60 * 60 * 24);
+                    
+                    // promise_days 可能为负数或 0，需要处理
+                    const promiseDays = parseFloat(d.promise_days) || 0;
+                    
+                    if (!isNaN(orderDate.getTime()) && !isNaN(shipDate.getTime())) {
+                        // 承诺最晚发货时间 = 下单时间 + 承诺时效天数
+                        const promiseShipDate = new Date(orderDate.getTime() + (promiseDays * 24 * 60 * 60 * 1000));
+                        const days = (promiseShipDate - shipDate) / (1000 * 60 * 60 * 24);
                         grouped[key].promiseDaysSum += days;
                         grouped[key].promiseDaysCount++;
                     }
@@ -3153,14 +2961,28 @@ function renderWarehouseRatio() {
                     grouped[key].deliveredCount++;
                 }
                 
-                // 【修复 2】时效达成率 = (妥投时间 - 承诺最晚收货时间) ≤ 0 的包裹数 / 总包裹数
-                if (d['妥投时间'] && d['承诺最晚收货时间']) {
-                    const deliveryDate = new Date(d['妥投时间']);
-                    const promiseDeliveryDate = new Date(d['承诺最晚收货时间']);
-                    if (!isNaN(deliveryDate.getTime()) && !isNaN(promiseDeliveryDate.getTime())) {
-                        // 妥投时间 <= 承诺最晚收货时间 = 按时达成
-                        if (deliveryDate <= promiseDeliveryDate) {
-                            grouped[key].onTimeCount++;
+                // 【修复 2】时效达成率 = 妥投订单中实际时效 <= 承诺时效的占比
+                if (d.delivery_date && d.delivery_date.trim() !== '' && d.promise_days !== undefined) {
+                    const deliveryDate = new Date(d.delivery_date);
+                    const shipDate = new Date(d.ship_date);
+                    if (!isNaN(deliveryDate.getTime()) && !isNaN(shipDate.getTime())) {
+                        const actualDays = (deliveryDate - shipDate) / (1000 * 60 * 60 * 24);
+                        const promiseDays = parseFloat(d.promise_days) || 0;
+                        // 承诺最晚发货时间 = order_date + promise_days
+                        let orderDate;
+                        const orderDateStr = String(d.order_date);
+                        if (orderDateStr.length === 8) {
+                            orderDate = new Date(`${orderDateStr.slice(0,4)}-${orderDateStr.slice(4,6)}-${orderDateStr.slice(6,8)}`);
+                        } else {
+                            orderDate = new Date(d.order_date);
+                        }
+                        if (!isNaN(orderDate.getTime())) {
+                            const promiseShipDate = new Date(orderDate.getTime() + (promiseDays * 24 * 60 * 60 * 1000));
+                            const promisedDays = (promiseShipDate - shipDate) / (1000 * 60 * 60 * 24);
+                            // 实际时效 <= 承诺时效
+                            if (actualDays <= promisedDays) {
+                                grouped[key].onTimeCount++;
+                            }
                         }
                     }
                 }
@@ -3189,18 +3011,9 @@ function renderWarehouseRatio() {
                     achievement: achievementRate,  // 时效达成率
                     // 成本占比 = 物流运费 (实际运费/预估运费)/订单收入
                     costRatio: row.orderRevenue > 0 ? ((row.logisticsFeeActual / row.orderRevenue) * 100) : 0,
-                    // 补偿率 = 运费/物流运费 (实际运费/预估运费)
-                    // 注意：这两个字段都已经根据货币筛选器折算，比率不受货币影响
-                    compensationRate: row.logisticsFeeActual > 0 ? ((row.freight / row.logisticsFeeActual) * 100) : 0,
-                    // 单价/kg = 物流运费 / 总重量（已根据货币筛选器折算）
-                    priceKg: row.weightKg > 0 ? (row.logisticsFeeActual / row.weightKg) : 0
+                    // 补偿率 = 运保费收入/物流运费 (实际运费/预估运费)
+                    compensationRate: row.logisticsFeeActual > 0 ? ((row.insuranceFee / row.logisticsFeeActual) * 100) : 0
                 };
-            });
-            
-            // 计算汇总行的总重量和总物流运费（用于计算单价/kg）
-            const totalWeight = rows.reduce((sum, r) => sum + r.weightKg, 0);
-            const totalLogisticsCost = rows.reduce((sum, r) => sum + r.logisticsFeeActual, 0);
-            const avgPriceKg = totalWeight > 0 ? (totalLogisticsCost / totalWeight) : 0;
             });
             
             // 应用排序
@@ -3212,7 +3025,6 @@ function renderWarehouseRatio() {
                     else if (state.column === 'l1') { valA = a.l1; valB = b.l1; }
                     else if (state.column === 'l2') { valA = a.l2; valB = b.l2; }
                     else if (state.column === 'l3') { valA = a.l3; valB = b.l3; }
-                    else if (state.column === 'priceKg') { valA = a.priceKg; valB = b.priceKg; }
                     else if (state.column === 'packages') { valA = a.packages; valB = b.packages; }
                     else if (state.column === 'ratio') { valA = a.ratio; valB = b.ratio; }
                     else if (state.column === 'promise') { valA = a.promise; valB = b.promise; }
@@ -3240,7 +3052,6 @@ function renderWarehouseRatio() {
                     <td style="text-align: left;">${row.l1}</td>
                     <td style="text-align: left;">${row.l2}</td>
                     <td style="text-align: left;">${row.l3}</td>
-                    <td style="text-align: right;">${row.priceKg.toFixed(2)}</td>
                     <td style="text-align: right;">${row.packages.toLocaleString()}</td>
                     <td style="text-align: right;">${row.ratio.toFixed(1)}%</td>
                     <td style="text-align: center;">${row.promise.toFixed(1)}</td>
@@ -3260,15 +3071,9 @@ function renderWarehouseRatio() {
             const avgCostRatio = rows.length > 0 ? (rows.reduce((sum, r) => sum + r.costRatio, 0) / rows.length) : 0;
             const avgCompensationRate = rows.length > 0 ? (rows.reduce((sum, r) => sum + r.compensationRate, 0) / rows.length) : 0;
             
-            // 计算汇总行的总重量和总物流运费（用于计算单价/kg）
-            const totalWeight = rows.reduce((sum, r) => sum + r.weightKg, 0);
-            const totalLogisticsCost = rows.reduce((sum, r) => sum + r.logisticsFeeActual, 0);
-            const avgPriceKg = totalWeight > 0 ? (totalLogisticsCost / totalWeight) : 0;
-            
             tfoot.innerHTML = `
                 <tr style="background: #e8f4f8; font-weight: bold;">
                     <td colspan="4" style="text-align: left;">汇总</td>
-                    <td style="text-align: right;">${avgPriceKg.toFixed(2)}</td>
                     <td style="text-align: right;">${totalPackages.toLocaleString()}</td>
                     <td style="text-align: right;">100.0%</td>
                     <td style="text-align: center;">${avgPromise.toFixed(1)}</td>
@@ -3277,14 +3082,6 @@ function renderWarehouseRatio() {
                     <td style="text-align: center;">${totalDelivered > 0 ? (totalOnTime / totalDelivered * 100).toFixed(1) : 0}%</td>
                     <td style="text-align: center;">${avgCostRatio.toFixed(1)}%</td>
                     <td style="text-align: center;">${avgCompensationRate.toFixed(1)}%</td>
-                </tr>
-                
-                <!-- 隐藏行：用于存储总重量和总物流成本，方便调试 -->
-                <tr style="display: none;">
-                    <td>总重量：</td>
-                    <td colspan="3">${totalWeight.toFixed(3)} kg</td>
-                    <td>总物流运费：</td>
-                    <td colspan="7">${totalLogisticsCost.toFixed(2)}</td>
                 </tr>
             `;
         }
@@ -3296,35 +3093,28 @@ function renderWarehouseRatio() {
         function renderFlowChart() {
             const flowChart = echarts.init(document.getElementById('flow-chart'));
             
-            // 使用全部数据（不受国家筛选影响）
-            const flowData = rawData;
-            
-            console.log('流向分析调试：flowData 长度 =', flowData.length);
-            if (flowData.length > 0) {
-                console.log('customer_shipping_method 样例:', flowData.slice(0, 3).map(d => d.customer_shipping_method));
-                console.log('product_l1 样例:', flowData.slice(0, 3).map(d => d.product_l1));
+            // 应用筛选
+            const detailCountry = document.getElementById('detail-country').value;
+            let flowData = filterData();
+            if (detailCountry !== 'all') {
+                flowData = flowData.filter(d => d.country_code === detailCountry);
             }
             
-            // 统计流向数据
-            // 由于 CSV 中 product_l1 只有"Standard"，无法判断快慢线产品
-            // 暂时使用 customer_shipping_method 作为唯一判断依据
-            // 快→快 和 中→中都算保持，快→中算降档，中→快算升档
-            // 但实际数据中 product_l1 都是 Standard，所以所有都是"慢线产品"
-            // 因此：快→慢=降档，中→慢=保持
+            // 【修复 2】统计流向数据 - 按新逻辑计算
+            // 客户选择：customer_shipping_method（Expedited Shipping = 快，Standard Shipping = 中）
+            // 产品等级：product_l1（Expedited = 快线，Standard = 慢线）
             let fast2fast = 0, fast2slow = 0, slow2fast = 0, slow2slow = 0;
             
             flowData.forEach(d => {
                 const customerShipping = d.customer_shipping_method || '';
-                const isFastChoice = customerShipping.includes('快'); // 客户选"快"
-                const isFastShip = d.product_l1 === 'Expedited'; // 实际发"快线产品"（但 CSV 中都是 Standard）
+                const isFastChoice = customerShipping.includes('Expedited'); // 客户选"快"
+                const isFastShip = d.product_l1 === 'Expedited'; // 实际发"快线产品"
                 
                 if (isFastChoice && isFastShip) fast2fast++;      // 快→快（保持）
                 else if (isFastChoice && !isFastShip) fast2slow++; // 快→慢（降档）⬇️
                 else if (!isFastChoice && isFastShip) slow2fast++; // 中→快（升档）⬆️
                 else slow2slow++;                                   // 中→中（保持）
             });
-            
-            console.log('流向统计：fast2fast=', fast2fast, 'fast2slow=', fast2slow, 'slow2fast=', slow2fast, 'slow2slow=', slow2slow);
             
             const total = fast2fast + fast2slow + slow2fast + slow2slow;
             if (total === 0) {
