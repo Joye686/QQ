@@ -1984,6 +1984,9 @@ function renderMultiLineChart(chart, data, warehouseName) {
             
             const { timeSeries } = calculateMetrics(data, currentTimeGranularity, currentStartDate, currentEndDate);
             
+            // 判断是否为百分比指标
+            const isPercentMetric = currentMetric === 'costRatio' || currentMetric === 'compensationRate';
+            
             // 【v3.17.29 修复】"其他"国家特殊处理
             const series = countries.map((country, index) => {
                 let countryData;
@@ -2021,9 +2024,6 @@ function renderMultiLineChart(chart, data, warehouseName) {
                     }
                 };
             });
-            
-            // 判断是否为百分比指标
-            const isPercentMetric = currentMetric === 'costRatio' || currentMetric === 'compensationRate';
             
             // 【修复 2】新增"全部"曲线 - 不区分国家的汇总数据
             const { data: totalMetrics } = calculateMetrics(data, currentTimeGranularity, currentStartDate, currentEndDate);
