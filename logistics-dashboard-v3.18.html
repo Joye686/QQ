@@ -856,12 +856,13 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                             <tr>
                                 <th rowspan="2" style="cursor: pointer;" onclick="sortTable('jiaxing', 'speed')">客户选择<br>运送方式</th>
                                 <th colspan="3">产品维度</th>
-                                <th colspan="5">指标（点击可排序）</th>
+                                <th colspan="6">指标（点击可排序）</th>
                             </tr>
                             <tr>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'l1')">一级</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'l2')">二级</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'l3')">三级</th>
+                                <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'priceKg')">单价/kg ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'packages')">包裹数 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'ratio')">占比 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('jiaxing', 'promise')">承诺时效 ⇅</th>
@@ -885,12 +886,13 @@ const EMBEDDED_RATES = {"2026-03":6.9236};
                             <tr>
                                 <th rowspan="2" style="cursor: pointer;" onclick="sortTable('overseas', 'speed')">客户选择<br>运送方式</th>
                                 <th colspan="3">产品维度</th>
-                                <th colspan="5">指标（点击可排序）</th>
+                                <th colspan="6">指标（点击可排序）</th>
                             </tr>
                             <tr>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'l1')">一级</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'l2')">二级</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'l3')">三级</th>
+                                <th style="cursor: pointer;" onclick="sortTable('overseas', 'priceKg')">单价/kg ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'packages')">包裹数 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'ratio')">占比 ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('overseas', 'promise')">承诺时效 ⇅</th>
@@ -3074,6 +3076,7 @@ function renderWarehouseRatio() {
                         l3: d.product_l3,
                         l1l2l3: `${d.product_l1 || ''} | ${d.product_l2 || ''} | ${d.product_l3 || ''}`,
                         packages: 0,
+                        weightKg: 0,  // 总重量
                         promiseDaysSum: 0,
                         promiseDaysCount: 0,
                         actualDaysSum: 0,
@@ -3087,7 +3090,8 @@ function renderWarehouseRatio() {
                 }
                 grouped[key].packages++;
                 
-                // 累加成本和收入
+                // 累加重量、成本和收入
+                grouped[key].weightKg += parseFloat(d.weight_kg) || 0;
                 grouped[key].logisticsFeeActual += parseFloat(d.logistics_cost) || 0;
                 grouped[key].orderRevenue += parseFloat(d.revenue) || 0;
                 grouped[key].insuranceFee += parseFloat(d.insurance_fee) || 0;
@@ -3170,12 +3174,21 @@ function renderWarehouseRatio() {
             const totalOnTime = Object.values(grouped).reduce((sum, g) => sum + g.onTimeCount, 0);
             
             // 转换为数组并排序
+            // 【v3.17.43 新增】获取货币筛选器值
+            const currency = document.getElementById('filter-currency')?.value || 'CNY';
+            const avgRate = data[0]?.exchange_rate || 1;
+            
             let rows = Object.values(grouped).map(row => {
                 const ratio = totalPackages > 0 ? (row.packages / totalPackages * 100) : 0;
                 const avgPromise = row.promiseDaysCount > 0 ? (row.promiseDaysSum / row.promiseDaysCount) : 0;
                 const avgActual = row.actualDaysCount > 0 ? (row.actualDaysSum / row.actualDaysCount) : 0;
                 const deliveryRate = row.packages > 0 ? (row.deliveredCount / row.packages * 100) : 0;
                 const achievementRate = row.deliveredCount > 0 ? (row.onTimeCount / row.deliveredCount * 100) : 0;
+                
+                // 【v3.17.43 新增】单价/kg = 物流运费 / 总重量（根据货币筛选器折算）
+                const costDisplay = currency === 'USD' ? (row.logisticsFeeActual / avgRate) : row.logisticsFeeActual;
+                const priceKg = row.weightKg > 0 ? (costDisplay / row.weightKg) : 0;
+                
                 return {
                     ...row,
                     ratio: ratio,
@@ -3183,6 +3196,7 @@ function renderWarehouseRatio() {
                     actual: avgActual,
                     delivery: deliveryRate,
                     achievement: achievementRate,  // 时效达成率
+                    priceKg: priceKg,  // 【v3.17.43 新增】单价/kg
                     // 成本占比 = 物流运费 (实际运费/预估运费)/订单收入
                     costRatio: row.orderRevenue > 0 ? ((row.logisticsFeeActual / row.orderRevenue) * 100) : 0,
                     // 补偿率 = 运保费收入/物流运费 (实际运费/预估运费)
@@ -3199,6 +3213,7 @@ function renderWarehouseRatio() {
                     else if (state.column === 'l1') { valA = a.l1; valB = b.l1; }
                     else if (state.column === 'l2') { valA = a.l2; valB = b.l2; }
                     else if (state.column === 'l3') { valA = a.l3; valB = b.l3; }
+                    else if (state.column === 'priceKg') { valA = a.priceKg; valB = b.priceKg; }
                     else if (state.column === 'packages') { valA = a.packages; valB = b.packages; }
                     else if (state.column === 'ratio') { valA = a.ratio; valB = b.ratio; }
                     else if (state.column === 'promise') { valA = a.promise; valB = b.promise; }
@@ -3221,11 +3236,13 @@ function renderWarehouseRatio() {
             rows.forEach((row, index) => {
                 const tr = document.createElement('tr');
                 tr.style.background = index % 2 === 0 ? '#fff' : '#f9f9f9';
+                const currencySymbol = currency === 'USD' ? '$' : '¥';
                 tr.innerHTML = `
                     <td><span style="padding: 2px 8px; border-radius: 4px; background: ${row.speed === '快' ? '#4285f4' : '#ea4335'}; color: white; font-size: 11px;">${row.speed}</span></td>
                     <td style="text-align: left;">${row.l1}</td>
                     <td style="text-align: left;">${row.l2}</td>
                     <td style="text-align: left;">${row.l3}</td>
+                    <td style="text-align: right;">${currencySymbol}${row.priceKg.toFixed(2)}</td>
                     <td style="text-align: right;">${row.packages.toLocaleString()}</td>
                     <td style="text-align: right;">${row.ratio.toFixed(1)}%</td>
                     <td style="text-align: center;">${row.promise.toFixed(1)}</td>
@@ -3238,6 +3255,9 @@ function renderWarehouseRatio() {
                 tbody.appendChild(tr);
             });
             
+            // 【v3.17.43 新增】货币符号
+            const currencySymbol = currency === 'USD' ? '$' : '¥';
+            
             // 渲染汇总行
             const avgPromise = totalPackages > 0 ? (totalPromise / totalPackages) : 0;
             const avgActual = totalPackages > 0 ? (totalActual / totalPackages) : 0;
@@ -3245,9 +3265,16 @@ function renderWarehouseRatio() {
             const avgCostRatio = rows.length > 0 ? (rows.reduce((sum, r) => sum + r.costRatio, 0) / rows.length) : 0;
             const avgCompensationRate = rows.length > 0 ? (rows.reduce((sum, r) => sum + r.compensationRate, 0) / rows.length) : 0;
             
+            // 【v3.17.43 新增】汇总行单价/kg = 总物流运费 / 总重量
+            const totalWeight = rows.reduce((sum, r) => sum + r.weightKg, 0);
+            const totalLogisticsCost = rows.reduce((sum, r) => sum + r.logisticsFeeActual, 0);
+            const totalCostDisplay = currency === 'USD' ? (totalLogisticsCost / avgRate) : totalLogisticsCost;
+            const avgPriceKg = totalWeight > 0 ? (totalCostDisplay / totalWeight) : 0;
+            
             tfoot.innerHTML = `
                 <tr style="background: #e8f4f8; font-weight: bold;">
                     <td colspan="4" style="text-align: left;">汇总</td>
+                    <td style="text-align: right;">${currencySymbol}${avgPriceKg.toFixed(2)}</td>
                     <td style="text-align: right;">${totalPackages.toLocaleString()}</td>
                     <td style="text-align: right;">100.0%</td>
                     <td style="text-align: center;">${avgPromise.toFixed(1)}</td>
